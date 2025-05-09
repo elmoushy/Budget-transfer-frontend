@@ -147,7 +147,7 @@
             <label for="adjustmentReason" class="required">
               {{ isArabic ? 'سبب التسوية' : 'Reason for Adjustment' }}
             </label>
-            <QuillEditor
+            <QuillEditorWrapper
               v-model:content="editorContent"
               :toolbar="editorToolbar"
               contentType="html"
@@ -179,7 +179,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { EditIcon, FileTextIcon, SearchIcon } from 'lucide-vue-next'
 import { useThemeStore } from '@/stores/themeStore'
-import { QuillEditor } from '@vueup/vue-quill'
+import QuillEditorWrapper from '@/components/QuillEditorWrapper.vue'
 
 // Define component name explicitly to satisfy the multi-word rule
 defineOptions({

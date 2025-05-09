@@ -1,12 +1,12 @@
 <!-- MainLayout.vue -->
 <template>
   <div class="layout" :class="{ 'dark-theme': isDarkMode }" :dir="isArabic ? 'rtl' : 'ltr'">
-    <HeaderBar />
+    <template v-if="isAuthenticated">
+      <HeaderBar />
+      <NavigationMenu />
+    </template>
 
-    <!-- ← horizontal menu under header -->
-    <NavigationMenu />
-
-    <main class="content">
+    <main class="content" :class="{ 'full-height': !isAuthenticated }">
       <RouterView v-slot="{ Component }">
         <Transition :name="isArabic ? 'rtl-fade' : 'fade'" mode="out-in">
           <component :is="Component" />
@@ -21,10 +21,14 @@ import { computed } from 'vue'
 import HeaderBar from '@/components/HeaderBar.vue'
 import NavigationMenu from '@/components/NavigationMenu.vue'
 import { useThemeStore } from '@/stores/themeStore'
+import { useAuthStore } from '@/stores/authStore'
 
 const themeStore = useThemeStore()
+const authStore = useAuthStore()
+
 const isDarkMode = computed(() => themeStore.darkMode)
 const isArabic = computed(() => themeStore.language === 'ar')
+const isAuthenticated = computed(() => authStore.isAuthenticated)
 </script>
 
 <style scoped>
@@ -79,5 +83,10 @@ const isArabic = computed(() => themeStore.language === 'ar')
 
 .rtl-fade-leave-to {
   transform: translateX(-10px);
+}
+
+.full-height {
+  height: 100vh;
+  padding: 0;
 }
 </style>

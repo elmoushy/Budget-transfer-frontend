@@ -1,5 +1,27 @@
 <script setup lang="ts">
 import MainLayout from '@/components/MainLayout.vue'
+import { onMounted } from 'vue'
+
+// Add font loading via DOM for better error handling
+onMounted(() => {
+  // Add preconnect for performance
+  const preconnect = document.createElement('link')
+  preconnect.rel = 'preconnect'
+  preconnect.href = 'https://fonts.googleapis.com'
+  document.head.appendChild(preconnect)
+
+  const preconnectCrossDomain = document.createElement('link')
+  preconnectCrossDomain.rel = 'preconnect'
+  preconnectCrossDomain.href = 'https://fonts.gstatic.com'
+  preconnectCrossDomain.crossOrigin = 'anonymous'
+  document.head.appendChild(preconnectCrossDomain)
+
+  // Add the font link
+  const fontLink = document.createElement('link')
+  fontLink.rel = 'stylesheet'
+  fontLink.href = 'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap'
+  document.head.appendChild(fontLink)
+})
 </script>
 
 <template>
@@ -67,16 +89,10 @@ body {
   left: 10px;
 }
 
-/* Better font for Arabic text */
+/* Better font for Arabic text with fallbacks */
 [dir='rtl'] {
-  font-family:
-    'Tajawal',
-    'Amiri',
-    'Noto Sans Arabic',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
+  font-family: 'Tajawal', 'Arial', 'Tahoma', sans-serif;
+  font-display: swap; /* Ensure text remains visible during loading */
 }
 
 /* Animation direction based on language */

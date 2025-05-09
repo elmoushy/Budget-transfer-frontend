@@ -15,6 +15,7 @@
             type="search"
             :placeholder="isArabic ? 'بحث...' : 'Search...'"
             class="input-search"
+            @input="handleSearch"
           />
           <button v-if="searchQuery" @click="clearSearch" class="clear-search">×</button>
         </div>
@@ -39,15 +40,15 @@
         </thead>
         <tbody key="body">
           <tr
-            v-for="row in paginatedRows"
-            :key="row.id"
-            :class="rowBg(row.statusLevel)"
+            v-for="row in displayedRows"
+            :key="row.transaction_id"
+            :class="rowBg(row.status)"
             class="table-row"
           >
-            <td>{{ row.attachment }}</td>
+            <td>{{ row.attachment ? 'Yes' : 'No' }}</td>
             <td>
-              <span class="status-badge" :class="'status-' + row.statusLevel.toLowerCase()">
-                {{ row.statusLevel }}
+              <span class="status-badge" :class="'status-' + row.status.toLowerCase()">
+                {{ row.status }}
               </span>
             </td>
             <td>
@@ -55,22 +56,42 @@
                 <EditIcon />
               </button>
             </td>
-            <td>{{ row.period }}</td>
-            <td>{{ row.date }}</td>
+            <td>{{ row.transaction_date }}</td>
+            <td>{{ formatDate(row.request_date) }}</td>
             <td>
-              <button class="icon-btn" @click="viewDesc(row)">
-                <FileTextIcon />
-              </button>
+              <div class="description-cell">
+                <button
+                  class="icon-btn view-desc-btn"
+                  @click="viewDesc(row)"
+                  title="View full description"
+                >
+                  <FileTextIcon />
+                </button>
+              </div>
             </td>
-            <td>{{ row.requestedBy }}</td>
+            <td>{{ row.requested_by }}</td>
             <td class="code-cell">{{ row.code }}</td>
             <td>
-              <button class="icon-btn" @click="editRow(row)">
-                <EditIcon />
-              </button>
+              <div class="action-buttons">
+                <button class="icon-btn" @click="editRow(row)">
+                  <EditIcon />
+                </button>
+                <button
+                  v-if="row.status.toLowerCase() === 'pending'"
+                  class="icon-btn delete-btn"
+                  @click="deleteRow(row)"
+                >
+                  <TrashIcon />
+                </button>
+              </div>
             </td>
           </tr>
-          <tr v-if="filteredRows.length === 0" key="no-results">
+          <tr v-if="loading" key="loading">
+            <td colspan="9" class="loading-row">
+              {{ isArabic ? 'جاري التحميل...' : 'Loading...' }}
+            </td>
+          </tr>
+          <tr v-else-if="displayedRows.length === 0" key="no-results">
             <td colspan="9" class="no-results">
               {{ isArabic ? 'لا توجد نتائج' : 'No results found' }}
             </td>
@@ -99,73 +120,65 @@
       <button
         @click="nextPage"
         class="page-btn"
-        :disabled="currentPage >= totalPages"
-        :class="{ disabled: currentPage >= totalPages }"
+        :disabled="!hasNextPage"
+        :class="{ disabled: !hasNextPage }"
       >
         {{ isArabic ? 'التالي' : 'Next' }}
       </button>
     </div>
 
-    <!-- New Request Modal -->
-    <div v-if="showModal" class="modal-overlay" @click="closeModal">
-      <div class="modal-container" :class="{ 'dark-mode': isDarkMode }" @click.stop>
+    <!-- New Request Modal Component -->
+    <NewRequestModal v-model="showModal" @submit="handleNewRequestSubmit" />
+
+    <!-- Edit Transfer Modal Component -->
+    <EditTransferModal
+      v-model="showEditModal"
+      :transferData="currentEditTransfer"
+      @submit="handleEditSubmit"
+    />
+
+    <!-- Description Modal -->
+    <div v-if="showDescModal" class="modal-overlay" @click="closeDescModal">
+      <div class="desc-modal-container" :class="{ 'dark-mode': isDarkMode }" @click.stop>
         <div class="modal-header">
-          <h2>{{ isArabic ? 'طلب مناقلة جديد' : 'New Transfer Request' }}</h2>
-          <button class="close-modal" @click="closeModal">×</button>
+          <h2>{{ isArabic ? 'وصف المعاملة' : 'Transfer Description' }}</h2>
+          <button class="close-modal" @click="closeDescModal">×</button>
         </div>
+        <div class="modal-body desc-modal-body">
+          <div
+            class="desc-content"
+            v-if="currentDesc"
+            v-html="formatHtmlContent(currentDesc)"
+          ></div>
+          <div class="no-desc" v-else>
+            {{ isArabic ? 'لا يوجد وصف' : 'No description available' }}
+          </div>
+        </div>
+      </div>
+    </div>
 
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showDeleteModal" class="modal-overlay" @click="cancelDelete">
+      <div class="delete-modal-container" :class="{ 'dark-mode': isDarkMode }" @click.stop>
+        <div class="modal-header">
+          <h2>{{ isArabic ? 'تأكيد الحذف' : 'Confirm Deletion' }}</h2>
+          <button class="close-modal" @click="cancelDelete">×</button>
+        </div>
         <div class="modal-body">
-          <!-- Time Period Field -->
-          <div class="form-group">
-            <label for="timePeriod" class="required">
-              {{ isArabic ? 'الفترة الزمنية' : 'Time Period' }}
-            </label>
-            <div class="select-wrapper">
-              <select id="timePeriod" v-model="newRequest.timePeriod" required>
-                <option value="" disabled>{{ isArabic ? 'اختر فترة' : 'Select period' }}</option>
-                <option value="Jan">{{ isArabic ? 'يناير' : 'January' }}</option>
-                <option value="Feb">{{ isArabic ? 'فبراير' : 'February' }}</option>
-                <option value="Mar">{{ isArabic ? 'مارس' : 'March' }}</option>
-                <option value="Apr">{{ isArabic ? 'أبريل' : 'April' }}</option>
-                <option value="May">{{ isArabic ? 'مايو' : 'May' }}</option>
-                <option value="Jun">{{ isArabic ? 'يونيو' : 'June' }}</option>
-                <option value="Jul">{{ isArabic ? 'يوليو' : 'July' }}</option>
-                <option value="Aug">{{ isArabic ? 'أغسطس' : 'August' }}</option>
-                <option value="Sep">{{ isArabic ? 'سبتمبر' : 'September' }}</option>
-                <option value="Oct">{{ isArabic ? 'أكتوبر' : 'October' }}</option>
-                <option value="Nov">{{ isArabic ? 'نوفمبر' : 'November' }}</option>
-                <option value="Dec">{{ isArabic ? 'ديسمبر' : 'December' }}</option>
-              </select>
-              <div class="select-arrow">▼</div>
-            </div>
-          </div>
-
-          <!-- Reason for Transfer Field -->
-          <div class="form-group">
-            <label for="transferReason" class="required">
-              {{ isArabic ? 'سبب المناقلة' : 'Reason for Transfer' }}
-            </label>
-            <QuillEditor
-              v-model:content="editorContent"
-              :toolbar="editorToolbar"
-              contentType="html"
-              theme="snow"
-              :options="editorOptions"
-              class="transfer-editor"
-              :class="{ 'editor-error': editorError }"
-            />
-            <div v-if="editorError" class="error-message">
-              {{ isArabic ? 'هذا الحقل مطلوب' : 'This field is required' }}
-            </div>
-          </div>
+          <p class="delete-message">
+            {{
+              isArabic
+                ? 'هل أنت متأكد من رغبتك في حذف هذا الطلب؟'
+                : 'Are you sure you want to delete this request?'
+            }}
+          </p>
         </div>
-
         <div class="modal-footer">
-          <button class="btn-secondary" @click="closeModal">
+          <button class="btn-secondary" @click="cancelDelete">
             {{ isArabic ? 'إلغاء' : 'Cancel' }}
           </button>
-          <button class="btn-primary submit-btn" @click="submitRequest">
-            {{ isArabic ? 'إنشاء' : 'Create' }}
+          <button class="btn-primary delete-confirm-btn" @click="confirmDelete">
+            {{ isArabic ? 'نعم، حذف' : 'Yes, Delete' }}
           </button>
         </div>
       </div>
@@ -175,71 +188,186 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { EditIcon, FileTextIcon, SearchIcon } from 'lucide-vue-next'
+import { EditIcon, FileTextIcon, SearchIcon, TrashIcon } from 'lucide-vue-next'
 import { useThemeStore } from '@/stores/themeStore'
-import { QuillEditor } from '@vueup/vue-quill'
+import { useAuthStore } from '@/stores/authStore'
+// Removed QuillEditor import as it's not used directly in this component and may cause deprecation warnings
+import axios from 'axios'
+import NewRequestModal from '@/components/NewRequestModal.vue'
+import EditTransferModal from '@/components/EditTransferModal.vue'
 
 // Define component name explicitly to satisfy the multi-word rule
 defineOptions({
   name: 'HomePage',
 })
 
-// Track editor state
-const editorContent = ref('<p>Enter your reason here...</p>')
-const editorError = ref(false)
-
-// Define editor toolbar options
-const editorToolbar = [
-  ['bold', 'italic', 'underline', 'strike'],
-  [{ list: 'ordered' }, { list: 'bullet' }],
-  [{ align: [] }],
-  ['clean'],
-]
-
-// Define editor options
-const editorOptions = {
-  placeholder: 'Enter your reason here...',
-  modules: {
-    toolbar: editorToolbar,
-  },
-}
+// API configuration
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const API_ENDPOINT = '/api/budget/transfers/list/'
+const PAGE_SIZE = 10
 
 // ───────────────────────────────────────────────────────────── Type Declarations
-interface RowData {
-  id: number
-  attachment: string
-  statusLevel: string
-  period: string
-  date: string
-  requestedBy: string
-  code: string
+interface ApiResponse {
+  count: number
+  next: string | null
+  previous: string | null
+  results: TransferData[]
 }
 
+interface TransferData {
+  transaction_id: number
+  transaction_date: string
+  amount: number
+  status: string
+  requested_by: string
+  user_id: number
+  request_date: string
+  notes: string
+  description_x: string
+  code: string
+  gl_posting_status: string
+  approvel_1: string
+  approvel_2: string
+  approvel_3: string
+  approvel_4: string
+  approvel_1_date: null | string
+  approvel_2_date: null | string
+  approvel_3_date: null | string
+  approvel_4_date: null | string
+  status_level: number
+  attachment: string
+  fy: string
+  group_id: null | number
+  interface_id: null | number
+  reject_group_id: null | number
+  reject_interface_id: null | number
+  approve_group_id: null | number
+  approve_interface_id: null | number
+  report: string
+  type: string
+}
+
+// ───────────────────────────────────────────────────────────── State
+const loading = ref(false)
+const apiData = ref<ApiResponse | null>(null)
+const displayedRows = ref<TransferData[]>([])
+const totalCount = ref(0)
+const hasNextPage = ref(false)
+const hasPrevPage = ref(false)
+const showModal = ref(false)
+const showDescModal = ref(false)
+const currentDesc = ref('')
+
+// New states for edit modal
+const showEditModal = ref(false)
+const currentEditTransfer = ref<TransferData | null>(null)
+
+// Add new state variables for delete confirmation
+const showDeleteModal = ref(false)
+const rowToDelete = ref<TransferData | null>(null)
+
 // ───────────────────────────────────────────────────────────── Helper Functions
-function editGI(row: RowData) {
-  console.log('Editing GI for row:', row.id)
+function formatDate(dateString: string): string {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return date.toLocaleDateString()
 }
-function viewDesc(row: RowData) {
-  console.log('Viewing description for row:', row.id)
+
+function editGI(row: TransferData) {
+  console.log('Editing GI for row:', row.transaction_id)
+  // Set the current transfer data for editing
+  currentEditTransfer.value = row
+  // Open the edit modal
+  showEditModal.value = true
 }
-function editRow(row: RowData) {
-  console.log('Editing row:', row.id)
+
+function formatHtmlContent(html: string): string {
+  // Sanitize HTML content if needed
+  return html || ''
 }
+
+function viewDesc(row: TransferData) {
+  // Show description in modal
+  currentDesc.value = row.notes || ''
+  showDescModal.value = true
+}
+
+function closeDescModal() {
+  showDescModal.value = false
+}
+
+function editRow(row: TransferData) {
+  // Set the current transfer data for editing
+  currentEditTransfer.value = row
+  // Open the edit modal
+  showEditModal.value = true
+}
+
+function deleteRow(row: TransferData) {
+  // Only allow deletion if status is pending
+  if (row.status.toLowerCase() !== 'pending') {
+    return
+  }
+
+  // Show delete confirmation modal instead of using confirm()
+  rowToDelete.value = row
+  showDeleteModal.value = true
+}
+
+function cancelDelete() {
+  showDeleteModal.value = false
+  rowToDelete.value = null
+}
+
+function confirmDelete() {
+  if (!rowToDelete.value) return
+
+  // Show loading state
+  loading.value = true
+  showDeleteModal.value = false
+
+  axios
+    .delete(`${API_BASE_URL}/api/budget/transfers/${rowToDelete.value.transaction_id}/delete/`, {
+      headers: {
+        Authorization: `Bearer ${authStore.token}`,
+        Accept: 'application/json',
+      },
+    })
+    .then(() => {
+      // Success - refresh the data
+      fetchData()
+    })
+    .catch((error) => {
+      console.error('Error deleting request:', error)
+      alert(isArabic.value ? 'حدث خطأ أثناء حذف الطلب' : 'Error deleting the request')
+    })
+    .finally(() => {
+      loading.value = false
+      rowToDelete.value = null
+    })
+}
+
 function rowBg(status: string) {
-  if (status === 'Approved') return 'row-approved'
-  if (status === 'Pending') return 'row-pending'
+  const statusLower = status.toLowerCase()
+  if (statusLower === 'approved') return 'row-approved'
+  if (statusLower === 'pending') return 'row-pending'
   return 'row-none'
 }
 
 // ───────────────────────────────────────────────────────────── Theme & Lang
 const themeStore = useThemeStore()
+const authStore = useAuthStore()
 const isArabic = ref(false)
 const isDarkMode = ref(false)
 
 onMounted(() => {
   isArabic.value = themeStore.language === 'ar'
   isDarkMode.value = themeStore.darkMode
+
+  // Fetch data when component mounts
+  fetchData()
 })
+
 watch(
   () => themeStore.language,
   (l) => (isArabic.value = l === 'ar'),
@@ -272,189 +400,111 @@ const arabicHeaders = {
 }
 const tableHeaders = computed(() => (isArabic.value ? arabicHeaders : englishHeaders))
 
-// ───────────────────────────────────────────────────────────── Sample Rows
-type Rows = RowData[]
-const rows = ref<Rows>([
-  {
-    id: 1,
-    attachment: 'Yes',
-    statusLevel: 'Pending',
-    period: 'Feb',
-    date: '1/29/2025',
-    requestedBy: '661',
-    code: 'FAR-0001',
-  },
-  {
-    id: 2,
-    attachment: 'Yes',
-    statusLevel: 'Approved',
-    period: 'Mar',
-    date: '1/28/2025',
-    requestedBy: '661',
-    code: 'FAR-0002',
-  },
-  {
-    id: 3,
-    attachment: 'No',
-    statusLevel: 'No Data',
-    period: 'Apr',
-    date: '1/29/2025',
-    requestedBy: '661',
-    code: 'FAR-0003',
-  },
-  {
-    id: 4,
-    attachment: 'Yes',
-    statusLevel: 'Approved',
-    period: 'May',
-    date: '2/1/2025',
-    requestedBy: '662',
-    code: 'FAR-0004',
-  },
-  {
-    id: 5,
-    attachment: 'No',
-    statusLevel: 'Pending',
-    period: 'Jun',
-    date: '2/5/2025',
-    requestedBy: '663',
-    code: 'FAR-0005',
-  },
-  {
-    id: 6,
-    attachment: 'Yes',
-    statusLevel: 'Approved',
-    period: 'Jul',
-    date: '2/10/2025',
-    requestedBy: '664',
-    code: 'FAR-0006',
-  },
-  {
-    id: 7,
-    attachment: 'No',
-    statusLevel: 'No Data',
-    period: 'Aug',
-    date: '2/15/2025',
-    requestedBy: '665',
-    code: 'FAR-0007',
-  },
-  {
-    id: 8,
-    attachment: 'Yes',
-    statusLevel: 'Pending',
-    period: 'Sep',
-    date: '2/20/2025',
-    requestedBy: '666',
-    code: 'FAR-0008',
-  },
-  {
-    id: 9,
-    attachment: 'No',
-    statusLevel: 'Approved',
-    period: 'Oct',
-    date: '2/25/2025',
-    requestedBy: '667',
-    code: 'FAR-0009',
-  },
-  {
-    id: 10,
-    attachment: 'Yes',
-    statusLevel: 'Pending',
-    period: 'Nov',
-    date: '3/1/2025',
-    requestedBy: '668',
-    code: 'FAR-0010',
-  },
-  {
-    id: 11,
-    attachment: 'No',
-    statusLevel: 'No Data',
-    period: 'Dec',
-    date: '3/5/2025',
-    requestedBy: '669',
-    code: 'FAR-0011',
-  },
-  {
-    id: 12,
-    attachment: 'Yes',
-    statusLevel: 'Approved',
-    period: 'Jan',
-    date: '3/10/2025',
-    requestedBy: '670',
-    code: 'FAR-0012',
-  },
-])
-
-// ───────────────────────────────────────────────────────────── Search & Pagination
+// ───────────────────────────────────────────────────────────── API Functions
 const searchQuery = ref('')
 const currentPage = ref(1)
-const itemsPerPage = 10
+const debounceTimeout = ref<number | null>(null)
 
-function clearSearch() {
-  searchQuery.value = ''
-}
-function nextPage() {
-  if (currentPage.value < totalPages.value) currentPage.value++
-}
-function prevPage() {
-  if (currentPage.value > 1) currentPage.value--
-}
-const filteredRows = computed(() =>
-  rows.value.filter((r) => r.code?.toLowerCase().includes(searchQuery.value.toLowerCase())),
-)
-watch(searchQuery, () => (currentPage.value = 1))
-const totalPages = computed(() => Math.ceil(filteredRows.value.length / itemsPerPage))
-const paginatedRows = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  return filteredRows.value.slice(start, start + itemsPerPage)
-})
-
-// ───────────────────────────────────────────────────────────── Modal
-const showModal = ref(false)
-const newRequest = ref({
-  timePeriod: '',
-  transferReason: '',
-})
-
-function openNewRequestModal() {
-  showModal.value = true
-  newRequest.value = { timePeriod: '', transferReason: '' }
-  // Reset editor content and error state when opening modal
-  editorContent.value = '<p>Enter your reason here...</p>'
-  editorError.value = false
-}
-
-function closeModal() {
-  showModal.value = false
-  // Reset error state when closing
-  editorError.value = false
-}
-
-function submitRequest() {
-  // Validate fields
-  const isDefaultContent =
-    editorContent.value === '<p>Enter your reason here...</p>' ||
-    editorContent.value === '<p><br></p>' ||
-    editorContent.value === ''
-
-  if (!newRequest.value.timePeriod || isDefaultContent) {
-    // Show error for editor if it's empty or has default content
-    if (isDefaultContent) {
-      editorError.value = true
-    }
-
-    alert(isArabic.value ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields')
+async function fetchData() {
+  if (!authStore.token) {
+    console.error('Authentication token not found')
     return
   }
 
-  // Reset error state
-  editorError.value = false
+  loading.value = true
 
-  // Update transfer reason with editor content
-  newRequest.value.transferReason = editorContent.value
+  try {
+    const params: Record<string, string> = {
+      page: currentPage.value.toString(),
+      page_size: PAGE_SIZE.toString(),
+    }
 
-  console.log('Submitting new request:', newRequest.value)
-  closeModal()
+    // Common headers for all requests
+    const headers = {
+      Authorization: `Bearer ${authStore.token}`,
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    }
+
+    // Create request body - empty object for regular listing, search criteria when searching
+    const requestBody = searchQuery.value.trim() ? { code: searchQuery.value.trim() } : {}
+
+    // Always use POST for both listing and searching
+    const response = await axios.post(`${API_BASE_URL}${API_ENDPOINT}`, requestBody, {
+      headers,
+      params, // Pagination params still go in URL
+    })
+
+    apiData.value = response.data
+    displayedRows.value = response.data.results
+    totalCount.value = response.data.count
+    hasNextPage.value = !!response.data.next
+    hasPrevPage.value = !!response.data.previous
+  } catch (error) {
+    console.error('Error fetching data:', error)
+    displayedRows.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+function handleSearch() {
+  // Debounce search requests to avoid excessive API calls
+  if (debounceTimeout.value) {
+    clearTimeout(debounceTimeout.value)
+  }
+
+  debounceTimeout.value = setTimeout(() => {
+    currentPage.value = 1 // Reset to first page when searching
+    fetchData()
+  }, 300) as unknown as number
+}
+
+function clearSearch() {
+  searchQuery.value = ''
+  currentPage.value = 1
+  fetchData()
+}
+
+function nextPage() {
+  if (hasNextPage.value) {
+    currentPage.value++
+    fetchData()
+  }
+}
+
+function prevPage() {
+  if (currentPage.value > 1) {
+    currentPage.value--
+    fetchData()
+  }
+}
+
+const totalPages = computed(() => {
+  return Math.ceil(totalCount.value / PAGE_SIZE) || 1
+})
+
+// ───────────────────────────────────────────────────────────── Modal Functions
+function openNewRequestModal() {
+  showModal.value = true
+}
+
+function handleNewRequestSubmit(formData: { timePeriod: string; transferReason: string }) {
+  console.log('New request submitted:', formData)
+
+  // Here you would typically call an API to create the new request
+  // For example:
+  // createNewRequest(formData)
+
+  // After successful submission, you might want to refresh the data
+  fetchData()
+}
+
+// Handle edit transfer submission
+function handleEditSubmit(updatedData: any) {
+  console.log('Transfer updated:', updatedData)
+  // After successful update, refresh the data
+  fetchData()
 }
 </script>
 
@@ -1219,5 +1269,187 @@ function submitRequest() {
 
 [dir='rtl'] .modal-footer {
   flex-direction: row-reverse;
+}
+
+.loading-row {
+  text-align: center;
+  padding: 2rem !important;
+  color: #64748b;
+  font-style: italic;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+/* Dark mode loading styles */
+.dark-mode .loading-row {
+  color: #a0a0b8;
+}
+
+.description-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Changed from space-between to center */
+  max-width: auto;
+}
+
+.view-desc-btn {
+  flex-shrink: 0;
+  margin-left: 0; /* Removed margin since we're centered */
+}
+
+[dir='rtl'] .view-desc-btn {
+  margin-left: 0;
+  margin-right: 0; /* Removed margin since we're centered */
+}
+
+/* Description Modal Styles */
+.desc-modal-container {
+  background-color: white;
+  width: 95%;
+  max-width: 600px;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  animation: slideIn 0.3s ease;
+}
+
+.desc-modal-body {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.desc-content {
+  line-height: 1.6;
+}
+
+.desc-content :deep(p) {
+  margin-bottom: 1rem;
+}
+
+.desc-content :deep(ul),
+.desc-content :deep(ol) {
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.no-desc {
+  color: #64748b;
+  font-style: italic;
+  text-align: center;
+}
+
+.dark-mode .no-desc {
+  color: #a0a0b8;
+}
+
+.dark-mode .desc-content {
+  color: #e2e2e2;
+}
+
+/* Scrollbar styling for the description modal */
+.desc-modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.desc-modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 8px;
+}
+
+.desc-modal-body::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 8px;
+}
+
+.desc-modal-body::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.dark-mode .desc-modal-body::-webkit-scrollbar-track {
+  background: #2c2c44;
+}
+
+.dark-mode .desc-modal-body::-webkit-scrollbar-thumb {
+  background: #4f4f6f;
+}
+
+.dark-mode .desc-modal-body::-webkit-scrollbar-thumb:hover {
+  background: #5f5f7f;
+}
+
+/* Add styles for action buttons container */
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.delete-btn {
+  color: #dc2626; /* Red color for delete button */
+}
+
+.delete-btn:hover {
+  background-color: rgba(220, 38, 38, 0.1);
+}
+
+/* Dark mode delete button */
+.dark-mode .delete-btn {
+  color: #ef4444;
+}
+
+.dark-mode .delete-btn:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+}
+
+/* Delete Confirmation Modal Styles */
+.delete-modal-container {
+  background-color: white;
+  width: 95%;
+  max-width: 450px;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  animation: slideIn 0.3s ease;
+}
+
+.delete-message {
+  text-align: center;
+  font-size: 1.1rem;
+  margin: 1rem 0;
+}
+
+.delete-confirm-btn {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+}
+
+.delete-confirm-btn:hover {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.dark-mode .delete-modal-container {
+  background-color: #1a1a2e;
+}
+
+.dark-mode .delete-message {
+  color: #e2e2e2;
+}
+
+.dark-mode .delete-confirm-btn {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.dark-mode .delete-confirm-btn:hover {
+  background: linear-gradient(135deg, #f87171, #ef4444);
 }
 </style>

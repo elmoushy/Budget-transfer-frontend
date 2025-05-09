@@ -9,6 +9,9 @@
 
     <!-- action icons -->
     <div class="actions">
+      <!-- Username display -->
+      <span class="username">{{ username }}</span>
+
       <!-- Language Toggle -->
       <div class="toggle-container">
         <span class="toggle-label">{{ isArabic ? 'EN' : 'AR' }}</span>
@@ -41,12 +44,18 @@
 
 <script setup lang="ts">
 import { BellIcon, LogOutIcon } from 'lucide-vue-next'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useThemeStore } from '@/stores/themeStore'
+import { useAuthStore } from '@/stores/authStore'
+import { useRouter } from 'vue-router'
 
 const themeStore = useThemeStore()
+const authStore = useAuthStore()
+const router = useRouter()
+
 const isDarkMode = ref(false)
 const isArabic = ref(false)
+const username = computed(() => authStore.user?.username || '')
 
 onMounted(() => {
   isDarkMode.value = themeStore.darkMode
@@ -61,10 +70,9 @@ function toggleLanguage() {
   themeStore.setLanguage(isArabic.value ? 'ar' : 'en')
 }
 
-function logout() {
-  // Implement logout functionality here
-  alert('Logging out...')
-  // Redirect to login page or call authentication service
+async function logout() {
+  await authStore.logout()
+  router.push({ name: 'Login' })
 }
 </script>
 
@@ -223,5 +231,22 @@ input:checked + .slider:before {
   50% {
     transform: scale(1.3);
   }
+}
+
+.username {
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding-right: 12px;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  margin-right: 12px;
+}
+
+[dir='rtl'] .username {
+  padding-right: 0;
+  padding-left: 12px;
+  border-right: none;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  margin-right: 0;
+  margin-left: 12px;
 }
 </style>

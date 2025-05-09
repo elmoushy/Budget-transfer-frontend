@@ -68,7 +68,7 @@
 
 <script lang="ts">
 import { ref, computed, watch, onMounted, nextTick, onUnmounted } from 'vue'
-import { Chart } from 'chart.js/auto'
+import Chart from 'chart.js/auto'
 import { useThemeStore } from '@/stores/themeStore'
 
 export default {

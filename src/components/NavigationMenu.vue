@@ -64,7 +64,7 @@ const isArabic = computed(() => themeStore.language === 'ar')
 const menuItemsData = {
   ar: [
     { label: 'لوحة القيادة', route: 'Dashboard' },
-    { label: 'المناقصات', route: 'Home' },
+    { label: 'المناقلات', route: 'Home' },
     { label: 'التسوية', route: 'Settlements' },
     { label: 'التعزيزات', route: 'Enhancements' },
     { label: 'المناقصات قيد الاعتماد', route: 'ContractsPendingApproval' },
@@ -73,7 +73,7 @@ const menuItemsData = {
   ],
   en: [
     { label: 'Dashboard', route: 'Dashboard' },
-    { label: 'Contracts', route: 'Home' },
+    { label: 'Transfers', route: 'Home' },
     { label: 'Settlements', route: 'Settlements' },
     { label: 'Enhancements', route: 'Enhancements' },
     { label: 'Contracts Pending Approval', route: 'ContractsPendingApproval' },
