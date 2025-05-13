@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import MainLayout from '@/components/MainLayout.vue'
 import { onMounted } from 'vue'
+import { computed, watch } from 'vue'
+import { useThemeStore } from '@/stores/themeStore'
+import SessionExpiredNotification from '@/components/SessionExpiredNotification.vue'
 
 // Add font loading via DOM for better error handling
 onMounted(() => {
@@ -22,10 +25,20 @@ onMounted(() => {
   fontLink.href = 'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap'
   document.head.appendChild(fontLink)
 })
+
+const themeStore = useThemeStore()
+const isArabic = computed(() => themeStore.language === 'ar')
+const isDarkMode = computed(() => themeStore.darkMode)
 </script>
 
 <template>
-  <MainLayout />
+  <div class="app-container" :class="{ rtl: isArabic, 'dark-mode': isDarkMode }">
+    <MainLayout />
+    <router-view />
+
+    <!-- Add the session expired notification component -->
+    <SessionExpiredNotification />
+  </div>
 </template>
 
 <style>

@@ -12,7 +12,81 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 //   }
 // });
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const API_ENDPOINT = '/api/budget/transfers/list/'
+const PAGE_SIZE = 10
+
+/**
+ * Service for handling transfer-related API operations
+ */
 export default {
+  /**
+   * Fetch transfers with optional search and pagination
+   * @param {string} searchQuery - Optional search term
+   * @param {number} page - Page number for pagination
+   * @returns {Promise} - API response with transfer data
+   */
+  async fetchTransfers(searchQuery = '', page = 1) {
+    const authStore = useAuthStore()
+
+    if (!authStore.token) {
+      throw new Error('Authentication token not found')
+    }
+
+    const params = {
+      page: page.toString(),
+      page_size: PAGE_SIZE.toString(),
+    }
+
+    // Common headers for all requests
+    const headers = {
+      Authorization: `Bearer ${authStore.token}`,
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    }
+
+    // Create request body - empty object for regular listing, search criteria when searching
+    const requestBody = searchQuery.trim() ? { code: searchQuery.trim() } : {}
+
+    try {
+      // Always use POST for both listing and searching
+      const response = await axios.post(`${API_BASE_URL}${API_ENDPOINT}`, requestBody, {
+        headers,
+        params, // Pagination params still go in URL
+      })
+
+      return response.data
+    } catch (error) {
+      console.error('Error fetching transfers:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Delete a transfer by ID
+   * @param {number} transferId - The ID of the transfer to delete
+   * @returns {Promise} - API response
+   */
+  async deleteTransfer(transferId) {
+    const authStore = useAuthStore()
+
+    if (!authStore.token) {
+      throw new Error('Authentication token not found')
+    }
+
+    try {
+      return await axios.delete(`${API_BASE_URL}/api/budget/transfers/${transferId}/delete/`, {
+        headers: {
+          Authorization: `Bearer ${authStore.token}`,
+          Accept: 'application/json',
+        },
+      })
+    } catch (error) {
+      console.error('Error deleting transfer:', error)
+      throw error
+    }
+  },
+
   /**
    * Fetches transfer details by transaction ID
    * @param {number} transactionId - The transaction ID to fetch

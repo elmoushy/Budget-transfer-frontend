@@ -195,19 +195,19 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { EditIcon, FileTextIcon, SearchIcon, TrashIcon } from 'lucide-vue-next'
 import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
-// Removed QuillEditor import as it's not used directly in this component and may cause deprecation warnings
-import axios from 'axios'
 import NewRequestModal from '@/components/NewRequestModal.vue'
 import EditTransferModal from '@/components/EditTransferModal.vue'
+import transferService from '@/services/transferService'
+
+// Import CSS
+import '@/assets/css/Home.css'
 
 // Define component name explicitly to satisfy the multi-word rule
 defineOptions({
   name: 'HomePage',
 })
 
-// API configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
-const API_ENDPOINT = '/api/budget/transfers/list/'
+// Page size constant
 const PAGE_SIZE = 10
 
 // ───────────────────────────────────────────────────────────── Type Declarations
@@ -330,13 +330,9 @@ function confirmDelete() {
   loading.value = true
   showDeleteModal.value = false
 
-  axios
-    .delete(`${API_BASE_URL}/api/budget/transfers/${rowToDelete.value.transaction_id}/delete/`, {
-      headers: {
-        Authorization: `Bearer ${authStore.token}`,
-        Accept: 'application/json',
-      },
-    })
+  // Use the new service for deletion
+  transferService
+    .deleteTransfer(rowToDelete.value.transaction_id)
     .then(() => {
       // Success - refresh the data
       fetchData()
@@ -410,42 +406,18 @@ const currentPage = ref(1)
 const debounceTimeout = ref<number | null>(null)
 
 async function fetchData() {
-  if (!authStore.token) {
-    console.error('Authentication token not found')
-    return
-  }
-
   loading.value = true
 
   try {
-    const params: Record<string, string> = {
-      page: currentPage.value.toString(),
-      page_size: PAGE_SIZE.toString(),
-    }
+    const data = await transferService.fetchTransfers(searchQuery.value, currentPage.value)
 
-    // Common headers for all requests
-    const headers = {
-      Authorization: `Bearer ${authStore.token}`,
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    }
-
-    // Create request body - empty object for regular listing, search criteria when searching
-    const requestBody = searchQuery.value.trim() ? { code: searchQuery.value.trim() } : {}
-
-    // Always use POST for both listing and searching
-    const response = await axios.post(`${API_BASE_URL}${API_ENDPOINT}`, requestBody, {
-      headers,
-      params, // Pagination params still go in URL
-    })
-
-    apiData.value = response.data
-    displayedRows.value = response.data.results
-    totalCount.value = response.data.count
-    hasNextPage.value = !!response.data.next
-    hasPrevPage.value = !!response.data.previous
+    apiData.value = data
+    displayedRows.value = data.results
+    totalCount.value = data.count
+    hasNextPage.value = !!data.next
+    hasPrevPage.value = !!data.previous
   } catch (error) {
-    console.error('Error fetching data:', error)
+    console.error('Error in component while fetching data:', error)
     displayedRows.value = []
   } finally {
     loading.value = false
@@ -495,12 +467,7 @@ function openNewRequestModal() {
 
 function handleNewRequestSubmit(formData: { timePeriod: string; transferReason: string }) {
   console.log('New request submitted:', formData)
-
-  // Here you would typically call an API to create the new request
-  // For example:
-  // createNewRequest(formData)
-
-  // After successful submission, you might want to refresh the data
+  // After successful submission, refresh the data
   fetchData()
 }
 
