@@ -51,6 +51,12 @@ const routes = [
     component: () => import('@/views/ContractsPendingApproval.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/cost-center-transfer/:id',
+    name: 'CostCenterTransferRequest',
+    component: () => import('@/views/CostCenterTransferRequest.vue'),
+    meta: { requiresAuth: true },
+  },
   // Catch-all route for 404
   {
     path: '/:pathMatch(.*)*',

@@ -70,7 +70,11 @@
               </div>
             </td>
             <td>{{ row.requested_by }}</td>
-            <td class="code-cell">{{ row.code }}</td>
+            <td class="code-cell">
+              <router-link :to="`/cost-center-transfer/${row.transaction_id}`" class="code-link">
+                {{ row.code }}
+              </router-link>
+            </td>
             <td>
               <div class="action-buttons">
                 <button class="icon-btn" @click="editRow(row)">
@@ -799,6 +803,27 @@ function handleEditSubmit(updatedData: any) {
 .code-cell {
   color: #6d1a36;
   font-weight: 600;
+}
+
+.code-link {
+  color: #6d1a36;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.code-link:hover {
+  text-decoration: underline;
+  color: #8a2a44;
+}
+
+.dark-mode .code-link {
+  color: #ff9ea0;
+}
+
+.dark-mode .code-link:hover {
+  color: #ffb5b7;
 }
 
 /* Dark mode icon buttons */
