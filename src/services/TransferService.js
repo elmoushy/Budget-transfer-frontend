@@ -45,8 +45,11 @@ export default {
       'Content-Type': 'application/json',
     }
 
-    // Create request body - empty object for regular listing, search criteria when searching
-    const requestBody = searchQuery.trim() ? { code: searchQuery.trim() } : {}
+    // Always include "FAR" as the code in the request body
+    // If there's a search query, include it as well
+    const requestBody = searchQuery.trim()
+      ? { code: 'FAR', search: searchQuery.trim() }
+      : { code: 'FAR' }
 
     try {
       // Always use POST for both listing and searching
@@ -75,7 +78,7 @@ export default {
     }
 
     try {
-      return await axios.delete(`${API_BASE_URL}/api/budget/transfers/${transferId}/delete/`, {
+      return await axios.delete(`${API_BASE_URL}/api/adjd-transfers/${transferId}/delete/`, {
         headers: {
           Authorization: `Bearer ${authStore.token}`,
           Accept: 'application/json',
@@ -187,7 +190,24 @@ export default {
   async createTransfer(transferData) {
     const authStore = useAuthStore()
     try {
-      const response = await axios.post(`${BASE_URL}/api/adjd-transfers/create/`, transferData, {
+      // Map each transfer using 'transaction' property (not transaction_id)
+      const transfersArray = transferData.map((item) => ({
+        transaction: item.transaction,
+        cost_center_code: item.cost_center_code,
+        cost_center_name: item.cost_center_name,
+        account_code: item.account_code,
+        account_name: item.account_name,
+        approved_budget: parseFloat(item.approved_budget) || 0,
+        available_budget: parseFloat(item.available_budget) || 0,
+        from_center: parseFloat(item.from_center) || 0,
+        to_center: parseFloat(item.to_center) || 0,
+        encumbrance: parseFloat(item.encumbrance) || 0,
+        actual: parseFloat(item.actual) || 0,
+        done: 1,
+      }))
+
+      // Send the array directly as payload
+      const response = await axios.post(`${BASE_URL}/api/adjd-transfers/create/`, transfersArray, {
         headers: {
           Authorization: `Bearer ${authStore.token}`,
         },

@@ -34,9 +34,7 @@ const isDarkMode = computed(() => themeStore.darkMode)
 <template>
   <div class="app-container" :class="{ rtl: isArabic, 'dark-mode': isDarkMode }">
     <MainLayout />
-    <router-view />
-
-    <!-- Add the session expired notification component -->
+    <!-- Removed extra router-view here -->
     <SessionExpiredNotification />
   </div>
 </template>

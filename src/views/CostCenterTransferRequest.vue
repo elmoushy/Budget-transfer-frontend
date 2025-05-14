@@ -414,8 +414,17 @@ const addNewRow = () => {
 // Create transfer function
 const createTransfer = async () => {
   try {
+    // Only include rows with both cost_center_code and account_code
+    const validRows = transferData.value.filter(
+      (item) => item.cost_center_code && item.account_code,
+    )
+    if (!validRows.length) {
+      alert(isArabic.value ? 'لا توجد بيانات صالحة للإرسال' : 'No valid rows to send')
+      return
+    }
+
     // Prepare data for API
-    const dataToSend = transferData.value.map((item) => ({
+    const dataToSend = validRows.map((item) => ({
       transaction: transactionId.value,
       cost_center_code: item.cost_center_code,
       cost_center_name: item.cost_center_name,
@@ -430,19 +439,37 @@ const createTransfer = async () => {
       done: 1,
     }))
 
-    await transferService.createTransfer(dataToSend)
+    // Pass the auth token as second argument to the API call
+    await transferService.createTransfer(dataToSend, authStore.token)
     alert(isArabic.value ? 'تم إنشاء النقل بنجاح' : 'Transfer created successfully')
-    await loadData() // Reload data
+    await loadData()
   } catch (err) {
     alert(isArabic.value ? 'فشل في إنشاء النقل' : 'Failed to create transfer')
-    console.error(err)
+    console.error('Error creating transfer:', err)
   }
 }
 
 // Delete row function
-const deleteRow = (index) => {
+const deleteRow = async (index) => {
   if (transferData.value.length > 1) {
-    transferData.value.splice(index, 1)
+    const row = transferData.value[index]
+
+    // If the row has a transfer_id, delete it from the API
+    if (row.transfer_id) {
+      try {
+        loading.value = true
+        await transferService.deleteTransfer(row.transfer_id)
+        transferData.value.splice(index, 1)
+        loading.value = false
+      } catch (err) {
+        loading.value = false
+        alert(isArabic.value ? 'فشل في حذف الصف' : 'Failed to delete row')
+        console.error('Error deleting row:', err)
+      }
+    } else {
+      // If no transfer_id, just remove from local array
+      transferData.value.splice(index, 1)
+    }
   } else {
     alert(isArabic.value ? 'يجب أن يكون هناك صف واحد على الأقل' : 'At least one row must exist')
   }

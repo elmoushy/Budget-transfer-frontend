@@ -154,11 +154,11 @@ async function submitForm() {
   editorError.value = false
 
   try {
-    // Prepare API payload with type:"AFR" hardcoded
+    // Prepare API payload with type:"FAR" instead of "AFR"
     const payload = {
       transaction_date: newRequest.value.timePeriod,
       notes: editorContent.value,
-      type: 'AFR', // Hardcoded value as requested
+      type: 'FAR', // Changed from 'AFR' to 'FAR'
     }
 
     // Make API call to create new transfer

@@ -10,13 +10,13 @@ const routes = [
     meta: { requiresAuth: false },
   },
   {
-    path: '/',
+    path: '/dashboard',
     name: 'Dashboard',
     component: () => import('@/views/Dashboard.vue'),
     meta: { requiresAuth: true },
   },
   {
-    path: '/home',
+    path: '/',
     name: 'Home',
     component: () => import('@/views/Home.vue'),
     meta: { requiresAuth: true },
@@ -29,24 +29,26 @@ const routes = [
   },
   {
     path: '/settlements',
-    name: 'Settlements',
-    component: () => import('@/views/Contracts.vue'),
+    name: 'Settlements', // This must match the name used in NavigationMenu.vue
+    component: () => import('@/views/Contracts.vue'), // Loads the Contracts component
     meta: { requiresAuth: true },
+    // Add alias for better consistency with component name
+    alias: '/contracts',
   },
   {
-    path: '/enhancements-pending',
+    path: '/enhancements-pending-approval',
     name: 'EnhancementsPendingApproval',
     component: () => import('@/views/EnhancementsPendingApproval.vue'),
     meta: { requiresAuth: true },
   },
   {
-    path: '/settlements-pending',
+    path: '/settlements-pending-approval',
     name: 'SettlementsPendingApproval',
     component: () => import('@/views/SettlementsPendingApproval.vue'),
     meta: { requiresAuth: true },
   },
   {
-    path: '/contracts-pending',
+    path: '/contracts-pending-approval',
     name: 'ContractsPendingApproval',
     component: () => import('@/views/ContractsPendingApproval.vue'),
     meta: { requiresAuth: true },
@@ -66,7 +68,7 @@ const routes = [
 
 // Create the router
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL || ''),
   routes,
 })
 

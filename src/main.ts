@@ -19,6 +19,7 @@ import '@fortawesome/fontawesome-free/css/all.css'
 import { MotionPlugin } from '@vueuse/motion'
 
 import { vObserve } from './utils/domObserver'
+import { setupAxiosInterceptors } from './utils/axiosInterceptor'
 
 // ── suppress DOMNodeInserted deprecation warning ──
 ;(function () {
@@ -35,6 +36,9 @@ import { vObserve } from './utils/domObserver'
     return orig.call(this, type, listener, options)
   }
 })()
+
+// Setup axios interceptors
+setupAxiosInterceptors()
 
 // Create app instance
 const app = createApp(App)
