@@ -93,7 +93,9 @@ export default {
   /**
    * Fetches transfer details by transaction ID
    * @param {number} transactionId - The transaction ID to fetch
-   * @returns {Promise} - Promise with transfer data
+   * @returns {Promise} - Promise with transfer data containing:
+   *   - summary: Object with transaction_id, balanced status
+   *   - transfers: Array of transfer objects with validation_errors
    */
   async getTransferDetails(transactionId) {
     const authStore = useAuthStore()
@@ -106,6 +108,7 @@ export default {
           },
         },
       )
+      // Return the complete response structure with summary and transfers
       return response.data
     } catch (error) {
       console.error('Error fetching transfer details:', error)
@@ -223,6 +226,7 @@ export default {
    * Alternative method: Get transfers using an axios instance
    * (Optional if needed, otherwise you can remove this method)
    * @param {number} transactionId
+   * @returns {Promise} - Promise with transfer data containing summary and transfers array
    */
   getTransfers(transactionId) {
     return axios.get(`${BASE_URL}/api/adjd-transfers/?transaction=${transactionId}`)

@@ -57,6 +57,13 @@
   padding-bottom: 1.5rem;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
 .page-title {
   font-size: 1.875rem;
   font-weight: 700;
@@ -109,6 +116,78 @@
   color: var(--primary-color);
 }
 
+/* Create button in header */
+.btn-header-create {
+  background: rgba(100, 22, 48, 0.85); /* New color #641630 with opacity */
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  text-transform: capitalize;
+  position: relative;
+  backdrop-filter: blur(5px);
+}
+
+/* Disabled state for the button */
+.btn-header-create.btn-disabled {
+  background: rgba(100, 22, 48, 0.35); /* Much lower opacity for disabled state */
+  color: rgba(255, 255, 255, 0.7);
+  cursor: not-allowed;
+  box-shadow: none;
+  pointer-events: none; /* Prevents hover effects */
+}
+
+.btn-header-create:hover {
+  background: rgba(100, 22, 48, 1); /* Full opacity on hover */
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(100, 22, 48, 0.3);
+}
+
+.btn-header-create .btn-icon {
+  font-size: 0.95rem;
+}
+
+.btn-header-create:hover .btn-icon {
+  transform: translateY(-1px);
+}
+
+.btn-header-create:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(100, 22, 48, 0.2);
+}
+
+/* Remove the before pseudo-element for a cleaner look */
+.btn-header-create:before {
+  content: none;
+}
+
+/* Dark mode variant */
+.dark-mode .btn-header-create {
+  background: rgba(134, 31, 65, 0.75); /* Slightly lighter shade for dark mode */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.dark-mode .btn-header-create.btn-disabled {
+  background: rgba(134, 31, 65, 0.35);
+  color: rgba(255, 255, 255, 0.5);
+  box-shadow: none;
+}
+
+.dark-mode .btn-header-create:hover {
+  background: rgba(134, 31, 65, 0.9);
+  box-shadow: 0 4px 8px rgba(134, 31, 65, 0.4);
+}
+
 /* Loading & Error states */
 .loading-container,
 .error-container {
@@ -140,31 +219,13 @@
   justify-content: center;
   width: 60px;
   height: 60px;
-  border-radius: 50%;
+  border-radius: 30%;
   background-color: #fee2e2;
-  color: var(--danger-color);
+  color: #e11d48; /* Brighter red color */
   font-size: 2rem;
   font-weight: bold;
   margin-bottom: 1.5rem;
-}
-
-.btn-retry {
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--border-radius);
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 1.5rem;
-  transition: var(--hover-transition);
-  box-shadow: 0 4px 6px rgba(109, 26, 54, 0.2);
-}
-
-.btn-retry:hover {
-  background-color: var(--primary-light);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 10px rgba(109, 26, 54, 0.3);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2); /* Add a subtle shadow */
 }
 
 /* Table styles */
@@ -230,8 +291,22 @@
 }
 
 .action-column {
-  width: 40px;
-  text-align: center;
+  width: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* Added to vertically center contents */
+  gap: 5px;
+  padding: 0.75rem 0.5rem !important;
+  height: 100%; /* Make it fill the row height */
+  min-height: 56px; /* Match typical th height */
+  box-sizing: border-box; /* Include padding in height calculation */
+}
+
+.transfer-table th.action-column {
+  min-height: 56px;
+  height: 56px;
+  vertical-align: middle;
 }
 
 .btn-delete-row {
@@ -567,6 +642,30 @@
   line-height: 1;
 }
 
+/* Floating Create Button */
+.btn-create-floating {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1;
+  background: linear-gradient(135deg, #2c3e50, #1a202c);
+  color: white;
+  border: none;
+  padding: 1rem 1.5rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
+}
+
+/* Optional hover effect */
+.btn-create-floating:hover {
+  transform: translateY(-3px);
+}
+
 /* Dark mode styles */
 .dark-mode .page-title {
   color: #e2e2e2;
@@ -695,6 +794,385 @@
   color: #ff9ea0;
 }
 
+.dark-mode .btn-header-create {
+  background: linear-gradient(135deg, #3c4e60, #2a303c);
+  border-bottom-color: #1c2630;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+.dark-mode .btn-header-create:hover {
+  background: linear-gradient(135deg, #4c5e70, #3a404c);
+}
+
+/* Balance error message styles */
+.balance-error-message {
+  display: flex;
+  align-items: center;
+  background-color: #fecaca; /* Brighter red background */
+  color: #b91c1c;
+  padding: 0.01rem 1.25rem; /* Further reduced vertical padding */
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2); /* More visible shadow */
+  margin-bottom: 0.25rem;
+  animation: fadeIn 0.3s ease-out;
+  border-radius: 20px; /* Increased curve radius */
+  overflow: hidden; /* Ensures content respects the curved borders */
+  width: 100%;
+  border: 1px solid #f87171; /* Add border for more visibility */
+  min-height: 12px; /* Decreased minimum height */
+  font-size: 0.9rem; /* Slightly smaller font size */
+}
+
+.balance-error-message .error-icon {
+  width: 28px; /* Slightly larger */
+  height: 34px; /* Slightly larger */
+  border-radius: 40%;
+  background-color: #dc2626; /* Brighter red */
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-right: 0.75rem;
+  margin-top: 1.5rem; /* Added to move down 2rem */
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8); /* Add white glow for contrast */
+}
+
+.balance-error-message .error-text {
+  font-weight: 600; /* Make text bolder */
+}
+
+/* Row validation styles - Updated with more visible colors */
+.row-error {
+  background-color: rgba(254, 202, 202, 0.4) !important; /* More visible red background */
+  border-left: 4px solid #e11d48; /* Brighter and slightly thicker border */
+  position: relative;
+}
+
+.row-error:hover {
+  background-color: rgba(254, 202, 202, 0.5) !important; /* More visible hover state */
+}
+
+.row-error .number-input,
+.row-error .account-select,
+.row-error .cost-center-select {
+  border-color: #f87171; /* Brighter red border for inputs in error rows */
+  box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.2); /* Add subtle shadow */
+}
+
+.row-valid {
+  background-color: rgba(209, 250, 229, 0.3) !important; /* More visible green background */
+  border-left: 4px solid #059669; /* Brighter and slightly thicker border */
+}
+
+.row-valid:hover {
+  background-color: rgba(209, 250, 229, 0.4) !important; /* More visible hover state */
+}
+
+/* Enhanced validation indicators */
+.validation-error-indicator {
+  position: relative;
+  margin-top: 5px;
+}
+
+.validation-success-indicator {
+  margin-top: 5px;
+}
+
+.error-icon-small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px; /* Slightly larger */
+  height: 22px; /* Slightly larger */
+  background-color: #ef4444; /* Brighter red */
+  color: white;
+  border-radius: 50%;
+  font-size: 14px; /* Slightly larger font */
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3); /* Add more visible outline */
+  border: 1px solid #fff; /* Add white border for contrast */
+}
+
+.success-icon-small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px; /* Slightly larger */
+  height: 22px; /* Slightly larger */
+  background-color: #10b981; /* Brighter green */
+  color: white;
+  border-radius: 50%;
+  font-size: 14px; /* Slightly larger font */
+  font-weight: bold;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3); /* Add more visible outline */
+  border: 1px solid #fff; /* Add white border for contrast */
+}
+
+.error-icon-small:hover {
+  transform: scale(1.15); /* Slightly more scale on hover */
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.4); /* More prominent shadow on hover */
+}
+
+/* Dark mode variants - Updated for better visibility */
+.dark-mode .row-error {
+  background-color: rgba(185, 28, 28, 0.25) !important; /* More visible in dark mode */
+  border-left-color: #f87171; /* Brighter border in dark mode */
+}
+
+.dark-mode .row-error:hover {
+  background-color: rgba(185, 28, 28, 0.35) !important; /* More visible hover in dark mode */
+}
+
+.dark-mode .row-error .number-input,
+.dark-mode .row-error .account-select,
+.dark-mode .row-error .cost-center-select {
+  border-color: #f87171; /* Brighter border color */
+  box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.4); /* More visible shadow */
+}
+
+.dark-mode .row-valid {
+  background-color: rgba(16, 185, 129, 0.2) !important; /* More visible in dark mode */
+  border-left-color: #34d399; /* Brighter border in dark mode */
+}
+
+.dark-mode .row-valid:hover {
+  background-color: rgba(16, 185, 129, 0.3) !important; /* More visible hover in dark mode */
+}
+
+.dark-mode .error-icon-small {
+  background-color: #f87171; /* Brighter in dark mode */
+  box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.5); /* More visible outline */
+}
+
+.dark-mode .success-icon-small {
+  background-color: #34d399; /* Brighter in dark mode */
+  box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.5); /* More visible outline */
+}
+
+.dark-mode .balance-error-message {
+  background-color: rgba(239, 68, 68, 0.25); /* More visible in dark mode */
+  color: #fca5a5; /* Brighter text */
+  border: 1px solid #ef4444; /* Add visible border */
+}
+
+.dark-mode .balance-error-message .error-icon {
+  background-color: #ef4444; /* Brighter background */
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.5); /* Dark outline for contrast */
+}
+
+/* Validation indicators */
+.validation-error-indicator {
+  position: relative;
+  margin-top: 5px;
+}
+
+.validation-success-indicator {
+  margin-top: 5px;
+}
+
+.error-icon-small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background-color: #b91c1c;
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.success-icon-small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background-color: #10b981;
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Error tooltip styles - Enhanced */
+.error-tooltip {
+  position: absolute;
+  left: 30px;
+  top: -10px;
+  background-color: white;
+  border: 2px solid #dc2626;
+  border-radius: 6px;
+  padding: 10px 12px;
+  box-shadow:
+    0 6px 16px rgba(220, 38, 38, 0.2),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+  z-index: 9999 !important;
+  min-width: 280px;
+  max-width: 380px;
+  white-space: normal;
+  animation: fadeInTooltip 0.2s ease-out;
+  transform-origin: left center;
+}
+
+.error-tooltip::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 12px;
+  width: 16px;
+  height: 16px;
+  background-color: white;
+  border-left: 2px solid #dc2626;
+  border-bottom: 2px solid #dc2626;
+  transform: rotate(45deg);
+}
+
+.error-list {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 0.85rem;
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.error-list li {
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.error-list li:last-child {
+  margin-bottom: 0;
+}
+
+/* Enhanced validation indicators */
+.validation-error-indicator {
+  position: relative;
+  margin-top: 5px;
+}
+
+.error-icon-small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background-color: #dc2626;
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(220, 38, 38, 0.3);
+  transition: all 0.2s ease;
+}
+
+.error-icon-small:hover {
+  transform: scale(1.1);
+  box-shadow: 0 3px 7px rgba(220, 38, 38, 0.4);
+}
+
+/* Dark mode variants */
+.dark-mode .error-tooltip {
+  background-color: #1e293b;
+  border-color: #ef4444;
+  box-shadow:
+    0 6px 16px rgba(239, 68, 68, 0.3),
+    0 0 0 1px rgba(0, 0, 0, 0.2);
+}
+
+.dark-mode .error-tooltip::before {
+  background-color: #1e293b;
+  border-color: #ef4444;
+}
+
+.dark-mode .error-list {
+  color: #ef4444;
+}
+
+.dark-mode .error-icon-small {
+  background-color: #ef4444;
+  box-shadow: 0 2px 5px rgba(239, 68, 68, 0.4);
+}
+
+/* Add tooltip animation */
+@keyframes fadeInTooltip {
+  from {
+    opacity: 0;
+    transform: translateX(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+} /* Added missing closing brace here */
+
+/* Dark mode variants */
+.dark-mode .balance-error-message {
+  background-color: rgba(185, 28, 28, 0.2);
+  color: #f87171;
+}
+
+.dark-mode .balance-error-message {
+  background-color: rgba(185, 28, 28, 0.2);
+  color: #f87171;
+}
+
+.dark-mode .balance-error-message .error-icon {
+  background-color: #b91c1c;
+}
+
+.dark-mode .row-error {
+  background-color: rgba(185, 28, 28, 0.15) !important;
+}
+
+.dark-mode .row-error:hover {
+  background-color: rgba(185, 28, 28, 0.25) !important;
+}
+
+.dark-mode .row-valid {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+}
+
+.dark-mode .row-valid:hover {
+  background-color: rgba(16, 185, 129, 0.25) !important;
+}
+
+.dark-mode .error-tooltip {
+  background-color: #1e293b;
+  border-color: #b91c1c;
+  color: #f1f5f9;
+}
+
+.dark-mode .error-list {
+  color: #f87171;
+}
+
+/* Fix for action column spacing to accommodate the new indicators */
+.action-column {
+  width: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* Added to vertically center contents */
+  gap: 5px;
+  padding: 0.75rem 0.5rem !important;
+  height: 100%; /* Make it fill the row height */
+  min-height: 56px; /* Match typical th height */
+  box-sizing: border-box; /* Include padding in height calculation */
+}
+
+/* Ensure table header has consistent sizing with action column */
+.transfer-table th.action-column {
+  min-height: 56px;
+  height: 56px;
+  vertical-align: middle;
+}
+
 /* RTL-specific styles */
 .rtl .number-cell {
   text-align: left;
@@ -719,6 +1197,10 @@
   background-position: left 0.75rem center;
   padding-right: 1rem;
   padding-left: 2.5rem;
+}
+
+.rtl .header-actions {
+  flex-direction: row-reverse;
 }
 
 /* Animations */
@@ -764,6 +1246,12 @@
     align-items: flex-start;
   }
 
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 1rem;
+  }
+
   .page-title {
     font-size: 1.5rem;
     margin-bottom: 1rem;
@@ -793,5 +1281,158 @@
   .loading-container,
   .error-container {
     padding: 2.5rem 1.5rem;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .btn-header-create {
+    width: 100%;
+  }
+}
+
+/* Enhanced error indicator without tooltip */
+.validation-error-indicator {
+  position: relative;
+  margin-top: 5px;
+  cursor: pointer;
+}
+
+.error-icon-small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background-color: #dc2626;
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 5px rgba(220, 38, 38, 0.3);
+  transition: all 0.2s ease;
+}
+
+.error-icon-small:hover {
+  transform: scale(1.1);
+  box-shadow: 0 3px 7px rgba(220, 38, 38, 0.4);
+}
+
+/* Replace tooltip with modal */
+.error-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease;
+}
+
+.error-modal-content {
+  background-color: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  animation: modalSlideIn 0.3s ease;
+}
+
+.error-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.error-modal-header h3 {
+  margin: 0;
+  color: #dc2626;
+  font-size: 1.2rem;
+}
+
+.error-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.error-modal-close:hover {
+  background-color: #f3f4f6;
+  color: #dc2626;
+}
+
+.error-modal-body {
+  padding: 20px;
+}
+
+.error-modal-body .error-list {
+  margin: 0;
+  padding-left: 20px;
+  color: #dc2626;
+}
+
+.error-modal-body .error-list li {
+  margin-bottom: 8px;
+}
+
+.error-modal-body .error-list li:last-child {
+  margin-bottom: 0;
+}
+
+/* Dark mode for modal */
+.dark-mode .error-modal-content {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+}
+
+.dark-mode .error-modal-header {
+  border-bottom-color: #334155;
+}
+
+.dark-mode .error-modal-header h3 {
+  color: #f87171;
+}
+
+.dark-mode .error-modal-close {
+  color: #94a3b8;
+}
+
+.dark-mode .error-modal-close:hover {
+  background-color: #334155;
+  color: #f87171;
+}
+
+.dark-mode .error-modal-body .error-list {
+  color: #f87171;
+}
+
+/* Modal animations */
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
   }
 }

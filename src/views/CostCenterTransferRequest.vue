@@ -1,12 +1,33 @@
 <template>
   <div class="transfer-request-page" :class="{ 'dark-mode': isDarkMode, rtl: isRTL }">
     <div class="page-header">
-      <h1 class="page-title">
-        {{ isArabic ? 'طلب مناقلة بنود الميزانية' : 'Cost-Center Transfer Request' }}
-      </h1>
-      <div class="transaction-info">
-        <span class="transaction-label">{{ isArabic ? 'رقم المعاملة:' : 'Transaction ID:' }}</span>
-        <span class="transaction-id">{{ transactionId }}</span>
+      <!-- Replaced title with error message when unbalanced -->
+      <div v-if="apiSummary && !apiSummary.balanced" class="balance-error-message">
+        <div class="error-icon">!</div>
+        <span class="error-text">
+          {{
+            isArabic
+              ? 'الميزان غير متوازن. يرجى مراجعة قيم التحويل.'
+              : 'Unbalanced transfer. Please review your transfer values.'
+          }}
+        </span>
+      </div>
+      <div class="header-actions">
+        <div class="transaction-info">
+          <span class="transaction-label">{{
+            isArabic ? 'رقم المعاملة:' : 'Transaction ID:'
+          }}</span>
+          <span class="transaction-id">{{ transactionId }}</span>
+        </div>
+        <button
+          class="btn-header-create"
+          @click="createTransfer"
+          :disabled="!changesMade"
+          :class="{ 'btn-disabled': !changesMade }"
+        >
+          <span class="btn-icon">✓</span>
+          {{ isArabic ? 'حفظ' : 'Save' }}
+        </button>
       </div>
     </div>
 
@@ -50,11 +71,26 @@
               v-for="(item, index) in transferData"
               :key="item.transfer_id || index"
               class="data-row"
+              :class="{
+                'row-error': item.validation_errors && item.validation_errors.length > 0,
+                'row-valid': !item.validation_errors || item.validation_errors.length === 0,
+              }"
             >
               <td class="action-column">
                 <button class="btn-delete-row" @click="deleteRow(index)" title="Delete Row">
                   <span class="delete-icon">×</span>
                 </button>
+                <!-- Replace tooltip with click-based error display -->
+                <div
+                  v-if="item.validation_errors && item.validation_errors.length > 0"
+                  class="validation-error-indicator"
+                  @click="showErrorDetails(item.validation_errors)"
+                >
+                  <span class="error-icon-small">!</span>
+                </div>
+                <div v-else class="validation-success-indicator">
+                  <span class="success-icon-small">✓</span>
+                </div>
               </td>
               <td class="number-cell">
                 <input
@@ -182,10 +218,6 @@
 
       <!-- Action buttons -->
       <div class="action-buttons">
-        <button class="btn-action btn-create" @click="createTransfer">
-          <span class="btn-icon">✓</span>
-          {{ isArabic ? 'إنشاء' : 'Create' }}
-        </button>
         <button class="btn-action btn-submit" @click="submitRequest">
           <span class="btn-icon">→</span>
           {{ isArabic ? 'تقديم' : 'Submit' }}
@@ -213,11 +245,26 @@
         accept=".xlsx,.xls,.csv"
       />
     </div>
+
+    <!-- Error details modal (outside table structure) -->
+    <div v-if="showErrorModal" class="error-modal-overlay" @click="hideErrorModal">
+      <div class="error-modal-content" @click.stop>
+        <div class="error-modal-header">
+          <h3>{{ isArabic ? 'أخطاء التحقق' : 'Validation Errors' }}</h3>
+          <button class="error-modal-close" @click="hideErrorModal">×</button>
+        </div>
+        <div class="error-modal-body">
+          <ul class="error-list">
+            <li v-for="(error, errorIndex) in currentErrors" :key="errorIndex">{{ error }}</li>
+          </ul>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -236,6 +283,7 @@ const transferData = ref([])
 const loading = ref(true)
 const error = ref(false)
 const fileInput = ref(null)
+const activeTooltipIndex = ref(null) // To track which tooltip is active
 
 // Add new state for cost center entities
 const costCenterEntities = ref([])
@@ -246,6 +294,20 @@ const costCenterEntitiesError = ref(false)
 const accountEntities = ref([])
 const accountEntitiesLoading = ref(false)
 const accountEntitiesError = ref(false)
+
+// New ref to store the original data snapshot
+const originalData = ref([])
+
+// Add a new ref to track if changes have been made
+const changesMade = ref(false)
+
+// Add a new ref for the summary data from the API
+const apiSummary = ref(null)
+
+// // Computed property to detect if any change has occurred
+// const changesMade = computed(() => {
+//   return JSON.stringify(originalData.value) !== JSON.stringify(transferData.value)
+// })
 
 // Theme and language
 const isDarkMode = computed(() => themeStore.darkMode)
@@ -326,6 +388,7 @@ const updateCostCenterName = (item, event) => {
   const code = event.target.value
   item.cost_center_code = code
   item.cost_center_name = getCostCenterName(code)
+  checkForChanges()
 }
 
 const getAccountName = (code) => {
@@ -338,6 +401,7 @@ const updateAccountName = (item, event) => {
   const code = event.target.value
   item.account_code = code
   item.account_name = getAccountName(code)
+  checkForChanges()
 }
 
 // Method to validate number input and handle conversion
@@ -368,6 +432,9 @@ const validateNumberInput = (item, field) => {
     // Revert to the numeric value if invalid
     item[inputField] = item[field] ? item[field].toString() : ''
   }
+
+  // Mark that changes have been made
+  checkForChanges()
 }
 
 // Initialize input fields on data load
@@ -409,6 +476,9 @@ const addNewRow = () => {
   }
 
   transferData.value.push(newRow)
+
+  // Mark that changes have been made
+  changesMade.value = true
 }
 
 // Create transfer function
@@ -443,6 +513,12 @@ const createTransfer = async () => {
     await transferService.createTransfer(dataToSend, authStore.token)
     alert(isArabic.value ? 'تم إنشاء النقل بنجاح' : 'Transfer created successfully')
     await loadData()
+
+    // After successful save, reset the changesMade flag
+    changesMade.value = false
+
+    // Store a new snapshot of the current state
+    originalData.value = JSON.parse(JSON.stringify(transferData.value))
   } catch (err) {
     alert(isArabic.value ? 'فشل في إنشاء النقل' : 'Failed to create transfer')
     console.error('Error creating transfer:', err)
@@ -450,30 +526,86 @@ const createTransfer = async () => {
 }
 
 // Delete row function
-const deleteRow = async (index) => {
+const deleteRow = (index) => {
   if (transferData.value.length > 1) {
-    const row = transferData.value[index]
+    // Just remove from local array without API call
+    transferData.value.splice(index, 1)
 
-    // If the row has a transfer_id, delete it from the API
-    if (row.transfer_id) {
-      try {
-        loading.value = true
-        await transferService.deleteTransfer(row.transfer_id)
-        transferData.value.splice(index, 1)
-        loading.value = false
-      } catch (err) {
-        loading.value = false
-        alert(isArabic.value ? 'فشل في حذف الصف' : 'Failed to delete row')
-        console.error('Error deleting row:', err)
-      }
-    } else {
-      // If no transfer_id, just remove from local array
-      transferData.value.splice(index, 1)
-    }
+    // Mark that changes have been made
+    changesMade.value = true
   } else {
     alert(isArabic.value ? 'يجب أن يكون هناك صف واحد على الأقل' : 'At least one row must exist')
   }
 }
+
+// Function to check for changes in the data
+const checkForChanges = () => {
+  // If there's no original data yet, we can't compare
+  if (!originalData.value || originalData.value.length === 0) {
+    changesMade.value = transferData.value.length > 0
+    return
+  }
+
+  // If row counts differ, changes were made
+  if (originalData.value.length !== transferData.value.length) {
+    changesMade.value = true
+    return
+  }
+
+  // Check if any row data has changed
+  for (let i = 0; i < transferData.value.length; i++) {
+    const current = transferData.value[i]
+    // If this is a new row without a transfer_id, mark as changed
+    if (!current.transfer_id) {
+      changesMade.value = true
+      return
+    }
+
+    // Find corresponding original row
+    const original = originalData.value.find((o) => o.transfer_id === current.transfer_id)
+    if (!original) {
+      changesMade.value = true
+      return
+    }
+
+    // Check numeric fields for changes
+    const numericFields = [
+      'approved_budget',
+      'available_budget',
+      'from_center',
+      'to_center',
+      'encumbrance',
+      'actual',
+    ]
+    for (const field of numericFields) {
+      if (parseFloat(original[field] || 0) !== parseFloat(current[field] || 0)) {
+        changesMade.value = true
+        return
+      }
+    }
+
+    // Check string fields for changes
+    const stringFields = ['cost_center_code', 'cost_center_name', 'account_code', 'account_name']
+    for (const field of stringFields) {
+      if (original[field] !== current[field]) {
+        changesMade.value = true
+        return
+      }
+    }
+  }
+
+  // If we got here, no changes were found
+  changesMade.value = false
+}
+
+// Add watchers for all the fields that could change
+watch(
+  () => transferData.value,
+  () => {
+    checkForChanges()
+  },
+  { deep: true },
+)
 
 // Existing methods
 const loadData = async () => {
@@ -481,15 +613,42 @@ const loadData = async () => {
   error.value = false
 
   try {
-    const data = await transferService.getTransferDetails(transactionId.value)
-    transferData.value = data
+    const response = await transferService.getTransferDetails(transactionId.value)
+
+    // Check if the response has the new structure with summary and transfers
+    if (response && response.summary && response.transfers) {
+      // Store the summary data separately
+      apiSummary.value = response.summary
+      // Set transferData to the transfers array
+      transferData.value = response.transfers
+    } else {
+      // Fallback to old structure for backward compatibility
+      transferData.value = response
+      apiSummary.value = null
+    }
+
     initializeInputFields() // Initialize input fields after data load
+    // Store a deep copy of the original data for future comparisons
+    originalData.value = JSON.parse(JSON.stringify(transferData.value))
+
+    // Reset changes flag after loading data
+    changesMade.value = false
   } catch (err) {
     error.value = true
     console.error('Failed to load transfer data:', err)
   } finally {
     loading.value = false
   }
+}
+
+// Method to show tooltip for a specific row
+const showTooltip = (index) => {
+  activeTooltipIndex.value = index
+}
+
+// Method to hide tooltip
+const hideTooltip = () => {
+  activeTooltipIndex.value = null
 }
 
 const formatNumber = (value) => {
@@ -588,6 +747,29 @@ onMounted(() => {
     fetchAccountEntities()
   }
 })
+
+// Replace tooltip state with modal state
+const showErrorModal = ref(false)
+const currentErrors = ref([])
+
+// Method to show error details in modal
+const showErrorDetails = (errors) => {
+  currentErrors.value = errors
+  showErrorModal.value = true
+}
+
+// Method to hide error modal
+const hideErrorModal = () => {
+  showErrorModal.value = false
+}
+
+// Remove the old tooltip methods
+// const showTooltip = (index) => {
+//   activeTooltipIndex.value = index
+// }
+// const hideTooltip = () => {
+//   activeTooltipIndex.value = null
+// }
 </script>
 
 <style src="@/styles/CostCenterTransferRequest.css" scoped></style>
