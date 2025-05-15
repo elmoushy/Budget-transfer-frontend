@@ -78,7 +78,7 @@ export default {
     }
 
     try {
-      return await axios.delete(`${API_BASE_URL}/api/adjd-transfers/${transferId}/delete/`, {
+      return await axios.delete(`${API_BASE_URL}/api/budget/transfers/${transferId}/delete/`, {
         headers: {
           Authorization: `Bearer ${authStore.token}`,
           Accept: 'application/json',
@@ -101,7 +101,7 @@ export default {
     const authStore = useAuthStore()
     try {
       const response = await axios.get(
-        `${BASE_URL}/api/adjd-transfers/?transaction=${transactionId}`,
+        `${BASE_URL}/api/budget/transfers/?transaction=${transactionId}`,
         {
           headers: {
             Authorization: `Bearer ${authStore.token}`,
@@ -125,7 +125,7 @@ export default {
     const authStore = useAuthStore()
     try {
       const response = await axios.post(
-        `${BASE_URL}/api/adjd-transfers/${transactionId}/submit/`,
+        `${BASE_URL}/api/budget/transfers/${transactionId}/submit/`,
         {},
         {
           headers: {
@@ -149,7 +149,7 @@ export default {
     const authStore = useAuthStore()
     try {
       const response = await axios.post(
-        `${BASE_URL}/api/adjd-transfers/${transactionId}/reopen/`,
+        `${BASE_URL}/api/budget/transfers/${transactionId}/reopen/`,
         {},
         {
           headers: {
@@ -172,12 +172,15 @@ export default {
   async generateReport(transactionId) {
     const authStore = useAuthStore()
     try {
-      const response = await axios.get(`${BASE_URL}/api/adjd-transfers/${transactionId}/report/`, {
-        headers: {
-          Authorization: `Bearer ${authStore.token}`,
+      const response = await axios.get(
+        `${BASE_URL}/api/budget/transfers/${transactionId}/report/`,
+        {
+          headers: {
+            Authorization: `Bearer ${authStore.token}`,
+          },
+          responseType: 'blob',
         },
-        responseType: 'blob',
-      })
+      )
       return response.data
     } catch (error) {
       console.error('Error generating report:', error)
@@ -210,11 +213,15 @@ export default {
       }))
 
       // Send the array directly as payload
-      const response = await axios.post(`${BASE_URL}/api/adjd-transfers/create/`, transfersArray, {
-        headers: {
-          Authorization: `Bearer ${authStore.token}`,
+      const response = await axios.post(
+        `${BASE_URL}/api/budget/transfers/create/`,
+        transfersArray,
+        {
+          headers: {
+            Authorization: `Bearer ${authStore.token}`,
+          },
         },
-      })
+      )
       return response.data
     } catch (error) {
       console.error('Error creating transfer request:', error)
@@ -229,6 +236,6 @@ export default {
    * @returns {Promise} - Promise with transfer data containing summary and transfers array
    */
   getTransfers(transactionId) {
-    return axios.get(`${BASE_URL}/api/adjd-transfers/?transaction=${transactionId}`)
+    return axios.get(`${BASE_URL}/api/budget/transfers/?transaction=${transactionId}`)
   },
 }

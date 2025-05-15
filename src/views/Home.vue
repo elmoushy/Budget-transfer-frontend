@@ -330,12 +330,14 @@ function confirmDelete() {
   loading.value = true
   showDeleteModal.value = false
 
-  // Use the new service for deletion
+  // Use the specific endpoint: http://localhost:8000/api/budget/transfers/{transaction_id}/delete/
   transferService
     .deleteTransfer(rowToDelete.value.transaction_id)
     .then(() => {
       // Success - refresh the data
       fetchData()
+      // Show success message
+      alert(isArabic.value ? 'تم حذف الطلب بنجاح' : 'Request deleted successfully')
     })
     .catch((error) => {
       console.error('Error deleting request:', error)
