@@ -236,13 +236,14 @@
         </button>
       </div>
 
-      <!-- File upload input (hidden) -->
-      <input
-        type="file"
-        ref="fileInput"
-        class="hidden-file-input"
-        @change="handleFileUpload"
-        accept=".xlsx,.xls,.csv"
+      <!-- Use the new File Upload Modal component without apiBaseUrl prop -->
+      <FileUploadModal
+        :show="showFileModal"
+        :is-arabic="isArabic"
+        :transaction-id="transactionId"
+        :auth-token="authStore.token"
+        @close="closeFileModal"
+        @upload-success="handleUploadSuccess"
       />
     </div>
 
@@ -270,6 +271,7 @@ import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
 import axios from 'axios'
 import transferService from '@/services/transferService'
+import FileUploadModal from '@/components/FileUploadModal.vue'
 
 // Component setup
 const route = useRoute()
@@ -679,29 +681,6 @@ const reopenRequest = async () => {
   }
 }
 
-const uploadFile = () => {
-  fileInput.value.click()
-}
-
-const handleFileUpload = async (event) => {
-  const file = event.target.files[0]
-  if (!file) return
-
-  const formData = new FormData()
-  formData.append('file', file)
-
-  try {
-    // Implement file upload API call here
-    alert(isArabic.value ? `تم رفع الملف: ${file.name}` : `File uploaded: ${file.name}`)
-    await loadData() // Reload data after successful upload
-  } catch (err) {
-    alert(isArabic.value ? 'فشل في رفع الملف' : 'Failed to upload file')
-  }
-
-  // Clear the file input for future uploads
-  event.target.value = null
-}
-
 const generateReport = async () => {
   try {
     const blob = await transferService.generateReport(transactionId.value)
@@ -770,6 +749,25 @@ const hideErrorModal = () => {
 // const hideTooltip = () => {
 //   activeTooltipIndex.value = null
 // }
+
+// File upload modal state
+const showFileModal = ref(false)
+
+// Open file upload modal
+const uploadFile = () => {
+  showFileModal.value = true
+}
+
+// Close file upload modal
+const closeFileModal = () => {
+  showFileModal.value = false
+}
+
+// Handle successful file upload
+const handleUploadSuccess = () => {
+  // Reload data to reflect changes from the uploaded file
+  loadData()
+}
 </script>
 
 <style src="@/styles/CostCenterTransferRequest.css" scoped></style>

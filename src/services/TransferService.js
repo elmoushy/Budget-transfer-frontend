@@ -101,7 +101,7 @@ export default {
     const authStore = useAuthStore()
     try {
       const response = await axios.get(
-        `${BASE_URL}/api/budget/transfers/?transaction=${transactionId}`,
+        `${BASE_URL}/api/adjd-transfers/?transaction=${transactionId}`,
         {
           headers: {
             Authorization: `Bearer ${authStore.token}`,
@@ -213,18 +213,40 @@ export default {
       }))
 
       // Send the array directly as payload
-      const response = await axios.post(
-        `${BASE_URL}/api/budget/transfers/create/`,
-        transfersArray,
-        {
-          headers: {
-            Authorization: `Bearer ${authStore.token}`,
-          },
+      const response = await axios.post(`${BASE_URL}/api/adjd-transfers/create/`, transfersArray, {
+        headers: {
+          Authorization: `Bearer ${authStore.token}`,
         },
-      )
+      })
       return response.data
     } catch (error) {
       console.error('Error creating transfer request:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Upload an Excel file for a specific transaction
+   * @param {File} file - The Excel file to upload
+   * @param {number} transactionId - The transaction ID
+   * @returns {Promise} - Promise with response
+   */
+  async uploadExcelFile(file, transactionId) {
+    const authStore = useAuthStore()
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('transaction', transactionId.toString())
+
+      const response = await axios.post(`${BASE_URL}/api/adjd-transfers/excel-upload/`, formData, {
+        headers: {
+          Authorization: `Bearer ${authStore.token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      return response.data
+    } catch (error) {
+      console.error('Error uploading Excel file:', error)
       throw error
     }
   },
