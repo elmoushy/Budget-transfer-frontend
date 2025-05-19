@@ -72,7 +72,7 @@
   />
 </template>
 
-<script setup>
+<script setup lang="js">
 import { ref } from 'vue'
 import transferService from '@/services/transferService'
 

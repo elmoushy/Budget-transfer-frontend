@@ -45,7 +45,30 @@
             :class="rowBg(row.status)"
             class="table-row"
           >
-            <td>{{ row.attachment ? 'Yes' : 'No' }}</td>
+            <td>
+              <div class="attachment-cell">
+                <div
+                  class="attachment-indicator"
+                  :class="{
+                    'has-attachments': row.attachment_count > 0,
+                    'no-attachments': !row.attachment_count,
+                  }"
+                  @click="openFileModal(row)"
+                  :title="getAttachmentTooltip(row)"
+                >
+                  <PaperclipIcon :size="18" />
+                  <span v-if="row.attachment_count > 0" class="attachment-badge">
+                    {{ row.attachment_count }}
+                  </span>
+                </div>
+                <span
+                  class="attachment-text"
+                  :class="{ 'with-attachments': row.attachment_count > 0 }"
+                >
+                  {{ row.attachment }}
+                </span>
+              </div>
+            </td>
             <td>
               <span class="status-badge" :class="'status-' + row.status.toLowerCase()">
                 {{ row.status }}
@@ -77,7 +100,17 @@
             </td>
             <td>
               <div class="action-buttons">
-                <button class="icon-btn" @click="editRow(row)">
+                <button
+                  class="icon-btn"
+                  :class="{ 'disabled-btn': row.status.toLowerCase() !== 'pending' }"
+                  @click="row.status.toLowerCase() === 'pending' ? editRow(row) : null"
+                  :disabled="row.status.toLowerCase() !== 'pending'"
+                  :title="
+                    row.status.toLowerCase() === 'pending'
+                      ? 'Edit'
+                      : 'Cannot edit non-pending items'
+                  "
+                >
                   <EditIcon />
                 </button>
                 <button
@@ -187,16 +220,33 @@
         </div>
       </div>
     </div>
+
+    <!-- Attachment Modal Component -->
+    <AttachmentModal
+      v-model:show="showFileModal"
+      :transaction-id="currentTransactionId"
+      @files-updated="handleFilesUpdated"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { EditIcon, FileTextIcon, SearchIcon, TrashIcon } from 'lucide-vue-next'
+import {
+  EditIcon,
+  FileTextIcon,
+  SearchIcon,
+  TrashIcon,
+  PaperclipIcon,
+  FileIcon,
+  DownloadIcon,
+  UploadCloudIcon,
+} from 'lucide-vue-next'
 import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
 import NewRequestModal from '@/components/NewRequestModal.vue'
 import EditTransferModal from '@/components/EditTransferModal.vue'
+import AttachmentModal from '@/components/AttachmentModal.vue'
 import transferService from '@/services/transferService'
 
 // Import CSS
@@ -269,6 +319,10 @@ const currentEditTransfer = ref<TransferData | null>(null)
 // Add new state variables for delete confirmation
 const showDeleteModal = ref(false)
 const rowToDelete = ref<TransferData | null>(null)
+
+// Simplified file modal state
+const showFileModal = ref(false)
+const currentTransactionId = ref(0)
 
 // ───────────────────────────────────────────────────────────── Helper Functions
 function formatDate(dateString: string): string {
@@ -353,7 +407,31 @@ function rowBg(status: string) {
   const statusLower = status.toLowerCase()
   if (statusLower === 'approved') return 'row-approved'
   if (statusLower === 'pending') return 'row-pending'
+  if (statusLower === 'rejected') return 'row-rejected'
   return 'row-none'
+}
+
+// Function to open the file modal
+function openFileModal(row) {
+  currentTransactionId.value = row.transaction_id
+  showFileModal.value = true
+}
+
+// Handle files updated event from attachment modal
+function handleFilesUpdated() {
+  // Refresh the main data to update attachment counts
+  fetchData()
+}
+
+// Add function to generate attachment tooltip
+function getAttachmentTooltip(row: TransferData): string {
+  if (!row.attachment_count) {
+    return isArabic.value ? 'لا توجد مرفقات' : 'No attachments'
+  }
+
+  return isArabic.value
+    ? `${row.attachment_count} مرفقات - انقر للعرض`
+    : `${row.attachment_count} attachments - Click to view`
 }
 
 // ───────────────────────────────────────────────────────────── Theme & Lang
@@ -729,11 +807,15 @@ function handleEditSubmit(updatedData: any) {
 
 /* --- row colors - subtler version --- */
 .row-pending {
-  background: rgba(248, 113, 113, 0.1);
+  background: rgba(245, 158, 11, 0.1); /* Orange/amber color for pending */
 }
 
 .row-approved {
-  background: rgba(52, 211, 153, 0.1);
+  background: rgba(52, 211, 153, 0.1); /* Green color for approved */
+}
+
+.row-rejected {
+  background: rgba(248, 113, 113, 0.1); /* Red color for rejected */
 }
 
 .row-none {
@@ -742,11 +824,15 @@ function handleEditSubmit(updatedData: any) {
 
 /* Dark mode row colors */
 .dark-mode .row-pending {
-  background: rgba(248, 113, 113, 0.08);
+  background: rgba(245, 158, 11, 0.08); /* Orange/amber color for pending */
 }
 
 .dark-mode .row-approved {
   background: rgba(52, 211, 153, 0.08);
+}
+
+.dark-mode .row-rejected {
+  background: rgba(248, 113, 113, 0.08); /* Red color for rejected */
 }
 
 .dark-mode .row-none {
@@ -1445,5 +1531,198 @@ function handleEditSubmit(updatedData: any) {
 
 .dark-mode .delete-confirm-btn:hover {
   background: linear-gradient(135deg, #f87171, #ef4444);
+}
+
+/* Add these new styles for file management */
+.attachment-cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.attachment-indicator {
+  position: relative;
+  min-width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.attachment-indicator:hover {
+  transform: scale(1.1);
+}
+
+.attachment-indicator::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  opacity: 0.15;
+  transition: all 0.2s ease;
+}
+
+.has-attachments {
+  color: #2563eb;
+}
+
+.has-attachments::after {
+  background-color: #2563eb;
+}
+
+.has-attachments:hover::after {
+  opacity: 0.25;
+}
+
+.no-attachments {
+  color: #9ca3af;
+}
+
+.no-attachments::after {
+  background-color: #9ca3af;
+}
+
+.no-attachments:hover::after {
+  opacity: 0.25;
+}
+
+.attachment-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background-color: #6d1a36;
+  color: white;
+  font-size: 0.7rem;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  animation: scaleIn 0.3s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Dark mode attachment styles */
+.dark-mode .has-attachments {
+  color: #60a5fa;
+}
+
+.dark-mode .has-attachments::after {
+  background-color: #60a5fa;
+}
+
+.dark-mode .no-attachments {
+  color: #6b7280;
+}
+
+.dark-mode .no-attachments::after {
+  background-color: #6b7280;
+}
+
+.dark-mode .attachment-badge {
+  background-color: #ff9ea0;
+  color: #1a1a2e;
+}
+
+/* Updated attachment cell styling */
+.attachment-cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.attachment-indicator {
+  position: relative;
+  min-width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* ...existing attachment indicator styles... */
+
+.attachment-text {
+  font-size: 0.875rem;
+  color: #64748b;
+  transition: all 0.2s ease;
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attachment-text.with-attachments {
+  color: #2563eb;
+  font-weight: 500;
+}
+
+.dark-mode .attachment-text {
+  color: #94a3b8;
+}
+
+.dark-mode .attachment-text.with-attachments {
+  color: #60a5fa;
+}
+
+/* Remove old attachment count styles */
+.attachment-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #6d1a36;
+  color: white;
+  font-size: 0.7rem;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dark-mode .attachment-count {
+  background-color: #ff9ea0;
+  color: #1a1a2e;
+}
+
+/* Disabled button styles */
+.disabled-btn {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+}
+
+.disabled-btn:hover {
+  background-color: transparent !important;
+  transform: none !important;
+}
+
+.dark-mode .disabled-btn {
+  opacity: 0.4;
 }
 </style>

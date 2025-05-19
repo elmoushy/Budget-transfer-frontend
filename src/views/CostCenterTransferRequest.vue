@@ -18,12 +18,17 @@
             isArabic ? 'رقم المعاملة:' : 'Transaction ID:'
           }}</span>
           <span class="transaction-id">{{ transactionId }}</span>
+
+          <!-- Add status indicator -->
+          <span class="status-indicator" :class="statusClass">
+            {{ formattedStatus }}
+          </span>
         </div>
         <button
           class="btn-header-create"
           @click="createTransfer"
-          :disabled="!changesMade"
-          :class="{ 'btn-disabled': !changesMade }"
+          :disabled="!isSaveButtonEnabled"
+          :class="{ 'btn-disabled': !isSaveButtonEnabled }"
         >
           <span class="btn-icon">✓</span>
           {{ isArabic ? 'حفظ' : 'Save' }}
@@ -77,7 +82,13 @@
               }"
             >
               <td class="action-column">
-                <button class="btn-delete-row" @click="deleteRow(index)" title="Delete Row">
+                <button
+                  class="btn-delete-row"
+                  @click="deleteRow(index)"
+                  title="Delete Row"
+                  :disabled="!isScreenEditable"
+                  :class="{ 'btn-disabled': !isScreenEditable }"
+                >
                   <span class="delete-icon">×</span>
                 </button>
                 <!-- Replace tooltip with click-based error display -->
@@ -99,6 +110,8 @@
                   class="number-input"
                   @input="validateNumberInput(item, 'to_center')"
                   :placeholder="isArabic ? 'إلى' : 'To'"
+                  :readonly="!isScreenEditable"
+                  :class="{ 'readonly-input': !isScreenEditable }"
                 />
               </td>
               <td class="number-cell">
@@ -108,43 +121,33 @@
                   class="number-input"
                   @input="validateNumberInput(item, 'from_center')"
                   :placeholder="isArabic ? 'من' : 'From'"
+                  :readonly="!isScreenEditable"
+                  :class="{ 'readonly-input': !isScreenEditable }"
                 />
               </td>
               <td class="number-cell">
-                <input
-                  type="text"
-                  v-model="item.encumbrance_input"
-                  class="number-input"
-                  @input="validateNumberInput(item, 'encumbrance')"
-                  :placeholder="isArabic ? 'حقًا ماليًا' : 'Encumbrance'"
-                />
+                <!-- Display-only for Encumbrance -->
+                <div class="name-display">
+                  {{ formatNumber(item.encumbrance) || '-' }}
+                </div>
               </td>
               <td class="number-cell">
-                <input
-                  type="text"
-                  v-model="item.available_budget_input"
-                  class="number-input"
-                  @input="validateNumberInput(item, 'available_budget')"
-                  :placeholder="isArabic ? 'الموازنة المتاحة' : 'Available Budget'"
-                />
+                <!-- Display-only for Available Budget -->
+                <div class="name-display">
+                  {{ formatNumber(item.available_budget) || '-' }}
+                </div>
               </td>
               <td class="number-cell">
-                <input
-                  type="text"
-                  v-model="item.actual_input"
-                  class="number-input"
-                  @input="validateNumberInput(item, 'actual')"
-                  :placeholder="isArabic ? 'الحالى' : 'Actual'"
-                />
+                <!-- Display-only for Actual -->
+                <div class="name-display">
+                  {{ formatNumber(item.actual) || '-' }}
+                </div>
               </td>
               <td class="number-cell">
-                <input
-                  type="text"
-                  v-model="item.approved_budget_input"
-                  class="number-input"
-                  @input="validateNumberInput(item, 'approved_budget')"
-                  :placeholder="isArabic ? 'الموازنة المعتمدة' : 'Approved Budget'"
-                />
+                <!-- Display-only for Approved Budget -->
+                <div class="name-display">
+                  {{ formatNumber(item.approved_budget) || '-' }}
+                </div>
               </td>
               <td class="name-display">
                 {{ item.account_name || getAccountName(item.account_code) || '-' }}
@@ -154,6 +157,8 @@
                   v-model="item.account_code"
                   class="account-select"
                   @change="updateAccountName(item, $event)"
+                  :disabled="!isScreenEditable"
+                  :class="{ 'readonly-input': !isScreenEditable }"
                 >
                   <option value="">{{ isArabic ? 'اختر رقم الحساب' : 'Select Account' }}</option>
                   <option
@@ -173,6 +178,8 @@
                   v-model="item.cost_center_code"
                   class="cost-center-select"
                   @change="updateCostCenterName(item, $event)"
+                  :disabled="!isScreenEditable"
+                  :class="{ 'readonly-input': !isScreenEditable }"
                 >
                   <option value="">{{ isArabic ? 'اختر رقم البند' : 'Select Cost Center' }}</option>
                   <option
@@ -201,7 +208,12 @@
             </tr>
             <tr>
               <td colspan="11" class="add-row-cell">
-                <button class="btn-add-row" @click="addNewRow">
+                <button
+                  class="btn-add-row"
+                  @click="addNewRow"
+                  :disabled="!isScreenEditable"
+                  :class="{ 'btn-disabled': !isScreenEditable }"
+                >
                   <span class="add-icon">+</span>
                   {{ isArabic ? 'إضافة صف جديد' : 'Add New Row' }}
                 </button>
@@ -218,15 +230,30 @@
 
       <!-- Action buttons -->
       <div class="action-buttons">
-        <button class="btn-action btn-submit" @click="submitRequest">
+        <button
+          class="btn-action btn-submit"
+          @click="submitRequest"
+          :disabled="!isSubmitButtonEnabled"
+          :class="{ 'btn-disabled': !isSubmitButtonEnabled }"
+        >
           <span class="btn-icon">→</span>
           {{ isArabic ? 'تقديم' : 'Submit' }}
         </button>
-        <button class="btn-action btn-upload" @click="uploadFile">
+        <button
+          class="btn-action btn-upload"
+          @click="uploadFile"
+          :disabled="!isUploadButtonEnabled"
+          :class="{ 'btn-disabled': !isUploadButtonEnabled }"
+        >
           <span class="btn-icon">↑</span>
           {{ isArabic ? 'رفع ملف المناقلة' : 'Upload Transfer File' }}
         </button>
-        <button class="btn-action btn-reopen" @click="reopenRequest">
+        <button
+          class="btn-action btn-reopen"
+          @click="reopenRequest"
+          :disabled="!isReopenButtonEnabled"
+          :class="{ 'btn-disabled': !isReopenButtonEnabled }"
+        >
           <span class="btn-icon">↻</span>
           {{ isArabic ? 'إعادة فتح الطلب' : 'Re-open Request' }}
         </button>
@@ -306,10 +333,95 @@ const changesMade = ref(false)
 // Add a new ref for the summary data from the API
 const apiSummary = ref(null)
 
-// // Computed property to detect if any change has occurred
-// const changesMade = computed(() => {
-//   return JSON.stringify(originalData.value) !== JSON.stringify(transferData.value)
-// })
+// Add new ref for current status
+const currentStatus = ref('not yet sent for approval') // Default value
+
+// Add new helper computed property to check for validation errors
+const hasValidationErrors = computed(() => {
+  return transferData.value.some(
+    (item) => item.validation_errors && item.validation_errors.length > 0,
+  )
+})
+
+// Computed properties to control UI based on status
+const isScreenEditable = computed(() => {
+  return (
+    currentStatus.value === 'is rejected' || currentStatus.value === 'not yet sent for approval'
+  )
+})
+
+const isSaveButtonEnabled = computed(() => {
+  return (
+    (currentStatus.value === 'is rejected' ||
+      currentStatus.value === 'not yet sent for approval') &&
+    changesMade.value
+  )
+})
+
+const isSubmitButtonEnabled = computed(() => {
+  // Disable if there are validation errors or the balance is false
+  if ((apiSummary.value && apiSummary.value.balanced === false) || hasValidationErrors.value) {
+    return false
+  }
+  return currentStatus.value === 'not yet sent for approval'
+})
+
+const isReopenButtonEnabled = computed(() => {
+  // Disable if there are validation errors or the balance is false
+  if ((apiSummary.value && apiSummary.value.balanced === false) || hasValidationErrors.value) {
+    return false
+  }
+  return currentStatus.value === 'is rejected'
+})
+
+const isUploadButtonEnabled = computed(() => {
+  return (
+    currentStatus.value === 'is rejected' || currentStatus.value === 'not yet sent for approval'
+  )
+})
+
+// Format status for display
+const formattedStatus = computed(() => {
+  const status = currentStatus.value
+
+  if (isArabic.value) {
+    switch (status) {
+      case 'approved':
+        return 'معتمد'
+      case 'is rejected':
+        return 'مرفوض'
+      case 'watting for approval':
+        return 'في انتظار الموافقة'
+      case 'not yet sent for approval':
+        return 'لم يتم الإرسال للموافقة'
+      default:
+        return status
+    }
+  } else {
+    switch (status) {
+      case 'watting for approval':
+        return 'Waiting for approval'
+      default:
+        return status.charAt(0).toUpperCase() + status.slice(1)
+    }
+  }
+})
+
+// Add status class for styling
+const statusClass = computed(() => {
+  switch (currentStatus.value) {
+    case 'approved':
+      return 'status-approved'
+    case 'is rejected':
+      return 'status-rejected'
+    case 'watting for approval':
+      return 'status-waiting'
+    case 'not yet sent for approval':
+      return 'status-not-sent'
+    default:
+      return ''
+  }
+})
 
 // Theme and language
 const isDarkMode = computed(() => themeStore.darkMode)
@@ -390,6 +502,13 @@ const updateCostCenterName = (item, event) => {
   const code = event.target.value
   item.cost_center_code = code
   item.cost_center_name = getCostCenterName(code)
+
+  // Track that cost center was the last field changed
+  item.lastChangedField = 'cost_center_code'
+
+  // Try to fetch financial data if both codes are available
+  fetchPivotFundDetails(item)
+
   checkForChanges()
 }
 
@@ -403,6 +522,13 @@ const updateAccountName = (item, event) => {
   const code = event.target.value
   item.account_code = code
   item.account_name = getAccountName(code)
+
+  // Track that account was the last field changed
+  item.lastChangedField = 'account_code'
+
+  // Try to fetch financial data if both codes are available
+  fetchPivotFundDetails(item)
+
   checkForChanges()
 }
 
@@ -463,18 +589,16 @@ const addNewRow = () => {
     account_code: '',
     account_name: '',
     approved_budget: 0,
-    approved_budget_input: '',
     available_budget: 0,
-    available_budget_input: '',
     from_center: 0,
     from_center_input: '',
     to_center: 0,
     to_center_input: '',
     encumbrance: 0,
-    encumbrance_input: '',
     actual: 0,
-    actual_input: '',
     done: 1,
+    financialDataFromApi: false,
+    lastChangedField: null, // Track which dropdown was changed last
   }
 
   transferData.value.push(newRow)
@@ -618,15 +742,26 @@ const loadData = async () => {
     const response = await transferService.getTransferDetails(transactionId.value)
 
     // Check if the response has the new structure with summary and transfers
-    if (response && response.summary && response.transfers) {
+    if (response && response.summary) {
       // Store the summary data separately
       apiSummary.value = response.summary
+
+      // Extract status from summary or status object
+      if (response.summary.status) {
+        currentStatus.value = response.summary.status
+      } else if (response.status && response.status.status) {
+        currentStatus.value = response.status.status
+      } else {
+        currentStatus.value = 'not yet sent for approval' // Default
+      }
+
       // Set transferData to the transfers array
       transferData.value = response.transfers
     } else {
       // Fallback to old structure for backward compatibility
       transferData.value = response
       apiSummary.value = null
+      currentStatus.value = 'not yet sent for approval' // Default
     }
 
     initializeInputFields() // Initialize input fields after data load
@@ -689,6 +824,7 @@ const generateReport = async () => {
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
+    // Changed: call setAttribute on the link element
     link.setAttribute('download', `transfer-report-${transactionId.value}.pdf`)
     document.body.appendChild(link)
     link.click()
@@ -768,6 +904,138 @@ const handleUploadSuccess = () => {
   // Reload data to reflect changes from the uploaded file
   loadData()
 }
+
+// Add these new methods after the existing methods in the script setup section
+const fetchPivotFundDetails = async (item) => {
+  // Only fetch if both cost center and account codes are set
+  if (!item.cost_center_code || !item.account_code) {
+    return
+  }
+
+  try {
+    const response = await transferService.getPivotFundDetails(
+      item.cost_center_code,
+      item.account_code,
+    )
+
+    if (response && response.data) {
+      // Update financial fields with retrieved data
+      const data = response.data
+
+      // Update numeric values
+      item.actual = parseFloat(data.actual) || 0
+      item.available_budget = parseFloat(data.fund) || 0
+      item.approved_budget = parseFloat(data.budget) || 0
+      item.encumbrance = parseFloat(data.encumbrance) || 0
+
+      // No longer need to update input fields as they've been removed
+      // Set flag to indicate data came from API
+      item.financialDataFromApi = true
+
+      // Mark that changes have been made
+      checkForChanges()
+    }
+  } catch (error) {
+    // Check if the error is a 404 (Not Found)
+    if (error.response && error.response.status === 404) {
+      // Alert the user with the specific IDs that failed
+      alert(
+        isArabic.value
+          ? `لا توجد بيانات لهذا التحديد. المركز: ${item.cost_center_code}, الحساب: ${item.account_code}`
+          : `This doesn't have data for Cost Center: ${item.cost_center_code}, Account: ${item.account_code}`,
+      )
+
+      // Reset the last changed selection
+      // We determine which one was last changed based on the component's context
+      if (item.lastChangedField === 'account_code') {
+        item.account_code = ''
+        item.account_name = ''
+      } else {
+        item.cost_center_code = ''
+        item.cost_center_name = ''
+      }
+
+      // Reset financial values
+      item.actual = 0
+      item.available_budget = 0
+      item.approved_budget = 0
+      item.encumbrance = 0
+      item.financialDataFromApi = false
+    } else {
+      console.error('Failed to fetch pivot fund details:', error)
+    }
+  }
+}
 </script>
 
 <style src="@/styles/CostCenterTransferRequest.css" scoped></style>
+
+<style>
+/* Add to your existing styles */
+.readonly-input {
+  background-color: #f0f0f0;
+  cursor: not-allowed;
+  border-color: #ddd;
+  color: #666;
+}
+
+.dark-mode .readonly-input {
+  background-color: #444;
+  border-color: #555;
+  color: #aaa;
+}
+
+/* New style for API data display */
+.api-value-display {
+  padding: 6px 10px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-weight: 500;
+  color: #555;
+}
+
+.dark-mode .api-value-display {
+  background-color: #333;
+  border-color: #444;
+  color: #ddd;
+}
+
+/* Status indicator styles */
+.status-indicator {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: white;
+}
+
+.status-approved {
+  background-color: #28a745;
+}
+
+.status-rejected {
+  background-color: #dc3545;
+}
+
+.status-waiting {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.status-not-sent {
+  background-color: #6c757d;
+}
+
+/* Button disabled state */
+.btn-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+</style>

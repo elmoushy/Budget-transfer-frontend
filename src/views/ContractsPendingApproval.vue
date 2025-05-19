@@ -14,6 +14,7 @@
             type="search"
             :placeholder="isArabic ? 'بحث...' : 'Search...'"
             class="input-search"
+            @input="handleSearchInput"
           />
           <button v-if="searchQuery" @click="clearSearch" class="clear-search">×</button>
         </div>
@@ -39,8 +40,14 @@
       </div>
     </div>
 
+    <!-- loading indicator -->
+    <div v-if="isLoading" class="loading-container">
+      <div class="loader"></div>
+      <p>{{ isArabic ? 'جاري التحميل...' : 'Loading...' }}</p>
+    </div>
+
     <!-- table -->
-    <div class="table-container">
+    <div v-else class="table-container">
       <transition-group name="table-fade" tag="table" class="main-table">
         <thead key="head">
           <tr>
@@ -61,8 +68,8 @@
         <tbody key="body">
           <tr
             v-for="row in paginatedRows"
-            :key="row.id"
-            :class="[rowBg(row.stateLevel), { 'row-selected': isRowSelected(row) }]"
+            :key="row.transaction_id"
+            :class="[rowBg(row.status), { 'row-selected': isRowSelected(row) }]"
             class="table-row"
           >
             <td class="checkbox-column">
@@ -76,14 +83,14 @@
               </label>
             </td>
             <td>
-              <span class="status-badge" :class="'status-' + row.stateLevel.toLowerCase()">
-                {{ row.stateLevel }}
+              <span class="status-badge" :class="'status-' + row.status.toLowerCase()">
+                {{ translateStatus(row.status) }}
               </span>
             </td>
             <td class="code-cell">{{ row.code }}</td>
-            <td>{{ row.requestDate }}</td>
-            <td>{{ row.requestedBy }}</td>
-            <td>{{ row.transactionDate }}</td>
+            <td>{{ formatDate(row.request_date) }}</td>
+            <td>{{ row.requested_by }}</td>
+            <td>{{ row.transaction_date }}</td>
             <td>
               <div class="action-buttons-cell">
                 <button class="icon-btn view-btn" @click="viewDetails(row)" title="View Details">
@@ -98,7 +105,7 @@
               </div>
             </td>
           </tr>
-          <tr v-if="filteredRows.length === 0" key="no-results">
+          <tr v-if="paginatedRows.length === 0" key="no-results">
             <td colspan="7" class="no-results">
               {{ isArabic ? 'لا توجد نتائج' : 'No results found' }}
             </td>
@@ -151,16 +158,39 @@
           <button
             :class="confirmModalType === 'approve' ? 'btn-approve' : 'btn-reject'"
             @click="confirmAction"
+            :disabled="isProcessingAction"
           >
             {{
-              confirmModalType === 'approve'
+              isProcessingAction
                 ? isArabic
-                  ? 'موافقة'
-                  : 'Approve'
-                : isArabic
-                  ? 'رفض'
-                  : 'Reject'
+                  ? 'جاري المعالجة...'
+                  : 'Processing...'
+                : confirmModalType === 'approve'
+                  ? isArabic
+                    ? 'موافقة'
+                    : 'Approve'
+                  : isArabic
+                    ? 'رفض'
+                    : 'Reject'
             }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div v-if="showErrorModal" class="modal-overlay" @click="closeErrorModal">
+      <div class="modal-container error-modal" :class="{ 'dark-mode': isDarkMode }" @click.stop>
+        <div class="modal-header">
+          <h2>{{ isArabic ? 'خطأ' : 'Error' }}</h2>
+          <button class="close-modal" @click="closeErrorModal">×</button>
+        </div>
+        <div class="modal-body">
+          <p>{{ errorMessage }}</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" @click="closeErrorModal">
+            {{ isArabic ? 'إغلاق' : 'Close' }}
           </button>
         </div>
       </div>
@@ -172,6 +202,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { SearchIcon, EyeIcon, CheckIcon, XIcon } from 'lucide-vue-next'
 import { useThemeStore } from '@/stores/themeStore'
+import TransfersFlowService from '@/services/TransfersFlowService'
 
 // Define component name explicitly
 defineOptions({
@@ -180,12 +211,12 @@ defineOptions({
 
 // ───────────────────────────────────────────────────────────── Type Declarations
 interface RowData {
-  id: number
-  stateLevel: string
+  transaction_id: number
+  status: string
   code: string
-  requestDate: string
-  requestedBy: string
-  transactionDate: string
+  request_date: string
+  requested_by: string
+  transaction_date: string
 }
 
 // ───────────────────────────────────────────────────────────── Theme & Lang
@@ -196,7 +227,9 @@ const isDarkMode = ref(false)
 onMounted(() => {
   isArabic.value = themeStore.language === 'ar'
   isDarkMode.value = themeStore.darkMode
+  loadTransfers()
 })
+
 watch(
   () => themeStore.language,
   (l) => (isArabic.value = l === 'ar'),
@@ -225,121 +258,54 @@ const arabicHeaders = {
 
 const tableHeaders = computed(() => (isArabic.value ? arabicHeaders : englishHeaders))
 
-// ───────────────────────────────────────────────────────────── Sample Data
-type Rows = RowData[]
-const rows = ref<Rows>([
-  {
-    id: 1,
-    stateLevel: 'Pending',
-    code: 'TR-0001',
-    requestDate: '2023-07-15',
-    requestedBy: 'Ahmed Mohammed',
-    transactionDate: 'July 2023',
-  },
-  {
-    id: 2,
-    stateLevel: 'Under Review',
-    code: 'TR-0002',
-    requestDate: '2023-07-18',
-    requestedBy: 'Fatima Ali',
-    transactionDate: 'July 2023',
-  },
-  {
-    id: 3,
-    stateLevel: 'Pending',
-    code: 'TR-0003',
-    requestDate: '2023-07-20',
-    requestedBy: 'Mohammed Salem',
-    transactionDate: 'August 2023',
-  },
-  {
-    id: 4,
-    stateLevel: 'Under Review',
-    code: 'TR-0004',
-    requestDate: '2023-07-22',
-    requestedBy: 'Layla Ibrahim',
-    transactionDate: 'August 2023',
-  },
-  {
-    id: 5,
-    stateLevel: 'Pending',
-    code: 'TR-0005',
-    requestDate: '2023-07-25',
-    requestedBy: 'Khalid Ahmed',
-    transactionDate: 'August 2023',
-  },
-  {
-    id: 6,
-    stateLevel: 'Under Review',
-    code: 'TR-0006',
-    requestDate: '2023-07-27',
-    requestedBy: 'Noor Hassan',
-    transactionDate: 'August 2023',
-  },
-  {
-    id: 7,
-    stateLevel: 'Pending',
-    code: 'TR-0007',
-    requestDate: '2023-07-30',
-    requestedBy: 'Samir Qasim',
-    transactionDate: 'September 2023',
-  },
-  {
-    id: 8,
-    stateLevel: 'Under Review',
-    code: 'TR-0008',
-    requestDate: '2023-08-02',
-    requestedBy: 'Aisha Mohammed',
-    transactionDate: 'September 2023',
-  },
-  {
-    id: 9,
-    stateLevel: 'Pending',
-    code: 'TR-0009',
-    requestDate: '2023-08-05',
-    requestedBy: 'Omar Farooq',
-    transactionDate: 'September 2023',
-  },
-  {
-    id: 10,
-    stateLevel: 'Under Review',
-    code: 'TR-0010',
-    requestDate: '2023-08-08',
-    requestedBy: 'Zainab Ali',
-    transactionDate: 'September 2023',
-  },
-  {
-    id: 11,
-    stateLevel: 'Pending',
-    code: 'TR-0011',
-    requestDate: '2023-08-10',
-    requestedBy: 'Youssef Hamid',
-    transactionDate: 'October 2023',
-  },
-  {
-    id: 12,
-    stateLevel: 'Under Review',
-    code: 'TR-0012',
-    requestDate: '2023-08-12',
-    requestedBy: 'Rania Ahmed',
-    transactionDate: 'October 2023',
-  },
-])
+// ───────────────────────────────────────────────────────────── API Data
+const rows = ref<RowData[]>([])
+const totalItems = ref(0)
+const isLoading = ref(false)
+const isProcessingAction = ref(false)
+const errorMessage = ref('')
+const showErrorModal = ref(false)
+
+// ───────────────────────────────────────────────────────────── Helper Functions
+function translateStatus(status: string) {
+  const statusMap: Record<string, string> = {
+    pending: isArabic.value ? 'قيد الانتظار' : 'Pending',
+    'under-review': isArabic.value ? 'قيد المراجعة' : 'Under Review',
+    approved: isArabic.value ? 'تمت الموافقة' : 'Approved',
+    rejected: isArabic.value ? 'تم الرفض' : 'Rejected',
+  }
+  return statusMap[status.toLowerCase()] || status
+}
+
+function formatDate(dateString: string) {
+  try {
+    const date = new Date(dateString)
+    return new Intl.DateTimeFormat(isArabic.value ? 'ar-SA' : 'en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(date)
+  } catch (e) {
+    return dateString
+  }
+}
 
 // ───────────────────────────────────────────────────────────── Row Selection
 const selectedRows = ref<RowData[]>([])
 
 const allRowsSelected = computed(() => {
-  return filteredRows.value.length > 0 && selectedRows.value.length === filteredRows.value.length
+  return paginatedRows.value.length > 0 && selectedRows.value.length === paginatedRows.value.length
 })
 
 function isRowSelected(row: RowData) {
-  return selectedRows.value.some((selectedRow) => selectedRow.id === row.id)
+  return selectedRows.value.some((selectedRow) => selectedRow.transaction_id === row.transaction_id)
 }
 
 function toggleRowSelection(row: RowData) {
   if (isRowSelected(row)) {
-    selectedRows.value = selectedRows.value.filter((selectedRow) => selectedRow.id !== row.id)
+    selectedRows.value = selectedRows.value.filter(
+      (selectedRow) => selectedRow.transaction_id !== row.transaction_id,
+    )
   } else {
     selectedRows.value.push(row)
   }
@@ -348,7 +314,7 @@ function toggleRowSelection(row: RowData) {
 function toggleAllRows(event: Event) {
   const checkbox = event.target as HTMLInputElement
   if (checkbox.checked) {
-    selectedRows.value = [...filteredRows.value]
+    selectedRows.value = [...paginatedRows.value]
   } else {
     selectedRows.value = []
   }
@@ -356,9 +322,10 @@ function toggleAllRows(event: Event) {
 
 // ───────────────────────────────────────────────────────────── Row Styling
 function rowBg(status: string) {
-  if (status === 'Approved') return 'row-approved'
-  if (status === 'Rejected') return 'row-rejected'
-  if (status === 'Under Review') return 'row-review'
+  const statusLower = status.toLowerCase()
+  if (statusLower === 'approved') return 'row-approved'
+  if (statusLower === 'rejected') return 'row-rejected'
+  if (statusLower === 'under-review') return 'row-review'
   return 'row-pending'
 }
 
@@ -366,44 +333,71 @@ function rowBg(status: string) {
 const searchQuery = ref('')
 const currentPage = ref(1)
 const itemsPerPage = 10
+const searchTimer = ref<number | null>(null)
+
+function handleSearchInput() {
+  if (searchTimer.value) {
+    clearTimeout(searchTimer.value)
+  }
+  searchTimer.value = window.setTimeout(() => {
+    currentPage.value = 1
+    loadTransfers()
+  }, 500) as unknown as number
+}
 
 function clearSearch() {
   searchQuery.value = ''
+  currentPage.value = 1
+  loadTransfers()
+}
+
+async function loadTransfers() {
+  try {
+    isLoading.value = true
+    const response = await TransfersFlowService.fetchPendingTransfers(
+      currentPage.value,
+      itemsPerPage,
+      searchQuery.value,
+    )
+    rows.value = response.results
+    totalItems.value = response.count
+    // Clear selection when data changes
+    selectedRows.value = []
+  } catch (error) {
+    console.error('Failed to load transfers:', error)
+    errorMessage.value = isArabic.value
+      ? 'حدث خطأ أثناء تحميل البيانات. يرجى المحاولة مرة أخرى.'
+      : 'An error occurred while loading data. Please try again.'
+    showErrorModal.value = true
+    rows.value = []
+    totalItems.value = 0
+  } finally {
+    isLoading.value = false
+  }
 }
 
 function nextPage() {
-  if (currentPage.value < totalPages.value) currentPage.value++
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+    loadTransfers()
+  }
 }
 
 function prevPage() {
-  if (currentPage.value > 1) currentPage.value--
+  if (currentPage.value > 1) {
+    currentPage.value--
+    loadTransfers()
+  }
 }
 
-const filteredRows = computed(() => {
-  const query = searchQuery.value.toLowerCase()
-  return rows.value.filter(
-    (row) =>
-      row.code.toLowerCase().includes(query) ||
-      row.requestedBy.toLowerCase().includes(query) ||
-      row.transactionDate.toLowerCase().includes(query),
-  )
-})
-
-watch(searchQuery, () => {
-  currentPage.value = 1
-  selectedRows.value = []
-})
-
-const totalPages = computed(() => Math.ceil(filteredRows.value.length / itemsPerPage))
-const paginatedRows = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  return filteredRows.value.slice(start, start + itemsPerPage)
-})
+const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage))
+const paginatedRows = computed(() => rows.value)
 
 // ───────────────────────────────────────────────────────────── Row Actions
 function viewDetails(row: RowData) {
-  console.log('View details for row:', row.id)
-  // Implement view details functionality
+  console.log('View details for row:', row.transaction_id)
+  // Implement view details functionality - could navigate to a detail page
+  // router.push(`/transfers/${row.transaction_id}`)
 }
 
 function approveRow(row: RowData) {
@@ -454,30 +448,33 @@ function closeConfirmModal() {
   showConfirmModal.value = false
 }
 
-function confirmAction() {
-  const type = confirmModalType.value
-  const actionItems = rowsToProcess.value
+function closeErrorModal() {
+  showErrorModal.value = false
+}
 
-  // Implement the actual action (API call would go here)
-  console.log(
-    `${type === 'approve' ? 'Approving' : 'Rejecting'} ${actionItems.length} items:`,
-    actionItems,
-  )
+async function confirmAction() {
+  try {
+    isProcessingAction.value = true
+    const type = confirmModalType.value
+    const actionItems = rowsToProcess.value
+    const transactionIds = actionItems.map((item) => item.transaction_id)
 
-  // Update UI (in a real app, you'd wait for API confirmation)
-  actionItems.forEach((item) => {
-    const rowIndex = rows.value.findIndex((row) => row.id === item.id)
-    if (rowIndex !== -1) {
-      rows.value[rowIndex].stateLevel = type === 'approve' ? 'Approved' : 'Rejected'
-    }
-  })
+    // Call API based on action type
+    await TransfersFlowService.approveRejectTransfers(transactionIds, type === 'approve' ? 2 : 3)
 
-  // Clear selection
-  selectedRows.value = selectedRows.value.filter(
-    (row) => !actionItems.some((item) => item.id === row.id),
-  )
+    // Reload data after successful action
+    await loadTransfers()
 
-  closeConfirmModal()
+    closeConfirmModal()
+  } catch (error) {
+    console.error('Error processing action:', error)
+    errorMessage.value = isArabic.value
+      ? 'حدث خطأ أثناء معالجة الإجراء. يرجى المحاولة مرة أخرى.'
+      : 'An error occurred while processing your action. Please try again.'
+    showErrorModal.value = true
+  } finally {
+    isProcessingAction.value = false
+  }
 }
 </script>
 
@@ -1254,5 +1251,42 @@ function confirmAction() {
 
 [dir='rtl'] .modal-footer {
   flex-direction: row-reverse;
+}
+
+/* Add styles for loading indicator */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.loader {
+  border: 4px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 4px solid #6d1a36;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+.dark-mode .loader {
+  border: 4px solid #333;
+  border-top: 4px solid #7d2a46;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.error-modal .modal-header {
+  border-bottom-color: #ef4444;
 }
 </style>

@@ -125,8 +125,8 @@ export default {
     const authStore = useAuthStore()
     try {
       const response = await axios.post(
-        `${BASE_URL}/api/budget/transfers/${transactionId}/submit/`,
-        {},
+        `${BASE_URL}/api/adjd-transfers/submit/`,
+        { transaction: transactionId },
         {
           headers: {
             Authorization: `Bearer ${authStore.token}`,
@@ -149,8 +149,11 @@ export default {
     const authStore = useAuthStore()
     try {
       const response = await axios.post(
-        `${BASE_URL}/api/budget/transfers/${transactionId}/reopen/`,
-        {},
+        `${BASE_URL}/api/adjd-transfers/reopen/`,
+        {
+          transaction: transactionId,
+          action: 'reopen',
+        },
         {
           headers: {
             Authorization: `Bearer ${authStore.token}`,
@@ -226,6 +229,59 @@ export default {
   },
 
   /**
+   * Upload file attachments for a transfer
+   * @param {File} file - The file to upload
+   * @param {number} transactionId - The transaction ID
+   * @returns {Promise} - Promise with response
+   */
+  async uploadFile(file, transactionId) {
+    const authStore = useAuthStore()
+    try {
+      const formData = new FormData()
+      formData.append('transaction_id', transactionId.toString())
+      formData.append('file', file)
+
+      const response = await axios.post(
+        `${BASE_URL}/api/budget/transfers/upload-files/`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${authStore.token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        },
+      )
+      return response.data
+    } catch (error) {
+      console.error('Error uploading file:', error)
+      throw error
+    }
+  },
+
+  /**
+   * List file attachments for a transfer
+   * @param {number} transactionId - The transaction ID
+   * @returns {Promise} - Promise with response containing array of attachments
+   */
+  async listFiles(transactionId) {
+    const authStore = useAuthStore()
+    try {
+      const response = await axios.get(
+        `${BASE_URL}/api/budget/transfers/list-files/?transaction_id=${transactionId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${authStore.token}`,
+          },
+        },
+      )
+      return response.data
+    } catch (error) {
+      console.error('Error listing files:', error)
+      throw error
+    }
+  },
+
+  /**
    * Upload an Excel file for a specific transaction
    * @param {File} file - The Excel file to upload
    * @param {number} transactionId - The transaction ID
@@ -247,6 +303,30 @@ export default {
       return response.data
     } catch (error) {
       console.error('Error uploading Excel file:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Get pivot fund details for a specific cost center and account
+   * @param {string} entityId - Cost Center Code
+   * @param {string} accountId - Account Code
+   * @returns {Promise} - Promise with pivot fund details
+   */
+  async getPivotFundDetails(entityId, accountId) {
+    const authStore = useAuthStore()
+    try {
+      const response = await axios.get(
+        `${BASE_URL}/api/accounts-entities/pivot-funds/getdetail/?entity_id=${entityId}&account_id=${accountId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${authStore.token}`,
+          },
+        },
+      )
+      return response.data
+    } catch (error) {
+      console.error('Error fetching pivot fund details:', error)
       throw error
     }
   },
