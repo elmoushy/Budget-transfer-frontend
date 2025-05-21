@@ -302,6 +302,7 @@ import axios from 'axios'
 import transferService from '@/services/transferService'
 import FileUploadModal from '@/components/FileUploadModal.vue'
 import { useNavigationStore } from '@/stores/navigationStore'
+import Swal from 'sweetalert2'
 
 // Component setup
 const route = useRoute()
@@ -385,9 +386,7 @@ const isReopenButtonEnabled = computed(() => {
 })
 
 const isUploadButtonEnabled = computed(() => {
-  return (
-    currentStatus.value === 'is rejected' || currentStatus.value === 'not yet sent for approval'
-  )
+  return currentStatus.value === 'not yet sent for approval'
 })
 
 // Format status for display
@@ -631,6 +630,29 @@ const addNewRow = () => {
   changesMade.value = true
 }
 
+// Helper function for SweetAlert2 notifications
+const showNotification = (title, icon = 'success', willNavigate = false) => {
+  return Swal.fire({
+    title: title,
+    icon: icon,
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: willNavigate ? 1500 : 3000,
+    timerProgressBar: true,
+    background: isDarkMode.value ? '#2d3748' : '#ffffff',
+    color: isDarkMode.value ? '#e2e8f0' : '#1a202c',
+    customClass: {
+      popup: 'notification-popup',
+      title: 'notification-title',
+    },
+    didOpen: (toast) => {
+      toast.addEventListener('mouseenter', Swal.stopTimer)
+      toast.addEventListener('mouseleave', Swal.resumeTimer)
+    },
+  })
+}
+
 // Create transfer function
 const createTransfer = async () => {
   try {
@@ -639,7 +661,10 @@ const createTransfer = async () => {
       (item) => item.cost_center_code && item.account_code,
     )
     if (!validRows.length) {
-      alert(isArabic.value ? 'لا توجد بيانات صالحة للإرسال' : 'No valid rows to send')
+      showNotification(
+        isArabic.value ? 'لا توجد بيانات صالحة للإرسال' : 'No valid rows to send',
+        'error',
+      )
       return
     }
 
@@ -670,7 +695,7 @@ const createTransfer = async () => {
 
     // Pass the auth token as second argument to the API call
     await transferService.createTransfer(dataToSend, authStore.token)
-    alert(isArabic.value ? 'تم إنشاء النقل بنجاح' : 'Transfer created successfully')
+    showNotification(isArabic.value ? 'تم إنشاء النقل بنجاح' : 'Transfer created successfully')
     await loadData()
 
     // After successful save, reset the changesMade flag
@@ -679,7 +704,7 @@ const createTransfer = async () => {
     // Store a new snapshot of the current state
     originalData.value = JSON.parse(JSON.stringify(transferData.value))
   } catch (err) {
-    alert(isArabic.value ? 'فشل في إنشاء النقل' : 'Failed to create transfer')
+    showNotification(isArabic.value ? 'فشل في إنشاء النقل' : 'Failed to create transfer', 'error')
     console.error('Error creating transfer:', err)
   }
 }
@@ -693,7 +718,10 @@ const deleteRow = (index) => {
     // Mark that changes have been made
     changesMade.value = true
   } else {
-    alert(isArabic.value ? 'يجب أن يكون هناك صف واحد على الأقل' : 'At least one row must exist')
+    showNotification(
+      isArabic.value ? 'يجب أن يكون هناك صف واحد على الأقل' : 'At least one row must exist',
+      'warning',
+    )
   }
 }
 
@@ -832,20 +860,33 @@ const formatNumber = (value) => {
 const submitRequest = async () => {
   try {
     await transferService.submitTransferRequest(transactionId.value)
-    alert(isArabic.value ? 'تم تقديم الطلب بنجاح' : 'Request submitted successfully')
-    router.push('/')
+    const notification = await showNotification(
+      isArabic.value ? 'تم تقديم الطلب بنجاح' : 'Request submitted successfully',
+      'success',
+      true,
+    )
+
+    // Navigate after the notification is shown
+    if (notification.dismiss === Swal.DismissReason.timer) {
+      router.push('/')
+    } else {
+      router.push('/')
+    }
   } catch (err) {
-    alert(isArabic.value ? 'فشل في تقديم الطلب' : 'Failed to submit request')
+    showNotification(isArabic.value ? 'فشل في تقديم الطلب' : 'Failed to submit request', 'error')
   }
 }
 
 const reopenRequest = async () => {
   try {
     await transferService.reopenTransferRequest(transactionId.value)
-    alert(isArabic.value ? 'تم إعادة فتح الطلب بنجاح' : 'Request reopened successfully')
+    showNotification(isArabic.value ? 'تم إعادة فتح الطلب بنجاح' : 'Request reopened successfully')
     await loadData()
   } catch (err) {
-    alert(isArabic.value ? 'فشل في إعادة فتح الطلب' : 'Failed to reopen request')
+    showNotification(
+      isArabic.value ? 'فشل في إعادة فتح الطلب' : 'Failed to reopen request',
+      'error',
+    )
   }
 }
 
@@ -863,8 +904,10 @@ const generateReport = async () => {
     link.click()
     link.remove()
     window.URL.revokeObjectURL(url)
+
+    showNotification(isArabic.value ? 'تم إنشاء التقرير بنجاح' : 'Report generated successfully')
   } catch (err) {
-    alert(isArabic.value ? 'فشل في إنشاء التقرير' : 'Failed to generate report')
+    showNotification(isArabic.value ? 'فشل في إنشاء التقرير' : 'Failed to generate report', 'error')
   }
 }
 
@@ -977,10 +1020,11 @@ const fetchPivotFundDetails = async (item) => {
     // Check if the error is a 404 (Not Found)
     if (error.response && error.response.status === 404) {
       // Alert the user with the specific IDs that failed
-      alert(
+      showNotification(
         isArabic.value
           ? `لا توجد بيانات لهذا التحديد. المركز: ${item.cost_center_code}, الحساب: ${item.account_code}`
           : `This doesn't have data for Cost Center: ${item.cost_center_code}, Account: ${item.account_code}`,
+        'warning',
       )
 
       // Reset the last changed selection
@@ -1075,5 +1119,31 @@ const fetchPivotFundDetails = async (item) => {
 .btn-disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* SweetAlert2 custom styles */
+.notification-popup {
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.dark-mode .notification-popup {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.notification-title {
+  font-size: 18px !important;
+  margin: 10px 0 !important;
+  letter-spacing: 0.5px;
+}
+
+.swal2-timer-progress-bar {
+  background: linear-gradient(to right, #3490dc, #6574cd);
+}
+
+.dark-mode .swal2-timer-progress-bar {
+  background: linear-gradient(to right, #38b2ac, #4299e1);
 }
 </style>

@@ -42,9 +42,10 @@ export default {
    * Approve or reject transfers
    * @param {Array} transactionIds - Array of transaction IDs
    * @param {number} decision - 2 for approve, 3 for reject
+   * @param {Array} reasons - Array of reasons for rejection (required when rejecting)
    * @returns {Promise} - API response
    */
-  async approveRejectTransfers(transactionIds, decision) {
+  async approveRejectTransfers(transactionIds, decision, reasons = []) {
     const authStore = useAuthStore()
 
     if (!authStore.token) {
@@ -57,6 +58,7 @@ export default {
         {
           transaction_id: transactionIds,
           decide: transactionIds.map(() => decision),
+          reason: reasons.length ? reasons : transactionIds.map(() => ''),
         },
         {
           headers: {

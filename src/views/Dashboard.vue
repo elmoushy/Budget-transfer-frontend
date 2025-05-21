@@ -1,18 +1,21 @@
 <!-- DashboardView.vue -->
 <template>
-  <div class="dashboard" :class="{ 'dark-mode': isDarkMode, rtl: isRTL }">
-    <h1 class="dashboard-title">{{ translations.dashboard }}</h1>
-    <p class="dashboard-subtitle">{{ translations.welcomeMessage }}</p>
+  <div class="dashboard" :class="{ 'dark-theme': isDarkMode, rtl: isRTL }">
+    <div class="dashboard-header" v-motion="{ type: 'fade', delay: 200 }">
+      <h1 class="dashboard-title">{{ translations.dashboard }}</h1>
+      <p class="dashboard-subtitle">{{ translations.welcomeMessage }}</p>
+    </div>
 
     <!-- ────── METRICS CARDS ────── -->
     <div class="metrics-grid">
       <div
         v-for="(metric, index) in localizedMetrics"
         :key="index"
-        class="metric-card"
-        :class="metric.trend"
+        class="metric-card glass-card"
+        :class="[metric.trend, `delay-${index}`]"
+        v-motion="{ type: 'slide', delay: 200 + index * 100 }"
       >
-        <div class="metric-icon">
+        <div class="metric-icon" :class="metric.color">
           <i :class="metric.icon"></i>
         </div>
         <div class="metric-content">
@@ -20,7 +23,7 @@
           <div class="metric-value">{{ metric.value }}</div>
           <div class="metric-trend">
             <i :class="metric.trend === 'up' ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
-            {{ metric.percentage }}% {{ translations.sinceLast }}
+            <span class="percentage">{{ metric.percentage }}%</span> {{ translations.sinceLast }}
           </div>
         </div>
       </div>
@@ -28,7 +31,7 @@
 
     <!-- ────── CHARTS ────── -->
     <div class="charts-grid">
-      <div class="chart-card main-chart">
+      <div class="chart-card glass-card main-chart" v-motion="{ type: 'fade', delay: 600 }">
         <h3>{{ translations.revenueOverview }}</h3>
         <canvas v-if="chartsReady" ref="lineChart"></canvas>
         <div v-else class="loading-chart">{{ translations.loadingChart }}</div>
@@ -239,6 +242,7 @@ export default {
         trend: 'up',
         percentage: '12.5',
         icon: 'fas fa-dollar-sign',
+        color: 'cyan',
       },
       {
         title: 'Allocated Funds',
@@ -246,6 +250,7 @@ export default {
         trend: 'up',
         percentage: '8.2',
         icon: 'fas fa-chart-pie',
+        color: 'magenta',
       },
       {
         title: 'Pending Approvals',
@@ -253,6 +258,7 @@ export default {
         trend: 'down',
         percentage: '3.1',
         icon: 'fas fa-clock',
+        color: 'amber',
       },
       {
         title: 'Completed Transfers',
@@ -260,6 +266,7 @@ export default {
         trend: 'up',
         percentage: '15.3',
         icon: 'fas fa-exchange-alt',
+        color: 'green',
       },
     ])
 

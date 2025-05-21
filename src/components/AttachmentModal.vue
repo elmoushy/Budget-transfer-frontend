@@ -90,6 +90,7 @@ import { ref, watch, defineProps, defineEmits } from 'vue'
 import { FileIcon, DownloadIcon, UploadCloudIcon } from 'lucide-vue-next'
 import { useThemeStore } from '@/stores/themeStore'
 import transferService from '@/services/transferService'
+import Swal from 'sweetalert2'
 import '@/assets/css/AttachmentModal.css'
 
 // Define props and emits
@@ -249,7 +250,21 @@ async function uploadFile() {
     clearSelectedFile()
     loadFiles() // Refresh the file list
     emit('files-updated')
-    alert(isArabic.value ? 'تم تحميل الملف بنجاح' : 'File uploaded successfully')
+
+    // Replace alert with SweetAlert2
+    Swal.fire({
+      title: isArabic.value ? 'تم بنجاح!' : 'Success!',
+      text: isArabic.value ? 'تم تحميل الملف بنجاح' : 'File uploaded successfully',
+      icon: 'success',
+      background: isDarkMode.value ? '#333' : '#fff',
+      color: isDarkMode.value ? '#fff' : '#333',
+      confirmButtonText: isArabic.value ? 'حسنًا' : 'OK',
+      timer: 3000,
+      timerProgressBar: true,
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+    })
   } catch (error) {
     console.error('Error uploading file:', error)
     fileError.value = isArabic.value

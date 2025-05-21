@@ -89,27 +89,50 @@ const menuItems = computed(() => (isArabic.value ? menuItemsData.ar : menuItemsD
 <style scoped>
 .navigation-menu {
   position: sticky;
-  top: 60px; /* sits right under your HeaderBar */
-  background: #8a2a44; /* Maroon base color */
+  top: 64px; /* Adjusted to match new header height */
+  background: rgba(138, 42, 68, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: #fff;
   z-index: 90;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .navigation-menu.dark-theme {
-  background: #5a1c2e; /* Darker maroon for dark mode */
+  background: rgba(90, 28, 46, 0.85);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.2),
+    inset 0 0 30px rgba(0, 0, 0, 0.1);
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  height: 50px; /* Keep fixed height for single line navigation */
+  height: 54px; /* Slightly taller for better scrolling area */
   transition: all 0.3s ease;
-  padding: 0 0.5rem; /* Reduced horizontal padding */
+  padding: 0 18px;
+  position: relative;
+}
+
+.container::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  opacity: 0.5;
 }
 
 [dir='rtl'] .container {
@@ -121,35 +144,81 @@ const menuItems = computed(() => (isArabic.value ? menuItemsData.ar : menuItemsD
   list-style: none;
   margin: 0;
   padding: 0;
-  flex-wrap: nowrap; /* Prevent wrapping to keep items in one line */
-  overflow-x: auto; /* Allow scrolling if items exceed container width */
+  flex-wrap: nowrap;
+  overflow-x: auto;
   width: 100%;
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+  -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
+}
+
+.nav-links::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for Chrome/Safari */
 }
 
 .nav-links li {
-  margin: 0; /* Remove margin to save space */
-  white-space: nowrap; /* prevent text wrapping within items */
+  margin: 0;
+  white-space: nowrap;
+  position: relative;
 }
 
 .nav-links a {
-  display: block;
-  padding: 0.75rem 0.6rem; /* Reduced horizontal padding to fit more items */
-  color: #f1f1f1;
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
-  transition: all 0.2s;
-  border-radius: 4px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 6px;
   font-weight: 500;
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-links a::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.7);
+  transform: translateX(-50%);
+  transition: width 0.3s ease;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
 }
 
 .nav-links li.active > a {
+  color: #fff;
   background: rgba(255, 255, 255, 0.15);
-  color: #ffcc80;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.nav-links li.active > a::after {
+  width: 80%;
+  background: #5eead4;
+  box-shadow: 0 0 10px rgba(94, 234, 212, 0.6);
 }
 
 .nav-links a:hover {
-  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
   transform: translateY(-2px);
+}
+
+.nav-links a:hover::before {
+  opacity: 1;
 }
 
 /* dropdown */
@@ -160,28 +229,73 @@ const menuItems = computed(() => (isArabic.value ? menuItemsData.ar : menuItemsD
 .dropdown-toggle {
   display: flex;
   align-items: center;
+  gap: 8px;
   cursor: pointer;
   padding: 0.75rem 1rem;
-  border-radius: 4px;
-  transition: all 0.2s;
+  border-radius: 6px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  color: rgba(255, 255, 255, 0.85);
+  position: relative;
+  overflow: hidden;
+}
+
+.dropdown-toggle i {
+  font-size: 12px;
+  transition: transform 0.3s ease;
 }
 
 .dropdown-toggle:hover {
-  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.dropdown-toggle:hover i {
+  transform: translateY(2px);
+}
+
+.dropdown-toggle::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.dropdown-toggle:hover::before {
+  opacity: 1;
 }
 
 .dropdown-menu {
   position: absolute;
-  top: 100%;
-  background: #7a2540; /* Slightly darker than main maroon */
+  top: calc(100% + 10px);
+  background: rgba(122, 37, 64, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   list-style: none;
   margin: 0;
-  padding: 0.5rem 0;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  padding: 0.5rem;
+  border-radius: 12px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 0 20px rgba(0, 0, 0, 0.2);
   overflow: hidden;
   z-index: 100;
-  min-width: 180px;
+  min-width: 200px;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: dropdownFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes dropdownFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 [dir='ltr'] .dropdown-menu {
@@ -194,15 +308,21 @@ const menuItems = computed(() => (isArabic.value ? menuItemsData.ar : menuItemsD
   left: auto;
 }
 
+.dropdown-menu li {
+  width: 100%;
+  margin-bottom: 2px;
+}
+
 .dropdown-menu li a {
-  padding: 0.75rem 1.25rem;
+  padding: 0.75rem 1rem;
   display: block;
   white-space: nowrap;
-  border-radius: 0;
+  border-radius: 6px;
+  width: 100%;
 }
 
 .dropdown-menu li a:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
   transform: none;
 }
 
@@ -210,5 +330,17 @@ const menuItems = computed(() => (isArabic.value ? menuItemsData.ar : menuItemsD
 [dir='rtl'] .nav-links a {
   font-size: 0.95rem;
   letter-spacing: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 12px;
+  }
+
+  .nav-links a {
+    padding: 0.75rem 0.8rem;
+    font-size: 0.85rem;
+  }
 }
 </style>

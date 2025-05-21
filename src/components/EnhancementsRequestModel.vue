@@ -70,6 +70,7 @@ import { useThemeStore } from '@/stores/themeStore'
 import { QuillEditor } from '@vueup/vue-quill'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/authStore'
+import Swal from 'sweetalert2'
 
 // Define component props
 const props = defineProps({
@@ -117,6 +118,63 @@ const themeStore = useThemeStore()
 const isArabic = computed(() => themeStore.language === 'ar')
 const isDarkMode = computed(() => themeStore.darkMode)
 
+// Functions to show custom SweetAlert notifications
+function showValidationError() {
+  Swal.fire({
+    title: isArabic.value ? 'تحقق من البيانات' : 'Validation Error',
+    text: isArabic.value ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields',
+    icon: 'warning',
+    background: isDarkMode.value ? 'rgba(26, 26, 46, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+    color: isDarkMode.value ? '#e2e2e2' : '#333',
+    backdrop: `rgba(0, 0, 10, 0.4)
+                backdrop-filter: blur(4px)`,
+    showConfirmButton: true,
+    confirmButtonText: isArabic.value ? 'حسناً' : 'OK',
+    confirmButtonColor: '#6d1a36',
+    showClass: {
+      popup: 'animate__animated animate__fadeInUp animate__faster',
+    },
+    hideClass: {
+      popup: 'animate__animated animate__fadeOutDown animate__faster',
+    },
+    customClass: {
+      container: 'swal-container',
+      popup: isDarkMode.value ? 'swal-popup-dark' : 'swal-popup',
+      title: 'swal-title',
+      confirmButton: 'swal-confirm-btn',
+    },
+  })
+}
+
+function showErrorNotification(error: any) {
+  console.error('Error creating enhancement request:', error)
+
+  Swal.fire({
+    title: isArabic.value ? 'خطأ!' : 'Error!',
+    text: isArabic.value ? 'حدث خطأ أثناء إنشاء الطلب' : 'Error creating request',
+    icon: 'error',
+    background: isDarkMode.value ? 'rgba(26, 26, 46, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+    color: isDarkMode.value ? '#e2e2e2' : '#333',
+    backdrop: `rgba(0, 0, 10, 0.4)
+                backdrop-filter: blur(4px)`,
+    showConfirmButton: true,
+    confirmButtonText: isArabic.value ? 'حسناً' : 'OK',
+    confirmButtonColor: '#6d1a36',
+    showClass: {
+      popup: 'animate__animated animate__fadeInUp animate__faster',
+    },
+    hideClass: {
+      popup: 'animate__animated animate__fadeOutDown animate__faster',
+    },
+    customClass: {
+      container: 'swal-container',
+      popup: isDarkMode.value ? 'swal-popup-dark' : 'swal-popup',
+      title: 'swal-title',
+      confirmButton: 'swal-confirm-btn',
+    },
+  })
+}
+
 // Methods
 function closeModal() {
   // Reset form when closing
@@ -129,14 +187,14 @@ function resetForm() {
     timePeriod: '',
     enhancementReason: '',
   }
-  editorContent.value = '<p>Enter your reason here...</p>'
+  editorContent.value = '<p></p>'
   editorError.value = false
 }
 
 async function submitForm() {
   // Validate fields
   const isDefaultContent =
-    editorContent.value === '<p>Enter your reason here...</p>' ||
+    editorContent.value === '<p></p>' ||
     editorContent.value === '<p><br></p>' ||
     editorContent.value === ''
 
@@ -146,7 +204,7 @@ async function submitForm() {
       editorError.value = true
     }
 
-    alert(isArabic.value ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields')
+    showValidationError()
     return
   }
 
@@ -175,8 +233,7 @@ async function submitForm() {
     // Close the modal
     closeModal()
   } catch (error) {
-    console.error('Error creating enhancement request:', error)
-    alert(isArabic.value ? 'حدث خطأ أثناء إنشاء الطلب' : 'Error creating request')
+    showErrorNotification(error)
   }
 }
 
@@ -199,106 +256,231 @@ watch(
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(10, 10, 20, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 100;
-  animation: fadeIn 0.3s ease;
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .modal-container {
-  background-color: white;
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
   width: 95%;
   max-width: 600px;
-  border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  border-radius: 16px;
+  box-shadow:
+    0 15px 40px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
   overflow: hidden;
-  animation: slideIn 0.3s ease;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .modal-header {
-  padding: 1.25rem;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.3);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0),
+    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0)
+  );
+}
+
+.modal-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  width: 80%;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    rgba(190, 190, 255, 0),
+    rgba(190, 190, 255, 0.5),
+    rgba(190, 190, 255, 0)
+  );
 }
 
 .modal-header h2 {
   margin: 0;
-  font-size: 1.25rem;
-  color: #1a202c;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #1a1a2e, #4a0d20);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
 }
 
 .close-modal {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.1);
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+  color: #6b7280;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.close-modal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .close-modal:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  transform: rotate(90deg) scale(1.1);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
+}
+
+.close-modal:hover::before {
+  opacity: 1;
+  transform: scale(1.5);
 }
 
 .modal-body {
-  padding: 1.5rem;
+  padding: 1.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  position: relative;
+  overflow: hidden;
+}
+
+.modal-body::before {
+  content: '';
+  position: absolute;
+  top: -100px;
+  right: -100px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(94, 234, 212, 0.05) 0%,
+    rgba(94, 234, 212, 0.02) 30%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 1;
 }
 
 .modal-footer {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid #e2e8f0;
+  padding: 1.25rem 1.75rem;
+  border-top: 1px solid rgba(226, 232, 240, 0.3);
   display: flex;
   justify-content: flex-end;
-  gap: 0.75rem;
+  gap: 1rem;
+  position: relative;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.05));
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  position: relative;
 }
 
 .form-group label {
   display: block;
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
   color: #4a5568;
+  letter-spacing: 0.02em;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  background: linear-gradient(90deg, #4a5568, #64748b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .required::after {
   content: ' *';
   color: #e53e3e;
+  text-shadow: 0 0 5px rgba(229, 62, 62, 0.3);
 }
 
 .select-wrapper {
   position: relative;
+  z-index: 1;
+}
+
+.select-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px rgba(226, 232, 240, 0.7);
+  transition: all 0.3s ease;
+}
+
+.select-wrapper:hover::after {
+  box-shadow:
+    0 0 0 1px rgba(109, 26, 54, 0.4),
+    0 0 20px rgba(109, 26, 54, 0.1);
 }
 
 .select-wrapper select {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.85rem 1rem;
   padding-right: 2.5rem;
   font-size: 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background-color: white;
+  border: none;
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  font-family: 'Inter', 'Space Grotesk', sans-serif;
+  letter-spacing: 0.01em;
   appearance: none;
   -webkit-appearance: none;
-  cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .select-wrapper select:focus {
   outline: none;
-  border-color: #6d1a36;
-  box-shadow: 0 0 0 3px rgba(109, 26, 54, 0.2);
+  box-shadow:
+    0 0 0 1px rgba(109, 26, 54, 0.6),
+    0 0 25px rgba(109, 26, 54, 0.15);
+  transform: translateY(-2px);
 }
 
 .select-arrow {
@@ -308,61 +490,161 @@ watch(
   transform: translateY(-50%);
   pointer-events: none;
   color: #64748b;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
+  transition: all 0.3s ease;
+  opacity: 0.7;
+}
+
+.select-wrapper:hover .select-arrow {
+  color: #6d1a36;
+  opacity: 1;
+  transform: translateY(-50%) translateY(-2px);
 }
 
 .btn-secondary {
-  background-color: #f1f5f9;
+  background-color: rgba(241, 245, 249, 0.8);
   color: #334155;
-  border: 1px solid #e2e8f0;
-  padding: 0.6rem 1.2rem;
-  border-radius: 6px;
+  border: none;
+  padding: 0.7rem 1.4rem;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  box-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.05),
+    0 0 0 1px rgba(226, 232, 240, 0.6);
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.01em;
+}
+
+.btn-secondary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .btn-secondary:hover {
-  background-color: #e2e8f0;
+  background-color: rgba(226, 232, 240, 0.9);
+  transform: translateY(-3px);
+  box-shadow:
+    0 4px 15px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(226, 232, 240, 0.8);
+}
+
+.btn-secondary:hover::before {
+  opacity: 1;
 }
 
 .btn-primary {
   background: linear-gradient(135deg, #6d1a36, #4a0d20);
   color: #fff;
   border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 6px;
+  padding: 0.7rem 1.4rem;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow:
+    0 4px 12px rgba(109, 26, 54, 0.25),
+    0 0 0 1px rgba(109, 26, 54, 0.5);
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.01em;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100%
+  );
+  transition: all 0.6s ease;
 }
 
 .btn-primary:hover {
   background: linear-gradient(135deg, #7d2a46, #5a1d30);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-3px);
+  box-shadow:
+    0 6px 15px rgba(109, 26, 54, 0.3),
+    0 0 0 1px rgba(109, 26, 54, 0.6);
+}
+
+.btn-primary:hover::before {
+  left: 100%;
+}
+
+.btn-primary:active {
+  transform: translateY(-1px);
 }
 
 .submit-btn {
-  min-width: 100px;
+  min-width: 120px;
+  position: relative;
+}
+
+.submit-btn::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.5);
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.submit-btn:hover::after {
+  width: 15px;
 }
 
 /* Dark mode modal styles */
 .dark-mode {
-  background-color: #1a1a2e;
-  border: 1px solid #3f3f5f;
+  background-color: rgba(26, 26, 46, 0.9);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(63, 63, 95, 0.3);
+  box-shadow:
+    0 15px 40px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(63, 63, 95, 0.6),
+    inset 0 0 50px rgba(0, 0, 0, 0.1);
 }
 
 .dark-mode .modal-header {
-  border-bottom-color: #3f3f5f;
+  border-bottom: none;
+  background: linear-gradient(
+    to right,
+    rgba(60, 60, 80, 0),
+    rgba(60, 60, 80, 0.1),
+    rgba(60, 60, 80, 0)
+  );
 }
 
 .dark-mode .modal-header h2 {
-  color: #e2e2e2;
+  background: linear-gradient(90deg, #5eead4, #c4b5fd);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 20px rgba(94, 234, 212, 0.3);
 }
 
 .dark-mode .close-modal {
@@ -379,36 +661,78 @@ watch(
 
 .dark-mode .form-group label {
   color: #a0a0b8;
+  background: linear-gradient(90deg, #a0a0b8, #d1d1e0);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.dark-mode .select-wrapper::after {
+  box-shadow: 0 0 0 1px rgba(63, 63, 95, 0.7);
+}
+
+.dark-mode .select-wrapper:hover::after {
+  box-shadow:
+    0 0 0 1px rgba(94, 234, 212, 0.5),
+    0 0 20px rgba(94, 234, 212, 0.2);
 }
 
 .dark-mode .select-wrapper select {
-  background-color: #2c2c44;
+  background-color: rgba(44, 44, 68, 0.8);
   color: #e2e2e2;
-  border-color: #3f3f5f;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .dark-mode .select-wrapper select:focus {
-  border-color: #ff9ea0;
-  box-shadow: 0 0 0 3px rgba(255, 158, 160, 0.2);
+  box-shadow:
+    0 0 0 1px rgba(94, 234, 212, 0.6),
+    0 0 25px rgba(94, 234, 212, 0.2);
 }
 
 .dark-mode .select-arrow {
   color: #a0a0b8;
 }
 
+.dark-mode .select-wrapper:hover .select-arrow {
+  color: #5eead4;
+}
+
 .dark-mode .btn-secondary {
-  background-color: #2c2c44;
+  background-color: rgba(44, 44, 68, 0.7);
   color: #e2e2e2;
-  border-color: #3f3f5f;
+  border: 1px solid rgba(63, 63, 95, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .dark-mode .btn-secondary:hover {
-  background-color: #3f3f5f;
+  background-color: rgba(63, 63, 95, 0.7);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
 }
 
 .dark-mode .btn-primary {
   background: linear-gradient(135deg, #7d2a46, #5a1d30);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(125, 42, 70, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.dark-mode .btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.dark-mode .btn-primary:hover::before {
+  opacity: 1;
 }
 
 /* Error message styling */
@@ -416,11 +740,33 @@ watch(
   color: #e53e3e;
   font-size: 0.875rem;
   margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  animation: errorPulse 1.5s infinite;
+}
+
+.error-message::before {
+  content: '⚠️';
+  font-size: 0.75rem;
+}
+
+@keyframes errorPulse {
+  0% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.7;
+  }
 }
 
 /* Dark mode error message styling */
 .dark-mode .error-message {
   color: #fc8181;
+  text-shadow: 0 0 8px rgba(252, 129, 129, 0.4);
 }
 
 /* Modern Quill editor styles */
@@ -516,4 +862,57 @@ watch(
 [dir='rtl'] .modal-footer {
   flex-direction: row-reverse;
 }
+
+/* SweetAlert2 custom styling */
+:global(.swal-container) {
+  z-index: 110;
+}
+
+:global(.swal-popup) {
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow:
+    0 15px 40px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+:global(.swal-popup-dark) {
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow:
+    0 15px 40px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(63, 63, 95, 0.6);
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(26, 26, 46, 0.95), rgba(44, 44, 68, 0.95));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(63, 63, 95, 0.3);
+}
+
+:global(.swal-title) {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+:global(.swal-confirm-btn) {
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em !important;
+  padding: 0.7rem 1.8rem !important;
+  box-shadow: 0 4px 12px rgba(109, 26, 54, 0.25) !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+:global(.swal-confirm-btn:hover) {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 15px rgba(109, 26, 54, 0.3) !important;
+}
+
+/* Add Animate.css imports */
+@import 'animate.css/animate.min.css';
 </style>

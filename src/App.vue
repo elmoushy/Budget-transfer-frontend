@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import MainLayout from '@/components/MainLayout.vue'
-import { onMounted } from 'vue'
+import { onMounted, ref, onUnmounted } from 'vue'
 import { computed, watch } from 'vue'
 import { useThemeStore } from '@/stores/themeStore'
 import SessionExpiredNotification from '@/components/SessionExpiredNotification.vue'
+import BackgroundConstellation from '@/plugins/backgroundConstellation'
+
+// Reference to the background element
+const bgContainer = ref<HTMLElement | null>(null)
+let constellationEffect: BackgroundConstellation | null = null
 
 // Add font loading via DOM for better error handling
 onMounted(() => {
@@ -22,38 +27,128 @@ onMounted(() => {
   // Add the font link
   const fontLink = document.createElement('link')
   fontLink.rel = 'stylesheet'
-  fontLink.href = 'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap'
+  fontLink.href =
+    'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Tajawal:wght@400;500;700&display=swap'
   document.head.appendChild(fontLink)
+
+  // Initialize constellation effect if container is available
+  if (bgContainer.value) {
+    constellationEffect = new BackgroundConstellation(bgContainer.value, themeStore.darkMode)
+    constellationEffect.start()
+  }
+})
+
+// Clean up
+onUnmounted(() => {
+  if (constellationEffect) {
+    constellationEffect.dispose()
+    constellationEffect = null
+  }
 })
 
 const themeStore = useThemeStore()
 const isArabic = computed(() => themeStore.language === 'ar')
 const isDarkMode = computed(() => themeStore.darkMode)
+
+// Update constellation when theme changes
+watch(
+  () => themeStore.darkMode,
+  (newDarkMode) => {
+    if (constellationEffect) {
+      constellationEffect.updateMode(newDarkMode)
+    }
+  },
+)
 </script>
 
 <template>
-  <div class="app-container" :class="{ rtl: isArabic, 'dark-mode': isDarkMode }">
+  <div class="app-container" :class="{ rtl: isArabic, 'dark-theme': isDarkMode }">
+    <div ref="bgContainer" class="bg-constellation"></div>
+    <div class="bg-animation"></div>
     <MainLayout />
-    <!-- Removed extra router-view here -->
     <SessionExpiredNotification />
   </div>
 </template>
 
 <style>
-/* global resets or font imports */
+/* global resets already in main.css */
 body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  background-color: #f5f7fa;
-  color: #333;
-  font-family:
-    'Inter',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
+  background-color: var(--color-bg-light);
+  color: var(--color-text-dark);
+  font-family: var(--font-primary);
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+body.dark-theme {
+  background-color: var(--color-bg-dark);
+  color: var(--color-text-light);
+}
+
+.app-container {
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.bg-animation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 20% 35%, rgba(243, 244, 246, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(243, 244, 246, 0.1) 0%, transparent 50%);
+  filter: blur(40px);
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.dark-theme .bg-animation {
+  background:
+    radial-gradient(circle at 20% 35%, rgba(94, 234, 212, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(240, 171, 252, 0.05) 0%, transparent 50%);
+  filter: blur(40px);
+  opacity: 0.5;
+  animation: gradientShift 15s ease infinite alternate;
+}
+
+@keyframes gradientShift {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+}
+
+.bg-constellation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+  pointer-events: none;
+}
+
+/* RTL support */
+.rtl {
+  direction: rtl;
+  text-align: right;
 }
 
 /* Logo colors as custom properties for reuse */

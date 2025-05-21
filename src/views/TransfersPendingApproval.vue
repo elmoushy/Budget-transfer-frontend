@@ -93,9 +93,6 @@
             <td>{{ row.transaction_date }}</td>
             <td>
               <div class="action-buttons-cell">
-                <button class="icon-btn view-btn" @click="viewDetails(row)" title="View Details">
-                  <EyeIcon />
-                </button>
                 <button class="icon-btn approve-btn" @click="approveRow(row)" title="Approve">
                   <CheckIcon />
                 </button>
@@ -150,6 +147,25 @@
         </div>
         <div class="modal-body">
           <p>{{ confirmModalMessage }}</p>
+
+          <!-- Rejection reason textarea -->
+          <div v-if="confirmModalType === 'reject'" class="reason-container">
+            <label for="rejection-reason" class="reason-label">
+              {{ isArabic ? 'سبب الرفض:' : 'Rejection Reason:' }}
+            </label>
+            <textarea
+              id="rejection-reason"
+              v-model="rejectionReason"
+              :placeholder="
+                isArabic ? 'يرجى ذكر سبب الرفض...' : 'Please provide a reason for rejection...'
+              "
+              class="reason-textarea"
+              rows="3"
+            ></textarea>
+            <p v-if="showReasonError" class="reason-error">
+              {{ isArabic ? 'سبب الرفض مطلوب' : 'Rejection reason is required' }}
+            </p>
+          </div>
         </div>
         <div class="modal-footer">
           <button class="btn-secondary" @click="closeConfirmModal">
@@ -424,10 +440,15 @@ const confirmModalType = ref<'approve' | 'reject'>('approve')
 const confirmModalTitle = ref('')
 const confirmModalMessage = ref('')
 const rowsToProcess = ref<RowData[]>([])
+const rejectionReason = ref('')
+const showReasonError = ref(false)
 
 function showConfirmationModal(type: 'approve' | 'reject', rowsToAction: RowData[]) {
   confirmModalType.value = type
   rowsToProcess.value = rowsToAction
+  // Reset rejection reason and error state when opening modal
+  rejectionReason.value = ''
+  showReasonError.value = false
 
   const count = rowsToAction.length
   if (type === 'approve') {
@@ -454,6 +475,12 @@ function closeErrorModal() {
 }
 
 async function confirmAction() {
+  // For rejection, validate that a reason was provided
+  if (confirmModalType.value === 'reject' && !rejectionReason.value.trim()) {
+    showReasonError.value = true
+    return
+  }
+
   try {
     isProcessingAction.value = true
     const type = confirmModalType.value
@@ -461,7 +488,13 @@ async function confirmAction() {
     const transactionIds = actionItems.map((item) => item.transaction_id)
 
     // Call API based on action type
-    await TransfersFlowService.approveRejectTransfers(transactionIds, type === 'approve' ? 2 : 3)
+    if (type === 'approve') {
+      await TransfersFlowService.approveRejectTransfers(transactionIds, 2)
+    } else {
+      // For rejection, pass an array of the same reason for all IDs
+      const reasons = transactionIds.map(() => rejectionReason.value.trim())
+      await TransfersFlowService.approveRejectTransfers(transactionIds, 3, reasons)
+    }
 
     // Reload data after successful action
     await loadTransfers()
@@ -1289,5 +1322,67 @@ async function confirmAction() {
 
 .error-modal .modal-header {
   border-bottom-color: #ef4444;
+}
+
+/* Rejection reason styles */
+.reason-container {
+  margin-top: 1rem;
+}
+
+.reason-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.reason-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+}
+
+.reason-textarea:focus {
+  outline: none;
+  border-color: #6d1a36;
+  box-shadow: 0 0 0 3px rgba(109, 26, 54, 0.1);
+}
+
+.dark-mode .reason-textarea {
+  background-color: #2c2c44;
+  border-color: #3f3f5f;
+  color: #e2e2e2;
+}
+
+.dark-mode .reason-textarea::placeholder {
+  color: #8f8fa8;
+}
+
+.reason-error {
+  color: #ef4444;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  animation: shake 0.5s ease;
+}
+
+.dark-mode .reason-error {
+  color: #fb7185;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
 }
 </style>

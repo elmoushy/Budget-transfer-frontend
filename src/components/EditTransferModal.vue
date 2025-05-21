@@ -70,6 +70,7 @@ import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
 import { QuillEditor } from '@vueup/vue-quill'
 import axios from 'axios'
+import Swal from 'sweetalert2'
 
 // Define component props
 const props = defineProps({
@@ -164,7 +165,21 @@ async function submitForm() {
       editorError.value = true
     }
 
-    alert(isArabic.value ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields')
+    Swal.fire({
+      title: isArabic.value ? 'تنبيه' : 'Warning',
+      text: isArabic.value ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields',
+      icon: 'warning',
+      background: isDarkMode.value ? '#1a1a2e' : '#fff',
+      color: isDarkMode.value ? '#e2e2e2' : '#1a202c',
+      confirmButtonText: isArabic.value ? 'حسناً' : 'OK',
+      confirmButtonColor: '#6d1a36',
+      showClass: {
+        popup: 'animate__animated animate__fadeInDown animate__faster',
+      },
+      hideClass: {
+        popup: 'animate__animated animate__fadeOutUp animate__faster',
+      },
+    })
     return
   }
 
@@ -191,6 +206,27 @@ async function submitForm() {
       },
     )
 
+    // Success notification
+    Swal.fire({
+      title: isArabic.value ? 'تم بنجاح' : 'Success',
+      text: isArabic.value
+        ? 'تم تحديث طلب المناقلة بنجاح'
+        : 'Transfer request updated successfully',
+      icon: 'success',
+      background: isDarkMode.value ? '#1a1a2e' : '#fff',
+      color: isDarkMode.value ? '#e2e2e2' : '#1a202c',
+      confirmButtonText: isArabic.value ? 'حسناً' : 'OK',
+      confirmButtonColor: '#6d1a36',
+      timer: 3000,
+      timerProgressBar: true,
+      showClass: {
+        popup: 'animate__animated animate__fadeInDown animate__faster',
+      },
+      hideClass: {
+        popup: 'animate__animated animate__fadeOutUp animate__faster',
+      },
+    })
+
     // Emit the submit event with the response data
     emit('submit', response.data)
 
@@ -198,7 +234,22 @@ async function submitForm() {
     closeModal()
   } catch (error) {
     console.error('Error updating transfer request:', error)
-    alert(isArabic.value ? 'حدث خطأ أثناء تحديث الطلب' : 'Error updating request')
+
+    Swal.fire({
+      title: isArabic.value ? 'خطأ' : 'Error',
+      text: isArabic.value ? 'حدث خطأ أثناء تحديث الطلب' : 'Error updating request',
+      icon: 'error',
+      background: isDarkMode.value ? '#1a1a2e' : '#fff',
+      color: isDarkMode.value ? '#e2e2e2' : '#1a202c',
+      confirmButtonText: isArabic.value ? 'حسناً' : 'OK',
+      confirmButtonColor: '#6d1a36',
+      showClass: {
+        popup: 'animate__animated animate__fadeInDown animate__faster',
+      },
+      hideClass: {
+        popup: 'animate__animated animate__fadeOutUp animate__faster',
+      },
+    })
   }
 }
 </script>

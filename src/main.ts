@@ -16,7 +16,7 @@ import '@vueup/vue-quill/dist/vue-quill.snow.css' // theme CSS
 import '@fortawesome/fontawesome-free/css/all.css'
 
 /* ───── Vue Motion ──── */
-import { MotionPlugin } from '@vueuse/motion'
+import motionPlugin from './plugins/motion'
 
 import { vObserve } from './utils/domObserver'
 import { setupAxiosInterceptors } from './utils/axiosInterceptor'
@@ -50,7 +50,7 @@ app.use(pinia)
 // Add the router
 app.use(router)
 app.use(PrimeVue, { ripple: true, inputStyle: 'outlined' })
-app.use(MotionPlugin)
+app.use(motionPlugin)
 
 /* Register components globally */
 app.component('QuillEditor', QuillEditor)

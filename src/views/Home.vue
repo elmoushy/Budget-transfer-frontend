@@ -1,14 +1,21 @@
 <template>
   <div class="home-page" :class="{ 'dark-mode': isDarkMode }">
+    <div class="page-background">
+      <div class="gradient-orb orb-1"></div>
+      <div class="gradient-orb orb-2"></div>
+      <div class="gradient-orb orb-3"></div>
+    </div>
+
     <!-- top bar: new request / actions / search -->
-    <div class="toolbar">
-      <button class="btn-primary" @click="openNewRequestModal">
+    <div class="toolbar glass-panel" v-motion-slide-top>
+      <button class="btn-primary glass-btn" @click="openNewRequestModal">
         <span class="btn-icon">+</span>
-        {{ isArabic ? 'طلب ملاحظة جديدة' : 'New Request' }}
+        <span class="btn-text">{{ isArabic ? 'طلب ملاحظة جديدة' : 'New Request' }}</span>
+        <div class="btn-glint"></div>
       </button>
 
       <div class="toolbar-right">
-        <div class="search-container">
+        <div class="search-container glass-field">
           <SearchIcon class="search-icon" />
           <input
             v-model="searchQuery"
@@ -16,14 +23,19 @@
             :placeholder="isArabic ? 'بحث...' : 'Search...'"
             class="input-search"
             @input="handleSearch"
+            @focus="handleSearchFocus"
+            @blur="handleSearchBlur"
           />
-          <button v-if="searchQuery" @click="clearSearch" class="clear-search">×</button>
+          <button v-if="searchQuery" @click="clearSearch" class="clear-search glass-btn-icon">
+            <span>×</span>
+          </button>
+          <div class="search-focus-indicator"></div>
         </div>
       </div>
     </div>
 
     <!-- table -->
-    <div class="table-container">
+    <div class="table-container glass-panel" v-motion-slide-bottom :delay="200">
       <transition-group name="table-fade" tag="table" class="main-table">
         <thead key="head">
           <tr>
@@ -40,17 +52,19 @@
         </thead>
         <tbody key="body">
           <tr
-            v-for="row in displayedRows"
+            v-for="(row, index) in displayedRows"
             :key="row.transaction_id"
             :class="rowBg(row.status)"
             class="table-row"
+            v-motion-slide-right
+            :delay="300 + index * 50"
           >
             <td>
               <div class="attachment-cell">
                 <div
                   class="attachment-indicator"
                   :class="{
-                    'has-attachments': row.attachment_count > 0,
+                    'has-attachments': row.attachment_count && row.attachment_count > 0,
                     'no-attachments': !row.attachment_count,
                     disabled: row.status.toLowerCase() !== 'pending',
                   }"
@@ -64,13 +78,16 @@
                   "
                 >
                   <PaperclipIcon :size="18" />
-                  <span v-if="row.attachment_count > 0" class="attachment-badge">
+                  <span
+                    v-if="row.attachment_count && row.attachment_count > 0"
+                    class="attachment-badge"
+                  >
                     {{ row.attachment_count }}
                   </span>
                 </div>
                 <span
                   class="attachment-text"
-                  :class="{ 'with-attachments': row.attachment_count > 0 }"
+                  :class="{ 'with-attachments': row.attachment_count && row.attachment_count > 0 }"
                 >
                   {{ row.attachment }}
                 </span>
@@ -182,7 +199,7 @@
     <!-- Edit Transfer Modal Component -->
     <EditTransferModal
       v-model="showEditModal"
-      :transferData="currentEditTransfer"
+      :transferData="currentEditTransfer || {}"
       @submit="handleEditSubmit"
     />
 
@@ -206,30 +223,87 @@
       </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
-    <div v-if="showDeleteModal" class="modal-overlay" @click="cancelDelete">
-      <div class="delete-modal-container" :class="{ 'dark-mode': isDarkMode }" @click.stop>
-        <div class="modal-header">
+    <!-- Delete Confirmation Modal - Futuristic Design -->
+    <div v-if="showDeleteModal" class="modal-overlay futuristic-overlay" @click="cancelDelete">
+      <div
+        class="delete-modal-container futuristic-modal"
+        :class="{ 'dark-mode': isDarkMode }"
+        @click.stop
+        v-motion-slide-bottom
+      >
+        <div class="modal-glow-effect"></div>
+        <div class="modal-header futuristic-header">
+          <div class="modal-decorator left"></div>
           <h2>{{ isArabic ? 'تأكيد الحذف' : 'Confirm Deletion' }}</h2>
-          <button class="close-modal" @click="cancelDelete">×</button>
+          <div class="modal-decorator right"></div>
+          <button class="close-modal futuristic-close" @click="cancelDelete">
+            <span class="close-icon">×</span>
+            <span class="close-pulse"></span>
+          </button>
         </div>
-        <div class="modal-body">
-          <p class="delete-message">
+        <div class="modal-body futuristic-body">
+          <div class="warning-icon-container">
+            <div class="warning-icon">
+              <div class="warning-circle"></div>
+              <span>!</span>
+            </div>
+            <div class="warning-pulse"></div>
+          </div>
+          <p class="delete-message futuristic-message">
             {{
               isArabic
                 ? 'هل أنت متأكد من رغبتك في حذف هذا الطلب؟'
                 : 'Are you sure you want to delete this request?'
             }}
           </p>
+          <div class="delete-info" v-if="rowToDelete">
+            <div class="info-item">
+              <span class="info-label">{{ isArabic ? 'الرمز:' : 'Code:' }}</span>
+              <span class="info-value">{{ rowToDelete.code }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">{{ isArabic ? 'التاريخ:' : 'Date:' }}</span>
+              <span class="info-value">{{ formatDate(rowToDelete.request_date) }}</span>
+            </div>
+          </div>
         </div>
-        <div class="modal-footer">
-          <button class="btn-secondary" @click="cancelDelete">
+        <div class="modal-footer futuristic-footer">
+          <button class="btn-secondary futuristic-btn-secondary" @click="cancelDelete">
             {{ isArabic ? 'إلغاء' : 'Cancel' }}
+            <span class="btn-glow"></span>
           </button>
-          <button class="btn-primary delete-confirm-btn" @click="confirmDelete">
+          <button
+            class="btn-primary delete-confirm-btn futuristic-btn-delete"
+            @click="confirmDelete"
+          >
+            <span class="btn-icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path
+                  d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                ></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+              </svg>
+            </span>
             {{ isArabic ? 'نعم، حذف' : 'Yes, Delete' }}
+            <span class="btn-glow delete-glow"></span>
           </button>
         </div>
+        <div class="modal-corner top-left"></div>
+        <div class="modal-corner top-right"></div>
+        <div class="modal-corner bottom-left"></div>
+        <div class="modal-corner bottom-right"></div>
       </div>
     </div>
 
@@ -241,7 +315,7 @@
     />
 
     <!-- Approval Pipeline Modal Component -->
-    <ApprovalPipelineModal v-model="showApprovalModal" :approval-data="currentApproval" />
+    <ApprovalPipelineModal v-model="showApprovalModal" :approval-data="currentApproval || {}" />
   </div>
 </template>
 
@@ -255,6 +329,7 @@ import EditTransferModal from '@/components/EditTransferModal.vue'
 import AttachmentModal from '@/components/AttachmentModal.vue'
 import ApprovalPipelineModal from '@/components/ApprovalPipelineModal.vue'
 import transferService from '@/services/transferService'
+import Swal from 'sweetalert2'
 
 // Import CSS
 import '@/assets/css/Home.css'
@@ -295,6 +370,7 @@ interface TransferData {
   approvel_2_date: null | string
   approvel_3_date: null | string
   approvel_4_date: null | string
+  attachment_count?: number
   status_level: number
   attachment: string
   fy: string
@@ -401,12 +477,18 @@ function confirmDelete() {
     .then(() => {
       // Success - refresh the data
       fetchData()
-      // Show success message
-      alert(isArabic.value ? 'تم حذف الطلب بنجاح' : 'Request deleted successfully')
+      // Replace alert with futuristic notification
+      showFuturisticNotification(
+        isArabic.value ? 'تم حذف الطلب بنجاح' : 'Request deleted successfully',
+      )
     })
-    .catch((error) => {
+    .catch((error: Error) => {
       console.error('Error deleting request:', error)
-      alert(isArabic.value ? 'حدث خطأ أثناء حذف الطلب' : 'Error deleting the request')
+      // Replace alert with futuristic notification for error
+      showFuturisticNotification(
+        isArabic.value ? 'حدث خطأ أثناء حذف الطلب' : 'Error deleting the request',
+        'error',
+      )
     })
     .finally(() => {
       loading.value = false
@@ -423,7 +505,7 @@ function rowBg(status: string) {
 }
 
 // Function to open the file modal
-function openFileModal(row) {
+function openFileModal(row: TransferData) {
   currentTransactionId.value = row.transaction_id
   showFileModal.value = true
 }
@@ -453,10 +535,131 @@ function openApprovalModal(row: TransferData) {
 
 // No need for closeApprovalModal anymore as it's handled by the v-model binding
 
+// Add search focus handlers
+function handleSearchFocus(e: Event) {
+  const target = e.target as HTMLElement
+  const container = target.closest('.search-container')
+  if (container) {
+    container.classList.add('focused')
+  }
+}
+
+function handleSearchBlur(e: Event) {
+  const target = e.target as HTMLElement
+  const container = target.closest('.search-container')
+  if (container) {
+    container.classList.remove('focused')
+    if ((target as HTMLInputElement).value) {
+      container.classList.add('has-value')
+    } else {
+      container.classList.remove('has-value')
+    }
+  }
+}
+
+// Apply magnetic snapping effect to table rows
+function applyMagneticEffect() {
+  const tableRows = document.querySelectorAll('.table-row')
+
+  tableRows.forEach((row) => {
+    row.addEventListener('mousemove', (e: Event) => {
+      const mouseEvent = e as MouseEvent
+      const rect = (row as HTMLElement).getBoundingClientRect()
+      const x = mouseEvent.clientX - rect.left
+      const y = mouseEvent.clientY - rect.top
+
+      // Calculate distance from center
+      const centerX = rect.width / 2
+      const centerY = rect.height / 2
+
+      // Apply subtle transform based on mouse position
+      const strength = 0.5 // Lower value for subtler effect
+      const moveX = ((x - centerX) / centerX) * strength
+      const moveY = ((y - centerY) / centerY) * strength
+
+      ;(row as HTMLElement).style.transform = `translate(${moveX}px, ${moveY}px)`
+    })
+
+    row.addEventListener('mouseleave', () => {
+      // Reset transform when mouse leaves
+      ;(row as HTMLElement).style.transform = 'translate(0, 0)'
+
+      // Add smooth transition back to original position
+      ;(row as HTMLElement).style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
+      setTimeout(() => {
+        ;(row as HTMLElement).style.transition = ''
+      }, 500)
+    })
+  })
+}
+
+// Call this after component mount to apply the magnetic effect
+onMounted(() => {
+  // ...existing mounted code...
+
+  // Apply magnetic effect with a slight delay to ensure DOM is ready
+  setTimeout(() => {
+    applyMagneticEffect()
+  }, 1000)
+
+  // Set up background animation
+  animateBackgroundOrbs()
+})
+
+// Animate floating background orbs
+function animateBackgroundOrbs() {
+  const randomMovement = (min: number, max: number) => {
+    return Math.floor(Math.random() * (max - min + 1) + min)
+  }
+
+  const orbs = document.querySelectorAll('.gradient-orb')
+
+  orbs.forEach((orb) => {
+    const elem = orb as HTMLElement
+    setInterval(() => {
+      const xMovement = randomMovement(-30, 30)
+      const yMovement = randomMovement(-30, 30)
+
+      elem.style.transform = `translate(${xMovement}px, ${yMovement}px)`
+    }, 8000)
+  })
+}
+
+// Futuristic notification function
+const showFuturisticNotification = (
+  title: string,
+  icon: 'success' | 'error' | 'warning' | 'info' = 'success',
+) => {
+  return Swal.fire({
+    title,
+    icon,
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    background: isDarkMode.value ? 'rgba(26, 26, 46, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+    color: isDarkMode.value ? '#e2e2e2' : '#1a202c',
+    customClass: {
+      popup: 'futuristic-toast',
+      title: 'futuristic-toast-title',
+      timerProgressBar: 'futuristic-progress',
+    },
+    showClass: {
+      popup: 'animate__animated animate__fadeInRight animate__faster',
+    },
+    hideClass: {
+      popup: 'animate__animated animate__fadeOutRight animate__faster',
+    },
+    didOpen: (toast) => {
+      toast.addEventListener('mouseenter', Swal.stopTimer)
+      toast.addEventListener('mouseleave', Swal.resumeTimer)
+    },
+  })
+}
+
 // ───────────────────────────────────────────────────────────── Theme & Lang
 const themeStore = useThemeStore()
-// Use auth store for API calls but not directly in template
-const authStore = useAuthStore()
 const isArabic = ref(false)
 const isDarkMode = ref(false)
 
@@ -583,338 +786,352 @@ function handleEditSubmit(updatedData: Record<string, unknown>) {
 </script>
 
 <style scoped>
+/* Base page styles */
 .home-page {
+  min-height: 100vh;
   padding: 1.5rem;
-  max-width: auto;
-  margin: 0 auto;
-  transition:
-    background-color 0.3s ease,
-    color 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--color-bg-light) 0%, #e4e8f0 100%);
 }
 
-/* Dark mode styles */
-.dark-mode {
-  background-color: #1a1a2e;
-  color: #e2e2e2;
+.home-page.dark-mode {
+  background: linear-gradient(135deg, var(--color-bg-dark) 0%, #111122 100%);
+  color: var(--color-text-light);
 }
 
-/* --- toolbar --- */
+/* Background animation elements */
+.page-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.gradient-orb {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.4;
+  filter: blur(80px);
+  transition: transform 8s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.orb-1 {
+  top: 10%;
+  left: 10%;
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, var(--color-accent-magenta) 0%, rgba(240, 171, 252, 0) 70%);
+  animation: pulse 15s ease-in-out infinite alternate;
+}
+
+.orb-2 {
+  bottom: 20%;
+  right: 10%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, var(--color-accent-cyan) 0%, rgba(94, 234, 212, 0) 70%);
+  animation: pulse 18s ease-in-out infinite alternate-reverse;
+}
+
+.orb-3 {
+  top: 40%;
+  right: 30%;
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, var(--color-accent-primary) 0%, rgba(109, 26, 54, 0) 70%);
+  animation: pulse 20s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0.3;
+  }
+}
+
+/* Glassmorphism panels */
+.glass-panel {
+  background: rgba(255, 255, 255, var(--glass-opacity-light));
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border-light);
+  border-radius: 24px;
+  box-shadow: var(--shadow-light);
+  transition: all var(--transition-normal);
+}
+
+.dark-mode .glass-panel {
+  background: rgba(17, 17, 34, var(--glass-opacity-dark));
+  border: 1px solid var(--glass-border-dark);
+  box-shadow: var(--shadow-dark);
+}
+
+/* Toolbar styles */
 .toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  padding: 1rem 1.5rem;
 }
 
-.btn-primary {
-  background: linear-gradient(135deg, #6d1a36, #4a0d20);
-  color: #fff;
+.btn-primary.glass-btn {
+  position: relative;
+  background: linear-gradient(90deg, var(--color-accent-primary), var(--color-accent-secondary));
   border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 6px;
-  cursor: pointer;
+  border-radius: 12px;
+  color: white;
   font-weight: 600;
+  padding: 0.75rem 1.5rem;
   display: flex;
   align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  gap: 0.5rem;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all var(--transition-normal);
 }
 
-.btn-primary:hover {
-  background: linear-gradient(135deg, #7d2a46, #5a1d30);
+.btn-primary.glass-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 20px rgba(109, 26, 54, 0.3);
 }
 
-.btn-primary:active {
-  transform: translateY(1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.dark-mode .btn-primary.glass-btn:hover {
+  box-shadow: var(--shadow-glow-magenta);
+}
+
+.btn-glint {
+  position: absolute;
+  top: -100%;
+  left: -100%;
+  width: 300%;
+  height: 300%;
+  background: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: rotate(45deg);
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-primary.glass-btn:hover .btn-glint {
+  transform: rotate(45deg) translate(100%, 100%);
 }
 
 .btn-icon {
   font-size: 1.2rem;
-  font-weight: bold;
+  line-height: 1;
 }
 
-.toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-}
-
-/* Modern search input */
+/* Search container */
 .search-container {
   position: relative;
+  min-width: 250px;
+  border-radius: 12px;
+  padding: 0.5rem 1rem;
   display: flex;
   align-items: center;
+  transition: all var(--transition-fast);
+}
+
+.search-container.focused {
+  border-color: var(--color-accent-primary);
+  box-shadow: 0 0 0 2px rgba(109, 26, 54, 0.2);
+}
+
+.dark-mode .search-container.focused {
+  box-shadow: 0 0 0 2px rgba(240, 171, 252, 0.2);
+}
+
+.search-focus-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--color-accent-primary), var(--color-accent-magenta));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--transition-normal);
+}
+
+.search-container.focused .search-focus-indicator {
+  transform: scaleX(1);
 }
 
 .search-icon {
-  position: absolute;
-  left: 10px;
-  color: #6d7280;
-  width: 16px;
-  height: 16px;
+  color: #64748b;
+  transition: color var(--transition-fast);
+}
+
+.search-container.focused .search-icon {
+  color: var(--color-accent-primary);
+}
+
+.dark-mode .search-container.focused .search-icon {
+  color: var(--color-accent-magenta);
 }
 
 .input-search {
-  width: 250px;
-  padding: 0.6rem 0.6rem 0.6rem 2.2rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.input-search:focus {
-  border-color: #6d1a36;
-  box-shadow: 0 0 0 3px rgba(109, 26, 54, 0.2);
+  background: transparent;
+  border: none;
+  padding: 0.5rem;
+  font-size: 1rem;
+  color: inherit;
+  width: 100%;
   outline: none;
 }
 
 .clear-search {
-  position: absolute;
-  right: 10px;
   background: transparent;
   border: none;
-  font-size: 1.2rem;
-  color: #6d7280;
+  color: #64748b;
   cursor: pointer;
-  padding: 0;
+  font-size: 1.2rem;
   line-height: 1;
+  padding: 0.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
 }
 
-/* Dark mode button and UI elements */
-.dark-mode .btn-primary {
-  background: linear-gradient(135deg, #7d2a46, #5a1d30);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+.clear-search:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--color-accent-primary);
 }
 
-.dark-mode .input-search {
-  background-color: #2c2c44;
-  color: #e2e2e2;
-  border-color: #3f3f5f;
+.dark-mode .clear-search:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-accent-magenta);
 }
 
-.dark-mode .input-search::placeholder {
-  color: #8f8fa8;
-}
-
-.dark-mode .search-icon,
-.dark-mode .clear-search {
-  color: #8f8fa8;
-}
-
-/* --- table container --- */
+/* Table container */
 .table-container {
   overflow-x: auto;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  margin-bottom: 1rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .main-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  text-align: center;
-  font-size: 0.875rem;
 }
 
-.main-table th,
-.main-table td {
-  padding: 0.8rem;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.main-table th {
-  background: #f8fafc;
-  color: #64748b;
+.main-table thead th {
+  text-align: left;
   font-weight: 600;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
-  position: sticky;
-  top: 0;
+  font-size: 0.875rem;
+  padding: 1rem 0.75rem;
+  color: #64748b;
+  position: relative;
+  transition: color var(--transition-fast);
 }
 
-.main-table th:first-child {
-  border-top-left-radius: 8px;
+.dark-mode .main-table thead th {
+  color: #94a3b8;
 }
 
-.main-table th:last-child {
-  border-top-right-radius: 8px;
+.main-table tbody td {
+  padding: 1rem 0.75rem;
+  vertical-align: middle;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all var(--transition-fast);
+}
+
+.dark-mode .main-table tbody td {
+  border-top-color: rgba(255, 255, 255, 0.05);
 }
 
 .table-row {
-  transition: all 0.2s ease;
+  position: relative;
+  transition:
+    transform var(--transition-fast),
+    background-color var(--transition-fast);
 }
 
 .table-row:hover {
-  background-color: rgba(109, 26, 54, 0.05);
-}
-
-.no-results {
-  text-align: center;
-  padding: 2rem !important;
-  color: #64748b;
-  font-style: italic;
-}
-
-/* Dark mode table styling */
-.dark-mode .table-container {
-  background-color: #2c2c44;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-}
-
-.dark-mode .main-table th {
-  background: #252538;
-  color: #a0a0b8;
-}
-
-.dark-mode .main-table td {
-  border-bottom-color: #3f3f5f;
+  background-color: rgba(0, 0, 0, 0.02);
+  transform: scale(1.01);
+  z-index: 1;
 }
 
 .dark-mode .table-row:hover {
-  background-color: rgba(125, 42, 70, 0.15);
+  background-color: rgba(255, 255, 255, 0.03);
 }
 
-.dark-mode .no-results {
-  color: #a0a0b8;
-}
-
-/* --- Status badges --- */
+/* Status badge */
 .status-badge {
   display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
+  padding: 0.35rem 0.75rem;
+  border-radius: 10px;
   font-size: 0.75rem;
   font-weight: 600;
-  text-transform: uppercase;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
 }
 
-.status-approved {
-  background-color: rgba(52, 211, 153, 0.2);
-  color: #047857;
+.status-badge::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 70%);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.status-badge:hover::after {
+  opacity: 1;
 }
 
 .status-pending {
-  background-color: rgba(248, 113, 113, 0.2);
-  color: #b91c1c;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #7c2d12;
 }
 
-.status-no {
-  background-color: rgba(156, 163, 175, 0.2);
-  color: #4b5563;
+.status-approved {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #064e3b;
 }
 
-/* Dark mode status badges */
-.dark-mode .status-approved {
-  background-color: rgba(52, 211, 153, 0.15);
-  color: #4ade80;
+.status-rejected {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #7f1d1d;
 }
 
 .dark-mode .status-pending {
-  background-color: rgba(248, 113, 113, 0.15);
-  color: #fb7185;
+  color: #fef3c7;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
 }
 
-.dark-mode .status-no {
-  background-color: rgba(156, 163, 175, 0.15);
-  color: #bfc3cd;
+.dark-mode .status-approved {
+  color: #d1fae5;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
 }
 
-/* --- row colors - subtler version --- */
-.row-pending {
-  background: rgba(245, 158, 11, 0.1); /* Orange/amber color for pending */
-}
-
-.row-approved {
-  background: rgba(52, 211, 153, 0.1); /* Green color for approved */
-}
-
-.row-rejected {
-  background: rgba(248, 113, 113, 0.1); /* Red color for rejected */
-}
-
-.row-none {
-  background: rgba(156, 163, 175, 0.1);
-}
-
-/* Dark mode row colors */
-.dark-mode .row-pending {
-  background: rgba(245, 158, 11, 0.08); /* Orange/amber color for pending */
-}
-
-.dark-mode .row-approved {
-  background: rgba(52, 211, 153, 0.08);
-}
-
-.dark-mode .row-rejected {
-  background: rgba(248, 113, 113, 0.08); /* Red color for rejected */
-}
-
-.dark-mode .row-none {
-  background: rgba(156, 163, 175, 0.08);
-}
-
-/* --- icons in cells --- */
-.icon-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: #6d1a36;
-  padding: 0.4rem;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-
-.icon-btn:hover {
-  background-color: rgba(109, 26, 54, 0.1);
-  transform: scale(1.1);
-}
-
-.code-cell {
-  color: #6d1a36;
-  font-weight: 600;
-}
-
-.code-link {
-  color: #6d1a36;
-  font-weight: 600;
-  text-decoration: none;
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.code-link:hover {
-  text-decoration: underline;
-  color: #8a2a44;
-}
-
-.dark-mode .code-link {
-  color: #ff9ea0;
-}
-
-.dark-mode .code-link:hover {
-  color: #ffb5b7;
-}
-
-/* Dark mode icon buttons */
-.dark-mode .icon-btn {
-  color: #ff9ea0;
-}
-
-.dark-mode .icon-btn:hover {
-  background-color: rgba(125, 42, 70, 0.2);
-}
-
-.dark-mode .code-cell {
-  color: #ff9ea0;
+.dark-mode .status-rejected {
+  color: #fee2e2;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
 }
 
 /* Pagination styles */
@@ -1787,5 +2004,737 @@ function handleEditSubmit(updatedData: Record<string, unknown>) {
 
 .dark-mode .attachment-indicator.disabled {
   opacity: 0.5;
+}
+
+/* Enhanced attachment indicator */
+.attachment-indicator {
+  position: relative;
+  min-width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.attachment-indicator:hover {
+  transform: scale(1.1);
+}
+
+.has-attachments {
+  color: var(--color-accent-cyan);
+}
+
+.dark-mode .has-attachments {
+  color: var(--color-accent-cyan);
+  text-shadow: 0 0 8px rgba(94, 234, 212, 0.4);
+}
+
+.attachment-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-secondary));
+  color: white;
+  font-size: 0.7rem;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  font-weight: 600;
+  box-shadow: var(--shadow-light);
+  animation: scaleIn 0.3s ease-out;
+}
+
+.dark-mode .attachment-badge {
+  box-shadow: var(--shadow-glow-magenta);
+}
+
+/* Button styles */
+.icon-btn {
+  background: transparent;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  transition: all var(--transition-fast);
+}
+
+.icon-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--color-accent-primary);
+  transform: translateY(-2px);
+}
+
+.dark-mode .icon-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-accent-magenta);
+  box-shadow: var(--shadow-glow-magenta);
+}
+
+/* Animation for table rows */
+.table-fade-enter-active,
+.table-fade-leave-active {
+  transition: all 0.5s ease;
+}
+
+.table-fade-enter-from,
+.table-fade-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .home-page {
+    padding: 1rem;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .toolbar-right {
+    width: 100%;
+  }
+
+  .search-container {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .table-container {
+    border-radius: 12px;
+    margin: 0 -0.5rem;
+  }
+
+  .table-container::before {
+    content: '←  Scroll horizontally  →';
+    display: block;
+    text-align: center;
+    padding: 0.5rem;
+    color: #64748b;
+    font-size: 0.75rem;
+  }
+
+  .dark-mode .table-container::before {
+    color: #94a3b8;
+  }
+}
+
+/* Futuristic Delete Modal Styles */
+.futuristic-overlay {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.futuristic-modal {
+  position: relative;
+  max-width: 450px;
+  width: 90%;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  animation: modalAppear 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: center;
+}
+
+.dark-mode .futuristic-modal {
+  background: rgba(25, 25, 35, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 0 20px rgba(240, 171, 252, 0.1);
+}
+
+.modal-glow-effect {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(240, 171, 252, 0.1) 0%, rgba(240, 171, 252, 0) 60%);
+  z-index: -1;
+  opacity: 0;
+  animation: glow-pulse 4s ease-in-out infinite alternate;
+}
+
+.dark-mode .modal-glow-effect {
+  opacity: 1;
+}
+
+.futuristic-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 1.2rem 1.5rem;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0),
+    rgba(109, 26, 54, 0.1),
+    rgba(255, 255, 255, 0)
+  );
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .futuristic-header {
+  background: linear-gradient(
+    90deg,
+    rgba(25, 25, 35, 0),
+    rgba(240, 171, 252, 0.15),
+    rgba(25, 25, 35, 0)
+  );
+  border-bottom: 1px solid rgba(240, 171, 252, 0.1);
+}
+
+.modal-decorator {
+  height: 2px;
+  flex: 1;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-accent-primary, #6d1a36),
+    transparent
+  );
+}
+
+.modal-decorator.left {
+  margin-right: 15px;
+  opacity: 0;
+  animation: decoratorAppear 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.3s;
+}
+
+.modal-decorator.right {
+  margin-left: 15px;
+  opacity: 0;
+  animation: decoratorAppear 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.5s;
+}
+
+.futuristic-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background: linear-gradient(
+    90deg,
+    var(--color-accent-primary, #6d1a36),
+    var(--color-accent-magenta, #f0abfc)
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+}
+
+.futuristic-close {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  width: 30px;
+  height: 30px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.futuristic-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--color-accent-primary, #6d1a36);
+  transform: rotate(90deg);
+}
+
+.dark-mode .futuristic-close:hover {
+  background: rgba(240, 171, 252, 0.2);
+  color: var(--color-accent-magenta, #f0abfc);
+  box-shadow: 0 0 10px rgba(240, 171, 252, 0.3);
+}
+
+.close-icon {
+  position: relative;
+  z-index: 2;
+}
+
+.close-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(240, 171, 252, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+
+.futuristic-close:hover .close-pulse {
+  animation: close-pulse 0.6s ease-out;
+}
+
+.futuristic-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.warning-icon-container {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin-bottom: 0.5rem;
+}
+
+.warning-icon {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #f87171, #ef4444);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
+  animation: warningAppear 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 2;
+}
+
+.dark-mode .warning-icon {
+  box-shadow:
+    0 4px 20px rgba(239, 68, 68, 0.5),
+    0 0 0 1px rgba(239, 68, 68, 0.2);
+}
+
+.warning-circle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.6);
+  box-sizing: border-box;
+}
+
+.warning-icon span {
+  color: white;
+  font-size: 2.5rem;
+  font-weight: 700;
+  transform: translateY(-2px);
+}
+
+.warning-pulse {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.3);
+  animation: pulse 2s ease-out infinite;
+  z-index: 1;
+}
+
+.futuristic-message {
+  font-size: 1.1rem;
+  font-weight: 500;
+  text-align: center;
+  max-width: 90%;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.delete-info {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dark-mode .delete-info {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+.info-label {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.dark-mode .info-label {
+  color: #94a3b8;
+}
+
+.info-value {
+  font-weight: 600;
+}
+
+.futuristic-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1.2rem 1.5rem;
+  gap: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+.dark-mode .futuristic-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.futuristic-btn-secondary {
+  position: relative;
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.5);
+  color: #64748b;
+  font-weight: 500;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.futuristic-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .futuristic-btn-secondary {
+  background: rgba(30, 30, 46, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e2e2;
+}
+
+.dark-mode .futuristic-btn-secondary:hover {
+  background: rgba(40, 40, 56, 0.8);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.futuristic-btn-delete {
+  position: relative;
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.futuristic-btn-delete:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+}
+
+.dark-mode .futuristic-btn-delete:hover {
+  box-shadow:
+    0 4px 15px rgba(239, 68, 68, 0.6),
+    0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+.btn-glow {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 80%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-30deg);
+  transition: all 0.6s ease;
+}
+
+.futuristic-btn-secondary:hover .btn-glow,
+.futuristic-btn-delete:hover .btn-glow {
+  left: 120%;
+  transition: all 0.6s ease;
+}
+
+.delete-glow {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+.modal-corner {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: var(--color-accent-primary, #6d1a36);
+  border-style: solid;
+  opacity: 0;
+  animation: cornerAppear 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.dark-mode .modal-corner {
+  border-color: var(--color-accent-magenta, #f0abfc);
+}
+
+.top-left {
+  top: 0;
+  left: 0;
+  border-width: 2px 0 0 2px;
+  animation-delay: 0.2s;
+}
+
+.top-right {
+  top: 0;
+  right: 0;
+  border-width: 2px 2px 0 0;
+  animation-delay: 0.4s;
+}
+
+.bottom-left {
+  bottom: 0;
+  left: 0;
+  border-width: 0 0 2px 2px;
+  animation-delay: 0.6s;
+}
+
+.bottom-right {
+  bottom: 0;
+  right: 0;
+  border-width: 0 2px 2px 0;
+  animation-delay: 0.8s;
+}
+
+@keyframes modalAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  80% {
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes cornerAppear {
+  0% {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  100% {
+    opacity: 1;
+    width: 12px;
+    height: 12px;
+  }
+}
+
+@keyframes warningAppear {
+  0% {
+    transform: scale(0);
+  }
+  60% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+}
+
+@keyframes glow-pulse {
+  0% {
+    transform: rotate(0deg);
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: rotate(360deg);
+    opacity: 0.3;
+  }
+}
+
+@keyframes close-pulse {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 0.5;
+  }
+  100% {
+    width: 100px;
+    height: 100px;
+    opacity: 0;
+  }
+}
+
+@keyframes decoratorAppear {
+  0% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@media (max-width: 480px) {
+  .futuristic-modal {
+    width: 95%;
+  }
+
+  .futuristic-footer {
+    flex-direction: column;
+  }
+
+  .futuristic-btn-secondary,
+  .futuristic-btn-delete {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Add futuristic SweetAlert toast styles */
+:global(.futuristic-toast) {
+  border-radius: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 0 15px rgba(109, 26, 54, 0.2) !important;
+  backdrop-filter: blur(10px) !important;
+  padding: 12px 20px !important;
+  width: auto !important;
+  max-width: 360px !important;
+}
+
+:global(.dark-mode .futuristic-toast) {
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 0 15px rgba(240, 171, 252, 0.2) !important;
+}
+
+:global(.futuristic-toast-title) {
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.3px !important;
+  margin-left: 5px !important;
+}
+
+:global(.futuristic-progress) {
+  background: linear-gradient(
+    90deg,
+    var(--color-accent-primary, #6d1a36),
+    var(--color-accent-magenta, #f0abfc)
+  ) !important;
+  height: 3px !important;
+  bottom: 0 !important;
+  border-radius: 0 0 16px 16px !important;
+}
+
+:global(.swal2-icon) {
+  margin: 0 0 5px 0 !important;
+  transform: scale(0.8) !important;
+}
+
+/* Add the required animation classes from animate.css or define your own */
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translate3d(100%, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes fadeOutRight {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(100%, 0, 0);
+  }
+}
+
+:global(.animate__animated) {
+  animation-duration: 0.5s;
+  animation-fill-mode: both;
+}
+
+:global(.animate__fadeInRight) {
+  animation-name: fadeInRight;
+}
+
+:global(.animate__fadeOutRight) {
+  animation-name: fadeOutRight;
+}
+
+:global(.animate__faster) {
+  animation-duration: 0.3s;
 }
 </style>

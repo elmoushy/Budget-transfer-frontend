@@ -78,50 +78,68 @@ async function logout() {
 
 <style scoped>
 .header {
-  height: 60px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 18px;
-  background: linear-gradient(90deg, #6d1a36, #4a0d20); /* Dark maroon gradient */
+  padding: 0 24px;
+  background: rgba(109, 26, 54, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   position: sticky;
   top: 0;
   z-index: 100;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .header.dark-theme {
-  background: linear-gradient(90deg, #3c0d1c, #2a0712); /* Darker maroon for dark mode */
+  background: rgba(40, 10, 20, 0.85);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 0 30px rgba(180, 70, 100, 0.03);
 }
 
 /* <-- clean left block --> */
 .left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+  position: relative;
 }
 
-/* your existing logo/text styles */
+/* Logo with light effect */
 .logo-img {
-  width: 32px;
+  width: 36px;
   height: auto;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
+  transition: all 0.3s ease;
+}
+
+.logo-img:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
 }
 
 .logo-text {
   font-weight: 700;
-  font-size: 20px;
-  background: linear-gradient(90deg, #fafafa, #e5e7eb);
+  font-size: 22px;
+  background: linear-gradient(90deg, #ffffff, #f0f0f0);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  letter-spacing: -0.02em;
+  position: relative;
 }
 
 /* --- right block --- */
 .actions {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 18px;
+  height: 100%;
 }
 
 .icon {
@@ -132,19 +150,35 @@ async function logout() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px;
-  transition:
-    transform 0.15s,
-    opacity 0.15s;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.icon::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  transform: scale(0);
+  transition: transform 0.4s ease;
+}
+
+.icon:hover::before {
+  transform: scale(1);
 }
 
 .icon:hover {
-  transform: translateY(-1px);
-  opacity: 0.9;
+  transform: translateY(-2px);
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .icon:active {
-  transform: translateY(1px);
+  transform: scale(0.95);
 }
 
 .bell {
@@ -153,36 +187,46 @@ async function logout() {
 
 .badge {
   position: absolute;
-  right: 3px;
-  top: 3px;
-  width: 6px;
-  height: 6px;
+  right: 2px;
+  top: 2px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: #ff9800; /* Adjusted to a warmer orange */
+  background: linear-gradient(45deg, #ff9800, #ff5252);
+  box-shadow: 0 0 10px rgba(255, 152, 0, 0.6);
   animation: pulse 2s infinite;
+  z-index: 1;
 }
 
 .logout {
   color: #ffcccb;
+  box-shadow: 0 0 0 1px rgba(255, 204, 203, 0.2);
+}
+
+.logout:hover {
+  box-shadow:
+    0 0 0 1px rgba(255, 204, 203, 0.4),
+    0 0 15px rgba(255, 204, 203, 0.2);
 }
 
 /* Toggle switches */
 .toggle-container {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .toggle-label {
   font-size: 12px;
-  font-weight: bold;
+  font-weight: 500;
+  letter-spacing: 0.03em;
 }
 
 .switch {
   position: relative;
   display: inline-block;
-  width: 40px;
-  height: 20px;
+  width: 46px;
+  height: 24px;
 }
 
 .switch input {
@@ -198,55 +242,100 @@ async function logout() {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #ccc;
-  transition: 0.4s;
-  border-radius: 20px;
+  background-color: rgba(150, 150, 150, 0.2);
+  transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 24px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
 }
 
 .slider:before {
   position: absolute;
   content: '';
-  height: 16px;
-  width: 16px;
-  left: 2px;
+  height: 18px;
+  width: 18px;
+  left: 3px;
   bottom: 2px;
   background-color: white;
-  transition: 0.4s;
+  transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+}
+
+.slider::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 152, 0, 0.1));
+  transform: translateX(-100%);
+  transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 input:checked + .slider {
-  background-color: #ff9800;
+  background-color: rgba(255, 152, 0, 0.3);
+}
+
+input:checked + .slider::after {
+  transform: translateX(0);
 }
 
 input:focus + .slider {
-  box-shadow: 0 0 1px #ff9800;
+  box-shadow:
+    0 0 2px rgba(255, 152, 0, 0.6),
+    0 0 0 1px rgba(255, 152, 0, 0.3);
 }
 
 input:checked + .slider:before {
-  transform: translateX(20px);
+  transform: translateX(22px);
+  background: #ff9800;
+  box-shadow: 0 0 8px rgba(255, 152, 0, 0.4);
 }
 
 @keyframes pulse {
-  50% {
-    transform: scale(1.3);
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(255, 152, 0, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 152, 0, 0);
   }
 }
 
 .username {
   font-size: 0.9rem;
   font-weight: 500;
-  padding-right: 12px;
-  border-right: 1px solid rgba(255, 255, 255, 0.2);
-  margin-right: 12px;
+  padding-right: 16px;
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  margin-right: 16px;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.username::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: #4ade80;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
+  display: inline-block;
 }
 
 [dir='rtl'] .username {
   padding-right: 0;
-  padding-left: 12px;
+  padding-left: 16px;
   border-right: none;
-  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
   margin-right: 0;
-  margin-left: 12px;
+  margin-left: 16px;
 }
 </style>
