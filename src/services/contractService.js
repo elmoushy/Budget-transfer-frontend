@@ -3,30 +3,21 @@ import { useAuthStore } from '@/stores/authStore'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
-// You can optionally create an axios instance, if needed:
-// const apiClient = axios.create({
-//   baseURL: `${BASE_URL}/api`,
-//   headers: {
-//     'Accept': 'application/json',
-//     'Content-Type': 'application/json'
-//   }
-// });
-
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 const API_ENDPOINT = '/api/budget/transfers/list/'
 const PAGE_SIZE = 10
 
 /**
- * Service for handling transfer-related API operations
+ * Service for handling contract-related API operations
  */
 export default {
   /**
-   * Fetch transfers with optional search and pagination
+   * Fetch contracts with optional search and pagination
    * @param {string} searchQuery - Optional search term
    * @param {number} page - Page number for pagination
-   * @returns {Promise} - API response with transfer data
+   * @returns {Promise} - API response with contract data
    */
-  async fetchTransfers(searchQuery = '', page = 1) {
+  async fetchContracts(searchQuery = '', page = 1) {
     const authStore = useAuthStore()
 
     if (!authStore.token) {
@@ -45,32 +36,30 @@ export default {
       'Content-Type': 'application/json',
     }
 
-    // Always include "FAR" as the code in the request body
+    // Always include "CON" as the code in the request body
     // If there's a search query, include it as well
     const requestBody = searchQuery.trim()
-      ? { code: 'FAR', search: searchQuery.trim() }
-      : { code: 'FAR' }
+      ? { code: 'FAD', search: searchQuery.trim() }
+      : { code: 'FAD' }
 
     try {
-      // Always use POST for both listing and searching
       const response = await axios.post(`${API_BASE_URL}${API_ENDPOINT}`, requestBody, {
+        params,
         headers,
-        params, // Pagination params still go in URL
       })
-
       return response.data
     } catch (error) {
-      console.error('Error fetching transfers:', error)
+      console.error('Error fetching contracts:', error)
       throw error
     }
   },
 
   /**
-   * Delete a transfer by ID
-   * @param {number} transferId - The ID of the transfer to delete
+   * Delete a contract by ID
+   * @param {number} contractId - The ID of the contract to delete
    * @returns {Promise} - API response
    */
-  async deleteTransfer(transferId) {
+  async deleteContract(contractId) {
     const authStore = useAuthStore()
 
     if (!authStore.token) {
@@ -78,97 +67,102 @@ export default {
     }
 
     try {
-      return await axios.delete(`${API_BASE_URL}/api/budget/transfers/${transferId}/delete/`, {
-        headers: {
-          Authorization: `Bearer ${authStore.token}`,
-          Accept: 'application/json',
+      const response = await axios.delete(
+        `${API_BASE_URL}/api/budget/transfers/${contractId}/delete/`,
+        {
+          headers: {
+            Authorization: `Bearer ${authStore.token}`,
+            Accept: 'application/json',
+          },
         },
-      })
+      )
+      return response.data
     } catch (error) {
-      console.error('Error deleting transfer:', error)
+      console.error('Error deleting contract:', error)
       throw error
     }
   },
 
   /**
-   * Fetches transfer details by transaction ID
+   * Fetches contract details by transaction ID
    * @param {number} transactionId - The transaction ID to fetch
-   * @returns {Promise} - Promise with transfer data containing:
+   * @returns {Promise} - Promise with contract data containing:
    *   - summary: Object with transaction_id, balanced status
-   *   - transfers: Array of transfer objects with validation_errors
+   *   - contracts: Array of contract objects with validation_errors
    */
-  async getTransferDetails(transactionId) {
+  async getContractDetails(transactionId) {
     const authStore = useAuthStore()
     try {
       const response = await axios.get(
-        `${BASE_URL}/api/adjd-transfers/?transaction=${transactionId}`,
+        `${API_BASE_URL}/api/adjd-transfers/?transaction=${transactionId}`,
         {
           headers: {
             Authorization: `Bearer ${authStore.token}`,
+            Accept: 'application/json',
           },
         },
       )
-      // Return the complete response structure with summary and transfers
       return response.data
     } catch (error) {
-      console.error('Error fetching transfer details:', error)
+      console.error('Error fetching contract details:', error)
       throw error
     }
   },
 
   /**
-   * Submit a transfer request
+   * Submit a contract request
    * @param {number} transactionId - The transaction ID
    * @returns {Promise} - Promise with response
    */
-  async submitTransferRequest(transactionId) {
+  async submitContractRequest(transactionId) {
     const authStore = useAuthStore()
     try {
       const response = await axios.post(
-        `${BASE_URL}/api/adjd-transfers/submit/`,
-        { transaction: transactionId },
+        `${API_BASE_URL}/api/budget/transfers/${transactionId}/submit/`,
+        {},
         {
           headers: {
             Authorization: `Bearer ${authStore.token}`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
           },
         },
       )
       return response.data
     } catch (error) {
-      console.error('Error submitting transfer request:', error)
+      console.error('Error submitting contract request:', error)
       throw error
     }
   },
 
   /**
-   * Reopen a transfer request
+   * Reopen a contract request
    * @param {number} transactionId - The transaction ID
    * @returns {Promise} - Promise with response
    */
-  async reopenTransferRequest(transactionId) {
+  async reopenContractRequest(transactionId) {
     const authStore = useAuthStore()
     try {
       const response = await axios.post(
-        `${BASE_URL}/api/adjd-transfers/reopen/`,
-        {
-          transaction: transactionId,
-          action: 'reopen',
-        },
+        `${API_BASE_URL}/api/budget/transfers/${transactionId}/reopen/`,
+        {},
         {
           headers: {
             Authorization: `Bearer ${authStore.token}`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
           },
         },
       )
       return response.data
     } catch (error) {
-      console.error('Error reopening transfer request:', error)
+      console.error('Error reopening contract request:', error)
       throw error
     }
   },
 
   /**
-   * Generate report for a transfer
+   * Generate report for a contract
    * @param {number} transactionId - The transaction ID
    * @returns {Promise} - Promise with report data
    */
@@ -176,12 +170,12 @@ export default {
     const authStore = useAuthStore()
     try {
       const response = await axios.get(
-        `${BASE_URL}/api/budget/transfers/${transactionId}/report/`,
+        `${API_BASE_URL}/api/budget/transfers/${transactionId}/report/`,
         {
           headers: {
             Authorization: `Bearer ${authStore.token}`,
+            Accept: 'application/json',
           },
-          responseType: 'blob',
         },
       )
       return response.data
@@ -192,53 +186,33 @@ export default {
   },
 
   /**
-   * Create transfer requests
-   * @param {Array} transferData - Array of transfer objects
+   * Create contract requests
+   * @param {Array} contractData - Array of contract objects
    * @returns {Promise} - Promise with response
    */
-  async createTransfer(transferData) {
+  async createContract(contractData) {
     const authStore = useAuthStore()
     try {
-      // Map each transfer using 'transaction' property (not transaction_id)
-      const transfersArray = transferData.map((item) => {
-        // Create base object without from_center
-        const transferObject = {
-          transaction: item.transaction,
-          cost_center_code: item.cost_center_code,
-          cost_center_name: item.cost_center_name,
-          account_code: item.account_code,
-          account_name: item.account_name,
-          approved_budget: parseFloat(item.approved_budget) || 0,
-          available_budget: parseFloat(item.available_budget) || 0,
-          to_center: parseFloat(item.to_center) || 0,
-          encumbrance: parseFloat(item.encumbrance) || 0,
-          actual: parseFloat(item.actual) || 0,
-          done: 1,
-        }
-
-        // Only add from_center if it's not null
-        if (item.from_center !== null) {
-          transferObject.from_center = parseFloat(item.from_center) || 0
-        }
-
-        return transferObject
-      })
-
-      // Send the array directly as payload
-      const response = await axios.post(`${BASE_URL}/api/adjd-transfers/create/`, transfersArray, {
-        headers: {
-          Authorization: `Bearer ${authStore.token}`,
+      const response = await axios.post(
+        `${API_BASE_URL}/api/adjd-transfers/create/`,
+        contractData,
+        {
+          headers: {
+            Authorization: `Bearer ${authStore.token}`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
         },
-      })
+      )
       return response.data
     } catch (error) {
-      console.error('Error creating transfer request:', error)
+      console.error('Error creating contract:', error)
       throw error
     }
   },
 
   /**
-   * Upload file attachments for a transfer
+   * Upload file attachments for a contract
    * @param {File} file - The file to upload
    * @param {number} transactionId - The transaction ID
    * @returns {Promise} - Promise with response
@@ -247,15 +221,15 @@ export default {
     const authStore = useAuthStore()
     try {
       const formData = new FormData()
-      formData.append('transaction_id', transactionId.toString())
       formData.append('file', file)
 
       const response = await axios.post(
-        `${BASE_URL}/api/budget/transfers/upload-files/`,
+        `${API_BASE_URL}/api/budget/transfers/${transactionId}/files/upload/`,
         formData,
         {
           headers: {
             Authorization: `Bearer ${authStore.token}`,
+            Accept: 'application/json',
             'Content-Type': 'multipart/form-data',
           },
         },
@@ -266,9 +240,8 @@ export default {
       throw error
     }
   },
-
   /**
-   * List file attachments for a transfer
+   * List file attachments for a contract
    * @param {number} transactionId - The transaction ID
    * @returns {Promise} - Promise with response containing array of attachments
    */
@@ -276,16 +249,41 @@ export default {
     const authStore = useAuthStore()
     try {
       const response = await axios.get(
-        `${BASE_URL}/api/budget/transfers/list-files/?transaction_id=${transactionId}`,
+        `${API_BASE_URL}/api/budget/transfers/${transactionId}/files/`,
         {
           headers: {
             Authorization: `Bearer ${authStore.token}`,
+            Accept: 'application/json',
           },
         },
       )
       return response.data
     } catch (error) {
       console.error('Error listing files:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Download a file attachment
+   * @param {number} fileId - The ID of the file to download
+   * @returns {Promise} - Promise with file blob
+   */
+  async downloadFile(fileId) {
+    const authStore = useAuthStore()
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/api/budget/transfers/files/${fileId}/download/`,
+        {
+          headers: {
+            Authorization: `Bearer ${authStore.token}`,
+          },
+          responseType: 'blob',
+        },
+      )
+      return response.data
+    } catch (error) {
+      console.error('Error downloading file:', error)
       throw error
     }
   },
@@ -298,17 +296,21 @@ export default {
    */
   async uploadExcelFile(file, transactionId) {
     const authStore = useAuthStore()
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('transaction', transactionId.toString())
+    const formData = new FormData()
+    formData.append('file', file)
 
-      const response = await axios.post(`${BASE_URL}/api/adjd-transfers/excel-upload/`, formData, {
-        headers: {
-          Authorization: `Bearer ${authStore.token}`,
-          'Content-Type': 'multipart/form-data',
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/api/budget/transfers/${transactionId}/excel/upload/`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${authStore.token}`,
+            Accept: 'application/json',
+            'Content-Type': 'multipart/form-data',
+          },
         },
-      })
+      )
       return response.data
     } catch (error) {
       console.error('Error uploading Excel file:', error)
@@ -326,10 +328,15 @@ export default {
     const authStore = useAuthStore()
     try {
       const response = await axios.get(
-        `${BASE_URL}/api/accounts-entities/pivot-funds/getdetail/?entity_id=${entityId}&account_id=${accountId}`,
+        `${API_BASE_URL}/api/accounts-entities/pivot-funds/getdetail/`,
         {
+          params: {
+            entity_id: entityId,
+            account_id: accountId,
+          },
           headers: {
             Authorization: `Bearer ${authStore.token}`,
+            Accept: 'application/json',
           },
         },
       )
@@ -341,12 +348,18 @@ export default {
   },
 
   /**
-   * Alternative method: Get transfers using an axios instance
+   * Alternative method: Get contracts using an axios instance
    * (Optional if needed, otherwise you can remove this method)
    * @param {number} transactionId
-   * @returns {Promise} - Promise with transfer data containing summary and transfers array
+   * @returns {Promise} - Promise with contract data containing summary and contracts array
    */
-  getTransfers(transactionId) {
-    return axios.get(`${BASE_URL}/api/budget/transfers/?transaction=${transactionId}`)
+  getContracts(transactionId) {
+    const authStore = useAuthStore()
+    return axios.get(`${API_BASE_URL}/api/budget/transfers/${transactionId}/`, {
+      headers: {
+        Authorization: `Bearer ${authStore.token}`,
+        Accept: 'application/json',
+      },
+    })
   },
 }

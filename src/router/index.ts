@@ -36,9 +36,15 @@ const routes = [
     alias: '/contracts',
   },
   {
-    path: '/enhancements-pending-approval',
-    name: 'EnhancementsPendingApproval',
-    component: () => import('@/views/EnhancementsPendingApproval.vue'),
+    path: '/contracts/:id',
+    name: 'ContractDetails',
+    component: () => import('@/views/ContractDetail.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/contracts-pending-approval',
+    name: 'ContractsPendingApproval',
+    component: () => import('@/views/ContractsPendingApproval.vue'),
     meta: { requiresAuth: true },
   },
   {
@@ -48,9 +54,9 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
-    path: '/contracts-pending-approval',
-    name: 'ContractsPendingApproval',
-    component: () => import('@/views/ContractsPendingApproval.vue'),
+    path: '/transfers-pending-approval',
+    name: 'EnhancementsPendingApproval',
+    component: () => import('@/views/TransfersPendingApproval.vue'),
     meta: { requiresAuth: true },
   },
   {

@@ -1,5 +1,5 @@
 <template>
-  <div class="transfer-request-page" :class="{ 'dark-mode': isDarkMode, rtl: isRTL }">
+  <div class="contract-request-page" :class="{ 'dark-mode': isDarkMode, rtl: isRTL }">
     <div class="page-header">
       <!-- Replaced title with error message when unbalanced -->
       <div v-if="apiSummary && !apiSummary.balanced" class="balance-error-message">
@@ -7,8 +7,8 @@
         <span class="error-text">
           {{
             isArabic
-              ? 'الميزان غير متوازن. يرجى مراجعة قيم التحويل.'
-              : 'Unbalanced transfer. Please review your transfer values.'
+              ? 'الميزان غير متوازن. يرجى مراجعة قيم العقد.'
+              : 'Unbalanced contract. Please review your contract values.'
           }}
         </span>
       </div>
@@ -26,7 +26,7 @@
         </div>
         <button
           class="btn-header-create"
-          @click="createTransfer"
+          @click="createContract"
           :disabled="!isSaveButtonEnabled"
           :class="{ 'btn-disabled': !isSaveButtonEnabled }"
         >
@@ -60,7 +60,7 @@
             <tr>
               <th class="action-column"></th>
               <th>{{ isArabic ? 'إلى' : 'To' }}</th>
-              <th v-if="!isFromEnhancementsPage">{{ isArabic ? 'من' : 'From' }}</th>
+              <th>{{ isArabic ? 'من' : 'From' }}</th>
               <th>{{ isArabic ? 'حقًا ماليًا' : 'Encumbrance' }}</th>
               <th>{{ isArabic ? 'الموازنة المتاحة' : 'Available Budget' }}</th>
               <th>{{ isArabic ? 'الحالى' : 'Actual' }}</th>
@@ -73,8 +73,8 @@
           </thead>
           <tbody>
             <tr
-              v-for="(item, index) in transferData"
-              :key="item.transfer_id || index"
+              v-for="(item, index) in contractData"
+              :key="item.contract_id || index"
               class="data-row"
               :class="{
                 'row-error': item.validation_errors && item.validation_errors.length > 0,
@@ -114,7 +114,7 @@
                   :class="{ 'readonly-input': !isScreenEditable }"
                 />
               </td>
-              <td v-if="!isFromEnhancementsPage" class="number-cell">
+              <td class="number-cell">
                 <input
                   type="text"
                   v-model="item.from_center_input"
@@ -197,9 +197,7 @@
             <tr class="summary-row">
               <td></td>
               <td class="number-cell">{{ formatNumber(summaryData.toSum) || '-' }}</td>
-              <td v-if="!isFromEnhancementsPage" class="number-cell">
-                {{ formatNumber(summaryData.fromSum) || '-' }}
-              </td>
+              <td class="number-cell">{{ formatNumber(summaryData.fromSum) || '-' }}</td>
               <td class="number-cell">{{ formatNumber(summaryData.encumbranceSum) || '-' }}</td>
               <td class="number-cell">{{ formatNumber(summaryData.availableBudgetSum) || '-' }}</td>
               <td class="number-cell">{{ formatNumber(summaryData.actualSum) || '-' }}</td>
@@ -227,7 +225,7 @@
 
       <!-- Total rows info -->
       <div class="total-info">
-        {{ isArabic ? `المجموع ${transferData.length}` : `Total ${transferData.length}` }}
+        {{ isArabic ? `المجموع ${contractData.length}` : `Total ${contractData.length}` }}
       </div>
 
       <!-- Action buttons -->
@@ -248,7 +246,7 @@
           :class="{ 'btn-disabled': !isUploadButtonEnabled }"
         >
           <span class="btn-icon">↑</span>
-          {{ isArabic ? 'رفع ملف المناقلة' : 'Upload Transfer File' }}
+          {{ isArabic ? 'رفع ملف العقد' : 'Upload Contract File' }}
         </button>
         <button
           class="btn-action btn-reopen"
@@ -299,9 +297,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
 import axios from 'axios'
-import transferService from '@/services/transferService'
+import contractService from '@/services/contractService'
 import FileUploadModal from '@/components/FileUploadModal.vue'
-import { useNavigationStore } from '@/stores/navigationStore'
 
 // Component setup
 const route = useRoute()
@@ -311,7 +308,7 @@ const authStore = useAuthStore()
 
 // State variables
 const transactionId = ref(null)
-const transferData = ref([])
+const contractData = ref([])
 const loading = ref(true)
 const error = ref(false)
 const fileInput = ref(null)
@@ -339,16 +336,9 @@ const apiSummary = ref(null)
 // Add new ref for current status
 const currentStatus = ref('not yet sent for approval') // Default value
 
-// Add a computed property to check if navigation is from EnhancementsPage
-const navigationStore = useNavigationStore()
-const isFromEnhancementsPage = computed(() => {
-  // Check both the navigation store and URL query parameter
-  return route.query.source === 'EnhancementsPage'
-})
-
 // Add new helper computed property to check for validation errors
 const hasValidationErrors = computed(() => {
-  return transferData.value.some(
+  return contractData.value.some(
     (item) => item.validation_errors && item.validation_errors.length > 0,
   )
 })
@@ -440,7 +430,7 @@ const isRTL = computed(() => themeStore.language === 'ar')
 
 // Summary data computed property
 const summaryData = computed(() => {
-  const data = transferData.value
+  const data = contractData.value
   return {
     toSum: data.reduce((sum, item) => sum + (parseFloat(item.to_center) || 0), 0),
     fromSum: data.reduce((sum, item) => sum + (parseFloat(item.from_center) || 0), 0),
@@ -548,12 +538,6 @@ const validateNumberInput = (item, field) => {
   const inputField = `${field}_input`
   const value = item[inputField]
 
-  // If coming from EnhancementsPage and this is from_center field, set to null
-  if (field === 'from_center' && isFromEnhancementsPage.value) {
-    item[field] = null
-    return
-  }
-
   // Allow empty values
   if (!value) {
     item[field] = null
@@ -583,18 +567,10 @@ const validateNumberInput = (item, field) => {
 
 // Initialize input fields on data load
 const initializeInputFields = () => {
-  transferData.value.forEach((item) => {
+  contractData.value.forEach((item) => {
     // Set up input fields with string values for the UI
     item.to_center_input = item.to_center !== null ? item.to_center.toString() : ''
-
-    // Handle from_center differently based on source page
-    if (isFromEnhancementsPage.value) {
-      item.from_center = null
-      item.from_center_input = ''
-    } else {
-      item.from_center_input = item.from_center !== null ? item.from_center.toString() : ''
-    }
-
+    item.from_center_input = item.from_center !== null ? item.from_center.toString() : ''
     item.encumbrance_input = item.encumbrance !== null ? item.encumbrance.toString() : ''
     item.available_budget_input =
       item.available_budget !== null ? item.available_budget.toString() : ''
@@ -614,7 +590,7 @@ const addNewRow = () => {
     account_name: '',
     approved_budget: 0,
     available_budget: 0,
-    from_center: isFromEnhancementsPage.value ? null : 0,
+    from_center: 0,
     from_center_input: '',
     to_center: 0,
     to_center_input: '',
@@ -625,17 +601,17 @@ const addNewRow = () => {
     lastChangedField: null, // Track which dropdown was changed last
   }
 
-  transferData.value.push(newRow)
+  contractData.value.push(newRow)
 
   // Mark that changes have been made
   changesMade.value = true
 }
 
-// Create transfer function
-const createTransfer = async () => {
+// Create contract function
+const createContract = async () => {
   try {
     // Only include rows with both cost_center_code and account_code
-    const validRows = transferData.value.filter(
+    const validRows = contractData.value.filter(
       (item) => item.cost_center_code && item.account_code,
     )
     if (!validRows.length) {
@@ -644,51 +620,42 @@ const createTransfer = async () => {
     }
 
     // Prepare data for API
-    const dataToSend = validRows.map((item) => {
-      const rowData = {
-        transaction: transactionId.value,
-        cost_center_code: item.cost_center_code,
-        cost_center_name: item.cost_center_name,
-        account_code: item.account_code,
-        account_name: item.account_name,
-        approved_budget: parseFloat(item.approved_budget) || 0,
-        available_budget: parseFloat(item.available_budget) || 0,
-        to_center: parseFloat(item.to_center) || 0,
-        encumbrance: parseFloat(item.encumbrance) || 0,
-        actual: parseFloat(item.actual) || 0,
-        done: 1,
-      }
-
-      // Only add from_center if not from EnhancementsPage
-      if (!isFromEnhancementsPage.value) {
-        console.log('from_center:', item.from_center)
-        rowData.from_center = parseFloat(item.from_center) || 0
-      }
-
-      return rowData
-    })
+    const dataToSend = validRows.map((item) => ({
+      transaction: transactionId.value,
+      cost_center_code: item.cost_center_code,
+      cost_center_name: item.cost_center_name,
+      account_code: item.account_code,
+      account_name: item.account_name,
+      approved_budget: parseFloat(item.approved_budget) || 0,
+      available_budget: parseFloat(item.available_budget) || 0,
+      from_center: parseFloat(item.from_center) || 0,
+      to_center: parseFloat(item.to_center) || 0,
+      encumbrance: parseFloat(item.encumbrance) || 0,
+      actual: parseFloat(item.actual) || 0,
+      done: 1,
+    }))
 
     // Pass the auth token as second argument to the API call
-    await transferService.createTransfer(dataToSend, authStore.token)
-    alert(isArabic.value ? 'تم إنشاء النقل بنجاح' : 'Transfer created successfully')
+    await contractService.createContract(dataToSend, authStore.token)
+    alert(isArabic.value ? 'تم إنشاء العقد بنجاح' : 'Contract created successfully')
     await loadData()
 
     // After successful save, reset the changesMade flag
     changesMade.value = false
 
     // Store a new snapshot of the current state
-    originalData.value = JSON.parse(JSON.stringify(transferData.value))
+    originalData.value = JSON.parse(JSON.stringify(contractData.value))
   } catch (err) {
-    alert(isArabic.value ? 'فشل في إنشاء النقل' : 'Failed to create transfer')
-    console.error('Error creating transfer:', err)
+    alert(isArabic.value ? 'فشل في إنشاء العقد' : 'Failed to create contract')
+    console.error('Error creating contract:', err)
   }
 }
 
 // Delete row function
 const deleteRow = (index) => {
-  if (transferData.value.length > 1) {
+  if (contractData.value.length > 1) {
     // Just remove from local array without API call
-    transferData.value.splice(index, 1)
+    contractData.value.splice(index, 1)
 
     // Mark that changes have been made
     changesMade.value = true
@@ -701,27 +668,27 @@ const deleteRow = (index) => {
 const checkForChanges = () => {
   // If there's no original data yet, we can't compare
   if (!originalData.value || originalData.value.length === 0) {
-    changesMade.value = transferData.value.length > 0
+    changesMade.value = contractData.value.length > 0
     return
   }
 
   // If row counts differ, changes were made
-  if (originalData.value.length !== transferData.value.length) {
+  if (originalData.value.length !== contractData.value.length) {
     changesMade.value = true
     return
   }
 
   // Check if any row data has changed
-  for (let i = 0; i < transferData.value.length; i++) {
-    const current = transferData.value[i]
-    // If this is a new row without a transfer_id, mark as changed
-    if (!current.transfer_id) {
+  for (let i = 0; i < contractData.value.length; i++) {
+    const current = contractData.value[i]
+    // If this is a new row without a contract_id, mark as changed
+    if (!current.contract_id) {
       changesMade.value = true
       return
     }
 
     // Find corresponding original row
-    const original = originalData.value.find((o) => o.transfer_id === current.transfer_id)
+    const original = originalData.value.find((o) => o.contract_id === current.contract_id)
     if (!original) {
       changesMade.value = true
       return
@@ -759,7 +726,7 @@ const checkForChanges = () => {
 
 // Add watchers for all the fields that could change
 watch(
-  () => transferData.value,
+  () => contractData.value,
   () => {
     checkForChanges()
   },
@@ -772,9 +739,9 @@ const loadData = async () => {
   error.value = false
 
   try {
-    const response = await transferService.getTransferDetails(transactionId.value)
+    const response = await contractService.getContractDetails(transactionId.value)
 
-    // Check if the response has the new structure with summary and transfers
+    // Check if the response has the new structure with summary and contracts
     if (response && response.summary) {
       // Store the summary data separately
       apiSummary.value = response.summary
@@ -788,37 +755,27 @@ const loadData = async () => {
         currentStatus.value = 'not yet sent for approval' // Default
       }
 
-      // Set transferData to the transfers array
-      transferData.value = response.transfers
+      // Set contractData to the transfers array (previously was trying to access response.contracts)
+      contractData.value = response.transfers || []
     } else {
       // Fallback to old structure for backward compatibility
-      transferData.value = response
+      contractData.value = response
       apiSummary.value = null
       currentStatus.value = 'not yet sent for approval' // Default
     }
 
     initializeInputFields() // Initialize input fields after data load
     // Store a deep copy of the original data for future comparisons
-    originalData.value = JSON.parse(JSON.stringify(transferData.value))
+    originalData.value = JSON.parse(JSON.stringify(contractData.value))
 
     // Reset changes flag after loading data
     changesMade.value = false
   } catch (err) {
     error.value = true
-    console.error('Failed to load transfer data:', err)
+    console.error('Failed to load contract data:', err)
   } finally {
     loading.value = false
   }
-}
-
-// Method to show tooltip for a specific row
-const showTooltip = (index) => {
-  activeTooltipIndex.value = index
-}
-
-// Method to hide tooltip
-const hideTooltip = () => {
-  activeTooltipIndex.value = null
 }
 
 const formatNumber = (value) => {
@@ -831,9 +788,9 @@ const formatNumber = (value) => {
 
 const submitRequest = async () => {
   try {
-    await transferService.submitTransferRequest(transactionId.value)
+    await contractService.submitContractRequest(transactionId.value)
     alert(isArabic.value ? 'تم تقديم الطلب بنجاح' : 'Request submitted successfully')
-    router.push('/')
+    router.push('/contracts')
   } catch (err) {
     alert(isArabic.value ? 'فشل في تقديم الطلب' : 'Failed to submit request')
   }
@@ -841,7 +798,7 @@ const submitRequest = async () => {
 
 const reopenRequest = async () => {
   try {
-    await transferService.reopenTransferRequest(transactionId.value)
+    await contractService.reopenContractRequest(transactionId.value)
     alert(isArabic.value ? 'تم إعادة فتح الطلب بنجاح' : 'Request reopened successfully')
     await loadData()
   } catch (err) {
@@ -851,14 +808,14 @@ const reopenRequest = async () => {
 
 const generateReport = async () => {
   try {
-    const blob = await transferService.generateReport(transactionId.value)
+    const blob = await contractService.generateReport(transactionId.value)
 
     // Create download link and trigger download
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
     // Changed: call setAttribute on the link element
-    link.setAttribute('download', `transfer-report-${transactionId.value}.pdf`)
+    link.setAttribute('download', `contract-report-${transactionId.value}.pdf`)
     document.body.appendChild(link)
     link.click()
     link.remove()
@@ -889,15 +846,10 @@ onMounted(() => {
     fetchAccountEntities() // Fetch account entities on mount
   } else {
     // If no transaction ID, start with an empty form
-    transferData.value = []
+    contractData.value = []
     addNewRow()
     fetchCostCenterEntities()
     fetchAccountEntities()
-  }
-
-  // Clean up on unmount
-  return () => {
-    navigationStore.clearNavigationSource()
   }
 })
 
@@ -915,14 +867,6 @@ const showErrorDetails = (errors) => {
 const hideErrorModal = () => {
   showErrorModal.value = false
 }
-
-// Remove the old tooltip methods
-// const showTooltip = (index) => {
-//   activeTooltipIndex.value = index
-// }
-// const hideTooltip = () => {
-//   activeTooltipIndex.value = null
-// }
 
 // File upload modal state
 const showFileModal = ref(false)
@@ -951,7 +895,7 @@ const fetchPivotFundDetails = async (item) => {
   }
 
   try {
-    const response = await transferService.getPivotFundDetails(
+    const response = await contractService.getPivotFundDetails(
       item.cost_center_code,
       item.account_code,
     )
@@ -1023,57 +967,9 @@ const fetchPivotFundDetails = async (item) => {
   color: #aaa;
 }
 
-/* New style for API data display */
-.api-value-display {
-  padding: 6px 10px;
-  height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  background-color: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-weight: 500;
-  color: #555;
-}
-
-.dark-mode .api-value-display {
-  background-color: #333;
-  border-color: #444;
-  color: #ddd;
-}
-
-/* Status indicator styles */
-.status-indicator {
-  display: inline-block;
-  margin-left: 10px;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: white;
-}
-
-.status-approved {
-  background-color: #28a745;
-}
-
-.status-rejected {
-  background-color: #dc3545;
-}
-
-.status-waiting {
-  background-color: #ffc107;
-  color: #212529;
-}
-
-.status-not-sent {
-  background-color: #6c757d;
-}
-
-/* Button disabled state */
-.btn-disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.contract-request-page {
+  padding: 1.5rem;
+  max-width: auto;
+  margin: 0 auto;
 }
 </style>

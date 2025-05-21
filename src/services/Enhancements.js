@@ -48,8 +48,8 @@ export default {
     // Always include "FAR" as the code in the request body
     // If there's a search query, include it as well
     const requestBody = searchQuery.trim()
-      ? { code: 'FAR', search: searchQuery.trim() }
-      : { code: 'FAR' }
+      ? { code: 'AFR', search: searchQuery.trim() }
+      : { code: 'AFR' }
 
     try {
       // Always use POST for both listing and searching
@@ -200,29 +200,20 @@ export default {
     const authStore = useAuthStore()
     try {
       // Map each transfer using 'transaction' property (not transaction_id)
-      const transfersArray = transferData.map((item) => {
-        // Create base object without from_center
-        const transferObject = {
-          transaction: item.transaction,
-          cost_center_code: item.cost_center_code,
-          cost_center_name: item.cost_center_name,
-          account_code: item.account_code,
-          account_name: item.account_name,
-          approved_budget: parseFloat(item.approved_budget) || 0,
-          available_budget: parseFloat(item.available_budget) || 0,
-          to_center: parseFloat(item.to_center) || 0,
-          encumbrance: parseFloat(item.encumbrance) || 0,
-          actual: parseFloat(item.actual) || 0,
-          done: 1,
-        }
-
-        // Only add from_center if it's not null
-        if (item.from_center !== null) {
-          transferObject.from_center = parseFloat(item.from_center) || 0
-        }
-
-        return transferObject
-      })
+      const transfersArray = transferData.map((item) => ({
+        transaction: item.transaction,
+        cost_center_code: item.cost_center_code,
+        cost_center_name: item.cost_center_name,
+        account_code: item.account_code,
+        account_name: item.account_name,
+        approved_budget: parseFloat(item.approved_budget) || 0,
+        available_budget: parseFloat(item.available_budget) || 0,
+        from_center: parseFloat(item.from_center) || 0,
+        to_center: parseFloat(item.to_center) || 0,
+        encumbrance: parseFloat(item.encumbrance) || 0,
+        actual: parseFloat(item.actual) || 0,
+        done: 1,
+      }))
 
       // Send the array directly as payload
       const response = await axios.post(`${BASE_URL}/api/adjd-transfers/create/`, transfersArray, {

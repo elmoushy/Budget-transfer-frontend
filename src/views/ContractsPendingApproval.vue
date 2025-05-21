@@ -3,7 +3,7 @@
     <!-- top bar: title / search -->
     <div class="toolbar">
       <h1 class="page-title">
-        {{ isArabic ? 'المناقصات قيد الاعتماد' : 'Contracts Pending Approval' }}
+        {{ isArabic ? 'المناقلات قيد الاعتماد' : 'Transfers Pending Approval' }}
       </h1>
 
       <div class="toolbar-right">
@@ -358,6 +358,7 @@ async function loadTransfers() {
       currentPage.value,
       itemsPerPage,
       searchQuery.value,
+      'FAD',
     )
     rows.value = response.results
     totalItems.value = response.count

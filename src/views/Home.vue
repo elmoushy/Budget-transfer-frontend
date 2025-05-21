@@ -52,9 +52,16 @@
                   :class="{
                     'has-attachments': row.attachment_count > 0,
                     'no-attachments': !row.attachment_count,
+                    disabled: row.status.toLowerCase() !== 'pending',
                   }"
-                  @click="openFileModal(row)"
-                  :title="getAttachmentTooltip(row)"
+                  @click="row.status.toLowerCase() === 'pending' ? openFileModal(row) : null"
+                  :title="
+                    row.status.toLowerCase() === 'pending'
+                      ? getAttachmentTooltip(row)
+                      : isArabic
+                        ? 'لا يمكن تعديل المرفقات لهذا الطلب'
+                        : 'Attachments cannot be modified for this request'
+                  "
                 >
                   <PaperclipIcon :size="18" />
                   <span v-if="row.attachment_count > 0" class="attachment-badge">
@@ -70,7 +77,12 @@
               </div>
             </td>
             <td>
-              <span class="status-badge" :class="'status-' + row.status.toLowerCase()">
+              <span
+                class="status-badge"
+                :class="'status-' + row.status.toLowerCase()"
+                @click="openApprovalModal(row)"
+                role="button"
+              >
                 {{ row.status }}
               </span>
             </td>
@@ -227,26 +239,21 @@
       :transaction-id="currentTransactionId"
       @files-updated="handleFilesUpdated"
     />
+
+    <!-- Approval Pipeline Modal Component -->
+    <ApprovalPipelineModal v-model="showApprovalModal" :approval-data="currentApproval" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import {
-  EditIcon,
-  FileTextIcon,
-  SearchIcon,
-  TrashIcon,
-  PaperclipIcon,
-  FileIcon,
-  DownloadIcon,
-  UploadCloudIcon,
-} from 'lucide-vue-next'
+import { EditIcon, FileTextIcon, SearchIcon, TrashIcon, PaperclipIcon } from 'lucide-vue-next'
 import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
 import NewRequestModal from '@/components/NewRequestModal.vue'
 import EditTransferModal from '@/components/EditTransferModal.vue'
 import AttachmentModal from '@/components/AttachmentModal.vue'
+import ApprovalPipelineModal from '@/components/ApprovalPipelineModal.vue'
 import transferService from '@/services/transferService'
 
 // Import CSS
@@ -323,6 +330,10 @@ const rowToDelete = ref<TransferData | null>(null)
 // Simplified file modal state
 const showFileModal = ref(false)
 const currentTransactionId = ref(0)
+
+// New state for approval modal
+const showApprovalModal = ref(false)
+const currentApproval = ref<TransferData | null>(null)
 
 // ───────────────────────────────────────────────────────────── Helper Functions
 function formatDate(dateString: string): string {
@@ -434,8 +445,17 @@ function getAttachmentTooltip(row: TransferData): string {
     : `${row.attachment_count} attachments - Click to view`
 }
 
+// Function to open the approval modal
+function openApprovalModal(row: TransferData) {
+  currentApproval.value = row
+  showApprovalModal.value = true
+}
+
+// No need for closeApprovalModal anymore as it's handled by the v-model binding
+
 // ───────────────────────────────────────────────────────────── Theme & Lang
 const themeStore = useThemeStore()
+// Use auth store for API calls but not directly in template
 const authStore = useAuthStore()
 const isArabic = ref(false)
 const isDarkMode = ref(false)
@@ -446,6 +466,9 @@ onMounted(() => {
 
   // Fetch data when component mounts
   fetchData()
+
+  // Note: transferService uses the authStore internally
+  // No need to manually set tokens
 })
 
 watch(
@@ -552,7 +575,7 @@ function handleNewRequestSubmit(formData: { timePeriod: string; transferReason: 
 }
 
 // Handle edit transfer submission
-function handleEditSubmit(updatedData: any) {
+function handleEditSubmit(updatedData: Record<string, unknown>) {
   console.log('Transfer updated:', updatedData)
   // After successful update, refresh the data
   fetchData()
@@ -1724,5 +1747,45 @@ function handleEditSubmit(updatedData: any) {
 
 .dark-mode .disabled-btn {
   opacity: 0.4;
+}
+
+/* Status badge clickable styles */
+.status-badge {
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.status-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Make status badge look clickable */
+.status-badge {
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.status-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Add these styles to the CSS section */
+.attachment-indicator.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.attachment-indicator.disabled:hover {
+  transform: none !important;
+}
+
+.dark-mode .attachment-indicator.disabled {
+  opacity: 0.5;
 }
 </style>

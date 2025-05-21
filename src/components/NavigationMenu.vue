@@ -65,19 +65,19 @@ const menuItemsData = {
   ar: [
     { label: 'لوحة القيادة', route: 'Dashboard' },
     { label: 'المناقلات', route: 'Home' },
-    { label: 'التسوية', route: 'Settlements' },
+    { label: 'العقود', route: 'Settlements' },
     { label: 'التعزيزات', route: 'Enhancements' },
-    { label: 'المناقصات قيد الاعتماد', route: 'ContractsPendingApproval' },
     { label: 'التعزيزات قيد الاعتماد', route: 'EnhancementsPendingApproval' },
+    { label: 'العقود قيد الاعتماد', route: 'ContractsPendingApproval' },
     { label: 'التسويات قيد الاعتماد', route: 'SettlementsPendingApproval' },
   ],
   en: [
     { label: 'Dashboard', route: 'Dashboard' },
     { label: 'Transfers', route: 'Home' },
-    { label: 'Settlements', route: 'Settlements' },
+    { label: 'Contracts', route: 'Settlements' },
     { label: 'Enhancements', route: 'Enhancements' },
+    { label: 'Transfers Pending Approval', route: 'EnhancementsPendingApproval' },
     { label: 'Contracts Pending Approval', route: 'ContractsPendingApproval' },
-    { label: 'Enhancements Pending Approval', route: 'EnhancementsPendingApproval' },
     { label: 'Settlements Pending Approval', route: 'SettlementsPendingApproval' },
   ],
 }

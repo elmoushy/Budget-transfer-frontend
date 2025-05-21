@@ -9,9 +9,10 @@ export default {
    * @param {number} page - Page number
    * @param {number} pageSize - Items per page
    * @param {string} search - Optional search term
+   * @param {string} code - Code identifier for the transfer type
    * @returns {Promise} - API response with transfers data
    */
-  async fetchPendingTransfers(page = 1, pageSize = 10, search = '') {
+  async fetchPendingTransfers(page = 1, pageSize = 10, search = '', code = '') {
     const authStore = useAuthStore()
 
     if (!authStore.token) {
@@ -26,6 +27,7 @@ export default {
         params: {
           page,
           page_size: pageSize,
+          code,
           search: search.trim(),
         },
       })
