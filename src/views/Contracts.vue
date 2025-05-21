@@ -313,6 +313,14 @@
 
     <!-- Approval Pipeline Modal Component -->
     <ApprovalPipelineModal v-model="showApprovalModal" :approval-data="currentApproval" />
+
+    <!-- Replace SweetAlert with our custom popup component -->
+    <FuturisticPopup
+      v-model:show="showPopup"
+      :type="popupType"
+      :message="popupMessage"
+      :duration="3000"
+    />
   </div>
 </template>
 
@@ -325,8 +333,8 @@ import NewContractModal from '@/components/NewContractModal.vue'
 import EditContractModal from '@/components/EditContractModal.vue'
 import AttachmentModal from '@/components/AttachmentModal.vue'
 import ApprovalPipelineModal from '@/components/ApprovalPipelineModal.vue'
+import FuturisticPopup from '@/components/FuturisticPopup.vue'
 import contractService from '@/services/contractService'
-import Swal from 'sweetalert2'
 
 // Import CSS
 import '@/assets/css/Contracts.css'
@@ -408,6 +416,11 @@ const currentTransactionId = ref(0)
 const showApprovalModal = ref(false)
 const currentApproval = ref<ContractData | null>(null)
 
+// Add state for our custom popup
+const showPopup = ref(false)
+const popupType = ref<'success' | 'error' | 'info'>('info')
+const popupMessage = ref('')
+
 // ───────────────────────────────────────────────────────────── Helper Functions
 function formatDate(dateString: string): string {
   if (!dateString) return ''
@@ -474,16 +487,16 @@ function confirmDelete() {
     .then(() => {
       // Success - refresh the data
       fetchData()
-      // Show success message using SweetAlert instead of alert()
-      showFuturisticAlert(
+      // Show success message using our custom popup instead of SweetAlert
+      showFuturisticPopup(
         'success',
         isArabic.value ? 'تم حذف العقد بنجاح' : 'Contract deleted successfully',
       )
     })
     .catch((error) => {
       console.error('Error deleting contract:', error)
-      // Show error message using SweetAlert instead of alert()
-      showFuturisticAlert(
+      // Show error message using our custom popup instead of SweetAlert
+      showFuturisticPopup(
         'error',
         isArabic.value ? 'حدث خطأ أثناء حذف العقد' : 'Error deleting the contract',
       )
@@ -741,53 +754,11 @@ function handleEditSubmit(updatedData: Record<string, unknown>) {
   fetchData()
 }
 
-// Helper function for showing futuristic sweet alerts
-function showFuturisticAlert(type: 'success' | 'error', message: string) {
-  const isDark = isDarkMode.value
-
-  Swal.fire({
-    title: '',
-    text: message,
-    icon: type,
-    background: isDark ? 'rgba(25, 25, 35, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-    backdrop: 'rgba(0, 0, 0, 0.4)',
-    color: isDark ? '#e2e2e2' : '#334155',
-    showConfirmButton: false,
-    timer: 3000,
-    timerProgressBar: true,
-    toast: true,
-    position: 'top-end',
-    showClass: {
-      popup: 'animate__animated animate__fadeInRight animate__faster',
-    },
-    hideClass: {
-      popup: 'animate__animated animate__fadeOutRight animate__faster',
-    },
-    customClass: {
-      popup: 'futuristic-alert',
-      title: 'futuristic-alert-title',
-      icon: `futuristic-alert-icon ${type === 'success' ? 'success-icon' : 'error-icon'}`,
-      content: 'futuristic-alert-content',
-    },
-    didOpen: (toast) => {
-      toast.addEventListener('mouseenter', Swal.stopTimer)
-      toast.addEventListener('mouseleave', Swal.resumeTimer)
-
-      // Add glow effect element
-      const glowElement = document.createElement('div')
-      glowElement.className = 'alert-glow-effect'
-      toast.appendChild(glowElement)
-
-      // Add decorative corner elements
-      const corners = ['top-left', 'top-right', 'bottom-left', 'bottom-right']
-      corners.forEach((corner, index) => {
-        const cornerElem = document.createElement('div')
-        cornerElem.className = `alert-corner ${corner}`
-        cornerElem.style.animationDelay = `${index * 0.1}s`
-        toast.appendChild(cornerElem)
-      })
-    },
-  })
+// Helper function for showing futuristic popups
+function showFuturisticPopup(type: 'success' | 'error' | 'info', message: string) {
+  popupType.value = type
+  popupMessage.value = message
+  showPopup.value = true
 }
 </script>
 
@@ -1865,140 +1836,6 @@ function showFuturisticAlert(type: 'success' | 'error', message: string) {
   .futuristic-btn-delete {
     width: 100%;
     justify-content: center;
-  }
-}
-</style>
-
-<style>
-/* SweetAlert2 Futuristic Styles */
-.futuristic-alert {
-  border-radius: 16px !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  overflow: hidden !important;
-  padding: 1rem 1.5rem !important;
-  box-shadow:
-    0 10px 25px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(255, 255, 255, 0.1) !important;
-  position: relative !important;
-}
-
-.dark-mode .futuristic-alert {
-  box-shadow:
-    0 10px 25px rgba(0, 0, 0, 0.4),
-    0 0 15px rgba(240, 171, 252, 0.1),
-    0 0 0 1px rgba(255, 255, 255, 0.05) !important;
-}
-
-.futuristic-alert-title {
-  font-weight: 600 !important;
-  font-size: 1.1rem !important;
-}
-
-.futuristic-alert-content {
-  font-size: 0.95rem !important;
-}
-
-.futuristic-alert-icon {
-  border-radius: 50% !important;
-  padding: 0.5rem !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-.futuristic-alert-icon.success-icon {
-  background: linear-gradient(135deg, #10b981, #059669) !important;
-  box-shadow: 0 0 15px rgba(16, 185, 129, 0.4) !important;
-}
-
-.futuristic-alert-icon.error-icon {
-  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.4) !important;
-}
-
-.alert-glow-effect {
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  border-radius: 50%;
-  z-index: -1;
-  opacity: 0;
-  animation: alert-glow-pulse 4s ease-in-out infinite alternate;
-}
-
-.alert-corner {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  opacity: 0;
-  animation: alert-corner-appear 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.alert-corner.top-left {
-  top: 0;
-  left: 0;
-  border-top: 2px solid var(--color-accent-primary, #6d1a36);
-  border-left: 2px solid var(--color-accent-primary, #6d1a36);
-}
-
-.alert-corner.top-right {
-  top: 0;
-  right: 0;
-  border-top: 2px solid var(--color-accent-primary, #6d1a36);
-  border-right: 2px solid var(--color-accent-primary, #6d1a36);
-}
-
-.alert-corner.bottom-left {
-  bottom: 0;
-  left: 0;
-  border-bottom: 2px solid var(--color-accent-primary, #6d1a36);
-  border-left: 2px solid var(--color-accent-primary, #6d1a36);
-}
-
-.alert-corner.bottom-right {
-  bottom: 0;
-  right: 0;
-  border-bottom: 2px solid var(--color-accent-primary, #6d1a36);
-  border-right: 2px solid var(--color-accent-primary, #6d1a36);
-}
-
-.dark-mode .alert-corner {
-  border-color: var(--color-accent-magenta, #f0abfc);
-}
-
-.success-icon ~ .alert-glow-effect {
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0) 70%);
-  opacity: 1;
-}
-
-.error-icon ~ .alert-glow-effect {
-  background: radial-gradient(circle, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0) 70%);
-  opacity: 1;
-}
-
-@keyframes alert-glow-pulse {
-  0% {
-    transform: rotate(0deg);
-    opacity: 0.3;
-  }
-  100% {
-    transform: rotate(360deg);
-    opacity: 0.5;
-  }
-}
-
-@keyframes alert-corner-appear {
-  0% {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-  100% {
-    opacity: 1;
-    width: 10px;
-    height: 10px;
   }
 }
 </style>

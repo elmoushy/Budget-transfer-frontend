@@ -288,6 +288,18 @@
         </div>
       </div>
     </div>
+
+    <!-- Add FuturisticPopup component to the template -->
+    <FuturisticPopup
+      v-model:show="showPopup"
+      :type="popupType"
+      :title="popupTitle"
+      :message="popupMessage"
+      :timer="popupTimer"
+      :showConfirmButton="true"
+      :confirmButtonText="isArabic ? 'موافق' : 'OK'"
+      @confirm="handlePopupConfirm"
+    />
   </div>
 </template>
 
@@ -297,9 +309,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
 import axios from 'axios'
-import Swal from 'sweetalert2'
 import contractService from '@/services/contractService'
 import FileUploadModal from '@/components/FileUploadModal.vue'
+import FuturisticPopup from '@/components/FuturisticPopup.vue'
 
 // Component setup
 const route = useRoute()
@@ -608,54 +620,40 @@ const addNewRow = () => {
   changesMade.value = true
 }
 
-// Create a reusable function for alerts
 const showFuturisticAlert = (text, icon = 'info', timer = null) => {
-  const title =
-    icon === 'success'
-      ? isArabic.value
-        ? 'نجاح!'
-        : 'Success!'
-      : icon === 'error'
-        ? isArabic.value
-          ? 'خطأ!'
-          : 'Error!'
-        : icon === 'warning'
-          ? isArabic.value
-            ? 'تحذير!'
-            : 'Warning!'
-          : isArabic.value
-            ? 'تنبيه!'
-            : 'Notice!'
+  // Set default titles based on icon type
+  let title = ''
+  if (icon === 'success') {
+    title = isArabic.value ? 'نجاح!' : 'Success!'
+  } else if (icon === 'error') {
+    title = isArabic.value ? 'خطأ!' : 'Error!'
+  } else if (icon === 'warning') {
+    title = isArabic.value ? 'تحذير!' : 'Warning!'
+  } else {
+    title = isArabic.value ? 'تنبيه!' : 'Notice!'
+  }
 
-  return Swal.fire({
-    title,
-    text,
-    icon,
-    background: isDarkMode.value ? 'rgba(20, 20, 35, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-    color: isDarkMode.value ? '#e2e2e2' : '#333',
-    backdrop: `
-      rgba(10, 10, 20, 0.4)
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px)
-    `,
-    showConfirmButton: true,
-    confirmButtonText: isArabic.value ? 'موافق' : 'OK',
-    confirmButtonColor: '#6d1a36',
-    customClass: {
-      popup: 'futuristic-popup',
-      title: 'futuristic-title',
-      confirmButton: 'futuristic-button',
-    },
-    timer: timer || (icon === 'success' ? 3000 : undefined),
-    timerProgressBar: timer || icon === 'success',
-    showClass: {
-      popup: 'animate__animated animate__fadeInDown animate__faster',
-    },
-    hideClass: {
-      popup: 'animate__animated animate__fadeOutUp animate__faster',
-    },
-    buttonsStyling: true,
+  // Set popup properties
+  popupType.value = icon
+  popupTitle.value = title
+  popupMessage.value = text
+  popupTimer.value = timer || (icon === 'success' ? 3000 : 0)
+  showPopup.value = true
+
+  // Return a promise that resolves when the popup is closed
+  return new Promise((resolve) => {
+    pendingAction.value = () => {
+      resolve({ dismiss: 'close' })
+    }
   })
+}
+
+// Handle popup confirm/close event
+const handlePopupConfirm = () => {
+  if (pendingAction.value) {
+    pendingAction.value()
+    pendingAction.value = null
+  }
 }
 
 // Create contract function
@@ -898,6 +896,13 @@ const generateReport = async () => {
     link.click()
     link.remove()
     window.URL.revokeObjectURL(url)
+
+    // Show success message
+    showFuturisticAlert(
+      isArabic.value ? 'تم إنشاء التقرير بنجاح' : 'Report generated successfully',
+      'success',
+      3000,
+    )
   } catch (err) {
     showFuturisticAlert(
       isArabic.value ? 'فشل في إنشاء التقرير' : 'Failed to generate report',
@@ -1030,6 +1035,14 @@ const fetchPivotFundDetails = async (item) => {
     }
   }
 }
+
+// Add state for FuturisticPopup
+const showPopup = ref(false)
+const popupType = ref('success')
+const popupTitle = ref('')
+const popupMessage = ref('')
+const popupTimer = ref(0)
+const pendingAction = ref(null)
 </script>
 
 <style src="@/styles/CostCenterTransferRequest.css" scoped></style>
@@ -1053,88 +1066,5 @@ const fetchPivotFundDetails = async (item) => {
   padding: 1.5rem;
   max-width: auto;
   margin: 0 auto;
-}
-
-/* SweetAlert2 custom styles for futuristic design */
-.futuristic-popup {
-  border-radius: 16px !important;
-  box-shadow:
-    0 15px 40px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(255, 255, 255, 0.1),
-    inset 0 0 30px rgba(120, 120, 255, 0.05) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  overflow: hidden !important;
-  position: relative !important;
-}
-
-.futuristic-popup::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 4px;
-  background: linear-gradient(to right, #6d1a36, rgba(109, 26, 54, 0.5), rgba(109, 26, 54, 0));
-  z-index: 1;
-}
-
-.futuristic-title {
-  font-weight: 600 !important;
-  letter-spacing: -0.02em !important;
-  background: linear-gradient(135deg, #1a1a2e, #4a0d20);
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
-  color: transparent !important;
-  text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-}
-
-.futuristic-button {
-  border-radius: 8px !important;
-  font-weight: 600 !important;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  position: relative !important;
-  overflow: hidden !important;
-  box-shadow: 0 4px 12px rgba(109, 26, 54, 0.25) !important;
-  letter-spacing: 0.02em !important;
-}
-
-.futuristic-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.2) 50%,
-    transparent 100%
-  );
-  transition: all 0.6s ease;
-}
-
-.futuristic-button:hover::before {
-  left: 100%;
-}
-
-.futuristic-button:hover {
-  transform: translateY(-2px) !important;
-  box-shadow:
-    0 6px 15px rgba(109, 26, 54, 0.3),
-    0 0 0 1px rgba(109, 26, 54, 0.6) !important;
-}
-
-/* Dark mode adjustments */
-.dark-mode .futuristic-title {
-  background: linear-gradient(135deg, #f0f0f0, #a0a0b8);
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
-}
-
-.dark-mode .futuristic-popup::before {
-  background: linear-gradient(to right, #a0a0ff, rgba(160, 160, 255, 0.5), rgba(160, 160, 255, 0));
 }
 </style>

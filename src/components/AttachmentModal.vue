@@ -83,6 +83,15 @@
       </div>
     </div>
   </div>
+
+  <!-- Add FuturisticPopup component -->
+  <FuturisticPopup
+    v-model:show="showPopup"
+    :type="popupType"
+    :title="popupTitle"
+    :message="popupMessage"
+    :timer="3000"
+  />
 </template>
 
 <script setup>
@@ -90,8 +99,8 @@ import { ref, watch, defineProps, defineEmits } from 'vue'
 import { FileIcon, DownloadIcon, UploadCloudIcon } from 'lucide-vue-next'
 import { useThemeStore } from '@/stores/themeStore'
 import transferService from '@/services/transferService'
-import Swal from 'sweetalert2'
 import '@/assets/css/AttachmentModal.css'
+import FuturisticPopup from '@/components/FuturisticPopup.vue'
 
 // Define props and emits
 const props = defineProps({
@@ -240,6 +249,12 @@ function clearSelectedFile() {
   }
 }
 
+// Add state for FuturisticPopup
+const showPopup = ref(false)
+const popupType = ref('success')
+const popupTitle = ref('')
+const popupMessage = ref('')
+
 // Upload a file
 async function uploadFile() {
   if (!selectedFile.value || !props.transactionId) return
@@ -251,20 +266,10 @@ async function uploadFile() {
     loadFiles() // Refresh the file list
     emit('files-updated')
 
-    // Replace alert with SweetAlert2
-    Swal.fire({
-      title: isArabic.value ? 'تم بنجاح!' : 'Success!',
-      text: isArabic.value ? 'تم تحميل الملف بنجاح' : 'File uploaded successfully',
-      icon: 'success',
-      background: isDarkMode.value ? '#333' : '#fff',
-      color: isDarkMode.value ? '#fff' : '#333',
-      confirmButtonText: isArabic.value ? 'حسنًا' : 'OK',
-      timer: 3000,
-      timerProgressBar: true,
-      toast: true,
-      position: 'top-end',
-      showConfirmButton: false,
-    })
+    popupType.value = 'success'
+    popupTitle.value = isArabic.value ? 'تم بنجاح!' : 'Success!'
+    popupMessage.value = isArabic.value ? 'تم تحميل الملف بنجاح' : 'File uploaded successfully'
+    showPopup.value = true
   } catch (error) {
     console.error('Error uploading file:', error)
     fileError.value = isArabic.value

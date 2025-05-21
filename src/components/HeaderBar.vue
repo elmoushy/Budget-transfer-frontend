@@ -4,7 +4,7 @@
     <!-- logo + title -->
     <div class="left">
       <img src="@/assets/img/lightidea_logo.png" alt="LightIdea Logo" class="logo-img" />
-      <h1 class="logo-text">{{ isArabic ? 'مناقلة' : 'Budget Transfer' }}</h1>
+      <h1 class="logo-text" style="transform: translateY(12px)!important;">{{ isArabic ? 'مناقلة' : 'Budget Transfer' }}</h1>
     </div>
 
     <!-- action icons -->

@@ -62,6 +62,15 @@
       </div>
     </div>
   </div>
+
+  <!-- Add FuturisticPopup component -->
+  <FuturisticPopup
+    v-model:show="showPopup"
+    :type="popupType"
+    :title="popupTitle"
+    :message="popupMessage"
+    :timer="3000"
+  />
 </template>
 
 <script setup lang="ts">
@@ -70,7 +79,7 @@ import { useThemeStore } from '@/stores/themeStore'
 import { QuillEditor } from '@vueup/vue-quill'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/authStore'
-import Swal from 'sweetalert2'
+import FuturisticPopup from '@/components/FuturisticPopup.vue'
 
 // Define component props
 const props = defineProps({
@@ -118,61 +127,29 @@ const themeStore = useThemeStore()
 const isArabic = computed(() => themeStore.language === 'ar')
 const isDarkMode = computed(() => themeStore.darkMode)
 
-// Functions to show custom SweetAlert notifications
+// Add state for FuturisticPopup
+const showPopup = ref(false)
+const popupType = ref('info')
+const popupTitle = ref('')
+const popupMessage = ref('')
+
+// Functions to show custom notifications - replace SweetAlert with FuturisticPopup
 function showValidationError() {
-  Swal.fire({
-    title: isArabic.value ? 'تحقق من البيانات' : 'Validation Error',
-    text: isArabic.value ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields',
-    icon: 'warning',
-    background: isDarkMode.value ? 'rgba(26, 26, 46, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-    color: isDarkMode.value ? '#e2e2e2' : '#333',
-    backdrop: `rgba(0, 0, 10, 0.4)
-                backdrop-filter: blur(4px)`,
-    showConfirmButton: true,
-    confirmButtonText: isArabic.value ? 'حسناً' : 'OK',
-    confirmButtonColor: '#6d1a36',
-    showClass: {
-      popup: 'animate__animated animate__fadeInUp animate__faster',
-    },
-    hideClass: {
-      popup: 'animate__animated animate__fadeOutDown animate__faster',
-    },
-    customClass: {
-      container: 'swal-container',
-      popup: isDarkMode.value ? 'swal-popup-dark' : 'swal-popup',
-      title: 'swal-title',
-      confirmButton: 'swal-confirm-btn',
-    },
-  })
+  popupType.value = 'warning'
+  popupTitle.value = isArabic.value ? 'تحقق من البيانات' : 'Validation Error'
+  popupMessage.value = isArabic.value
+    ? 'يرجى ملء جميع الحقول المطلوبة'
+    : 'Please fill all required fields'
+  showPopup.value = true
 }
 
 function showErrorNotification(error: any) {
   console.error('Error creating enhancement request:', error)
 
-  Swal.fire({
-    title: isArabic.value ? 'خطأ!' : 'Error!',
-    text: isArabic.value ? 'حدث خطأ أثناء إنشاء الطلب' : 'Error creating request',
-    icon: 'error',
-    background: isDarkMode.value ? 'rgba(26, 26, 46, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-    color: isDarkMode.value ? '#e2e2e2' : '#333',
-    backdrop: `rgba(0, 0, 10, 0.4)
-                backdrop-filter: blur(4px)`,
-    showConfirmButton: true,
-    confirmButtonText: isArabic.value ? 'حسناً' : 'OK',
-    confirmButtonColor: '#6d1a36',
-    showClass: {
-      popup: 'animate__animated animate__fadeInUp animate__faster',
-    },
-    hideClass: {
-      popup: 'animate__animated animate__fadeOutDown animate__faster',
-    },
-    customClass: {
-      container: 'swal-container',
-      popup: isDarkMode.value ? 'swal-popup-dark' : 'swal-popup',
-      title: 'swal-title',
-      confirmButton: 'swal-confirm-btn',
-    },
-  })
+  popupType.value = 'error'
+  popupTitle.value = isArabic.value ? 'خطأ!' : 'Error!'
+  popupMessage.value = isArabic.value ? 'حدث خطأ أثناء إنشاء الطلب' : 'Error creating request'
+  showPopup.value = true
 }
 
 // Methods
@@ -862,57 +839,4 @@ watch(
 [dir='rtl'] .modal-footer {
   flex-direction: row-reverse;
 }
-
-/* SweetAlert2 custom styling */
-:global(.swal-container) {
-  z-index: 110;
-}
-
-:global(.swal-popup) {
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow:
-    0 15px 40px rgba(0, 0, 0, 0.15),
-    0 0 0 1px rgba(255, 255, 255, 0.2);
-  overflow: hidden;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-:global(.swal-popup-dark) {
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow:
-    0 15px 40px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(63, 63, 95, 0.6);
-  overflow: hidden;
-  background: linear-gradient(135deg, rgba(26, 26, 46, 0.95), rgba(44, 44, 68, 0.95));
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(63, 63, 95, 0.3);
-}
-
-:global(.swal-title) {
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-:global(.swal-confirm-btn) {
-  border-radius: 8px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.01em !important;
-  padding: 0.7rem 1.8rem !important;
-  box-shadow: 0 4px 12px rgba(109, 26, 54, 0.25) !important;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-}
-
-:global(.swal-confirm-btn:hover) {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 15px rgba(109, 26, 54, 0.3) !important;
-}
-
-/* Add Animate.css imports */
-@import 'animate.css/animate.min.css';
 </style>

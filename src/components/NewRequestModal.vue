@@ -62,6 +62,15 @@
       </div>
     </div>
   </div>
+
+  <!-- Add FuturisticPopup component -->
+  <FuturisticPopup
+    v-model:show="showPopup"
+    :type="popupType"
+    :title="popupTitle"
+    :message="popupMessage"
+    :timer="3000"
+  />
 </template>
 
 <script setup lang="ts">
@@ -70,7 +79,7 @@ import { useThemeStore } from '@/stores/themeStore'
 import { QuillEditor } from '@vueup/vue-quill'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/authStore'
-import Swal from 'sweetalert2'
+import FuturisticPopup from '@/components/FuturisticPopup.vue'
 
 // Define component props
 const props = defineProps({
@@ -118,6 +127,12 @@ const themeStore = useThemeStore()
 const isArabic = computed(() => themeStore.language === 'ar')
 const isDarkMode = computed(() => themeStore.darkMode)
 
+// Add state for FuturisticPopup
+const showPopup = ref(false)
+const popupType = ref('info')
+const popupTitle = ref('')
+const popupMessage = ref('')
+
 // Methods
 function closeModal() {
   // Reset form when closing
@@ -147,34 +162,13 @@ async function submitForm() {
       editorError.value = true
     }
 
-    // Replace alert with SweetAlert2
-    Swal.fire({
-      title: isArabic.value ? 'تنبيه!' : 'Warning!',
-      text: isArabic.value ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields',
-      icon: 'warning',
-      background: isDarkMode.value ? 'rgba(30, 30, 50, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-      color: isDarkMode.value ? '#e2e2e2' : '#333',
-      backdrop: `rgba(10, 10, 20, 0.4)
-                 backdrop-filter: blur(8px);
-                 -webkit-backdrop-filter: blur(8px)`,
-      showConfirmButton: true,
-      confirmButtonText: isArabic.value ? 'موافق' : 'OK',
-      confirmButtonColor: '#6d1a36',
-      customClass: {
-        popup: 'futuristic-popup',
-        title: 'futuristic-title',
-        confirmButton: 'futuristic-button',
-      },
-      buttonsStyling: true,
-      timer: 5000,
-      timerProgressBar: true,
-      showClass: {
-        popup: 'animate__animated animate__fadeInDown animate__faster',
-      },
-      hideClass: {
-        popup: 'animate__animated animate__fadeOutUp animate__faster',
-      },
-    })
+    // Replace SweetAlert with FuturisticPopup
+    popupType.value = 'warning'
+    popupTitle.value = isArabic.value ? 'تنبيه!' : 'Warning!'
+    popupMessage.value = isArabic.value
+      ? 'يرجى ملء جميع الحقول المطلوبة'
+      : 'Please fill all required fields'
+    showPopup.value = true
     return
   }
 
@@ -205,34 +199,11 @@ async function submitForm() {
   } catch (error) {
     console.error('Error creating transfer request:', error)
 
-    // Replace alert with SweetAlert2
-    Swal.fire({
-      title: isArabic.value ? 'خطأ!' : 'Error!',
-      text: isArabic.value ? 'حدث خطأ أثناء إنشاء الطلب' : 'Error creating request',
-      icon: 'error',
-      background: isDarkMode.value ? 'rgba(30, 30, 50, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-      color: isDarkMode.value ? '#e2e2e2' : '#333',
-      backdrop: `rgba(10, 10, 20, 0.4)
-                 backdrop-filter: blur(8px);
-                 -webkit-backdrop-filter: blur(8px)`,
-      showConfirmButton: true,
-      confirmButtonText: isArabic.value ? 'موافق' : 'OK',
-      confirmButtonColor: '#6d1a36',
-      customClass: {
-        popup: 'futuristic-popup',
-        title: 'futuristic-title',
-        confirmButton: 'futuristic-button',
-      },
-      buttonsStyling: true,
-      timer: 5000,
-      timerProgressBar: true,
-      showClass: {
-        popup: 'animate__animated animate__fadeInDown animate__faster',
-      },
-      hideClass: {
-        popup: 'animate__animated animate__fadeOutUp animate__faster',
-      },
-    })
+    // Replace SweetAlert with FuturisticPopup
+    popupType.value = 'error'
+    popupTitle.value = isArabic.value ? 'خطأ!' : 'Error!'
+    popupMessage.value = isArabic.value ? 'حدث خطأ أثناء إنشاء الطلب' : 'Error creating request'
+    showPopup.value = true
   }
 }
 
@@ -852,7 +823,6 @@ watch(
   }
 }
 
-/* SweetAlert2 custom styles */
 :global(.futuristic-popup) {
   border-radius: 16px;
   box-shadow:
@@ -866,63 +836,7 @@ watch(
   overflow: hidden;
 }
 
-:global(.futuristic-popup::before) {
-  content: '';
-  position: absolute;
-  top: -10px;
-  left: -10px;
-  right: -10px;
-  bottom: -10px;
-  background: linear-gradient(45deg, rgba(94, 234, 212, 0.03), rgba(125, 42, 70, 0.03));
-  z-index: -1;
-  border-radius: 18px;
-}
-
-:global(.futuristic-title) {
-  font-weight: 600 !important;
-  letter-spacing: -0.02em !important;
-  background: linear-gradient(135deg, #1a1a2e, #4a0d20);
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
-  color: transparent !important;
-  text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-}
-
-:global(.futuristic-button) {
-  border-radius: 8px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.01em !important;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  overflow: hidden !important;
-  position: relative !important;
-}
-
-:global(.futuristic-button::before) {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.2) 50%,
-    transparent 100%
-  );
-  transition: all 0.6s ease;
-}
-
-:global(.futuristic-button:hover::before) {
-  left: 100%;
-}
-
-:global(.futuristic-button:hover) {
-  transform: translateY(-2px) !important;
-  box-shadow:
-    0 6px 15px rgba(109, 26, 54, 0.3),
-    0 0 0 1px rgba(109, 26, 54, 0.6) !important;
-}
+/* Remove other SweetAlert related styles */
 
 /* RTL support for Arabic */
 [dir='rtl'] .select-arrow {

@@ -290,6 +290,14 @@
         </div>
       </div>
     </div>
+    <!-- Add the FuturisticPopup component at the end of the template -->
+    <FuturisticPopup
+      v-model:show="showPopup"
+      :type="popupType"
+      :message="popupMessage"
+      :duration="popupDuration"
+      @complete="handlePopupComplete"
+    />
   </div>
 </template>
 
@@ -302,7 +310,7 @@ import axios from 'axios'
 import transferService from '@/services/transferService'
 import FileUploadModal from '@/components/FileUploadModal.vue'
 import { useNavigationStore } from '@/stores/navigationStore'
-import Swal from 'sweetalert2'
+import FuturisticPopup from '@/components/FuturisticPopup.vue'
 
 // Component setup
 const route = useRoute()
@@ -630,27 +638,28 @@ const addNewRow = () => {
   changesMade.value = true
 }
 
-// Helper function for SweetAlert2 notifications
+// Helper function for FuturisticPopup notifications
 const showNotification = (title, icon = 'success', willNavigate = false) => {
-  return Swal.fire({
-    title: title,
-    icon: icon,
-    toast: true,
-    position: 'top-end',
-    showConfirmButton: false,
-    timer: willNavigate ? 1500 : 3000,
-    timerProgressBar: true,
-    background: isDarkMode.value ? '#2d3748' : '#ffffff',
-    color: isDarkMode.value ? '#e2e8f0' : '#1a202c',
-    customClass: {
-      popup: 'notification-popup',
-      title: 'notification-title',
-    },
-    didOpen: (toast) => {
-      toast.addEventListener('mouseenter', Swal.stopTimer)
-      toast.addEventListener('mouseleave', Swal.resumeTimer)
-    },
+  popupType.value = icon
+  popupMessage.value = title
+  popupDuration.value = willNavigate ? 1500 : 3000
+  pendingNavigation.value = willNavigate
+  showPopup.value = true
+
+  // Return a promise that resolves when the notification is complete (for compatibility)
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ dismiss: 'timer' })
+    }, popupDuration.value)
   })
+}
+
+// Handle popup completion (for navigation)
+const handlePopupComplete = () => {
+  if (pendingNavigation.value) {
+    router.push('/')
+    pendingNavigation.value = false
+  }
 }
 
 // Create transfer function
@@ -866,12 +875,7 @@ const submitRequest = async () => {
       true,
     )
 
-    // Navigate after the notification is shown
-    if (notification.dismiss === Swal.DismissReason.timer) {
-      router.push('/')
-    } else {
-      router.push('/')
-    }
+    // Navigation is now handled by the handlePopupComplete method
   } catch (err) {
     showNotification(isArabic.value ? 'فشل في تقديم الطلب' : 'Failed to submit request', 'error')
   }
@@ -1119,31 +1123,5 @@ const fetchPivotFundDetails = async (item) => {
 .btn-disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-/* SweetAlert2 custom styles */
-.notification-popup {
-  border-radius: 10px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-}
-
-.dark-mode .notification-popup {
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-}
-
-.notification-title {
-  font-size: 18px !important;
-  margin: 10px 0 !important;
-  letter-spacing: 0.5px;
-}
-
-.swal2-timer-progress-bar {
-  background: linear-gradient(to right, #3490dc, #6574cd);
-}
-
-.dark-mode .swal2-timer-progress-bar {
-  background: linear-gradient(to right, #38b2ac, #4299e1);
 }
 </style>

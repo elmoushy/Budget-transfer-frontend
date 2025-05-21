@@ -316,6 +316,14 @@
 
     <!-- Approval Pipeline Modal Component -->
     <ApprovalPipelineModal v-model="showApprovalModal" :approval-data="currentApproval || {}" />
+
+    <!-- Add FuturisticPopup component -->
+    <FuturisticPopup
+      v-model:show="showPopup"
+      :type="popupType"
+      :message="popupMessage"
+      :duration="3000"
+    />
   </div>
 </template>
 
@@ -328,8 +336,8 @@ import NewRequestModal from '@/components/NewRequestModal.vue'
 import EditTransferModal from '@/components/EditTransferModal.vue'
 import AttachmentModal from '@/components/AttachmentModal.vue'
 import ApprovalPipelineModal from '@/components/ApprovalPipelineModal.vue'
+import FuturisticPopup from '@/components/FuturisticPopup.vue'
 import transferService from '@/services/transferService'
-import Swal from 'sweetalert2'
 
 // Import CSS
 import '@/assets/css/Home.css'
@@ -411,6 +419,11 @@ const currentTransactionId = ref(0)
 const showApprovalModal = ref(false)
 const currentApproval = ref<TransferData | null>(null)
 
+// Add state for futuristic popup
+const showPopup = ref(false)
+const popupType = ref<'success' | 'error' | 'warning' | 'info'>('info')
+const popupMessage = ref('')
+
 // ───────────────────────────────────────────────────────────── Helper Functions
 function formatDate(dateString: string): string {
   if (!dateString) return ''
@@ -477,17 +490,18 @@ function confirmDelete() {
     .then(() => {
       // Success - refresh the data
       fetchData()
-      // Replace alert with futuristic notification
-      showFuturisticNotification(
+      // Replace SweetAlert with our custom popup
+      showFuturisticPopup(
+        'success',
         isArabic.value ? 'تم حذف الطلب بنجاح' : 'Request deleted successfully',
       )
     })
     .catch((error: Error) => {
       console.error('Error deleting request:', error)
-      // Replace alert with futuristic notification for error
-      showFuturisticNotification(
-        isArabic.value ? 'حدث خطأ أثناء حذف الطلب' : 'Error deleting the request',
+      // Replace SweetAlert with our custom popup for error
+      showFuturisticPopup(
         'error',
+        isArabic.value ? 'حدث خطأ أثناء حذف الطلب' : 'Error deleting the request',
       )
     })
     .finally(() => {
@@ -625,37 +639,11 @@ function animateBackgroundOrbs() {
   })
 }
 
-// Futuristic notification function
-const showFuturisticNotification = (
-  title: string,
-  icon: 'success' | 'error' | 'warning' | 'info' = 'success',
-) => {
-  return Swal.fire({
-    title,
-    icon,
-    toast: true,
-    position: 'top-end',
-    showConfirmButton: false,
-    timer: 3000,
-    timerProgressBar: true,
-    background: isDarkMode.value ? 'rgba(26, 26, 46, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-    color: isDarkMode.value ? '#e2e2e2' : '#1a202c',
-    customClass: {
-      popup: 'futuristic-toast',
-      title: 'futuristic-toast-title',
-      timerProgressBar: 'futuristic-progress',
-    },
-    showClass: {
-      popup: 'animate__animated animate__fadeInRight animate__faster',
-    },
-    hideClass: {
-      popup: 'animate__animated animate__fadeOutRight animate__faster',
-    },
-    didOpen: (toast) => {
-      toast.addEventListener('mouseenter', Swal.stopTimer)
-      toast.addEventListener('mouseleave', Swal.resumeTimer)
-    },
-  })
+// Replace the SweetAlert2 notification function with our custom function
+function showFuturisticPopup(type: 'success' | 'error' | 'warning' | 'info', message: string) {
+  popupType.value = type
+  popupMessage.value = message
+  showPopup.value = true
 }
 
 // ───────────────────────────────────────────────────────────── Theme & Lang
@@ -2653,88 +2641,5 @@ function handleEditSubmit(updatedData: Record<string, unknown>) {
     width: 100%;
     justify-content: center;
   }
-}
-
-/* Add futuristic SweetAlert toast styles */
-:global(.futuristic-toast) {
-  border-radius: 16px !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow:
-    0 10px 30px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(255, 255, 255, 0.05),
-    0 0 15px rgba(109, 26, 54, 0.2) !important;
-  backdrop-filter: blur(10px) !important;
-  padding: 12px 20px !important;
-  width: auto !important;
-  max-width: 360px !important;
-}
-
-:global(.dark-mode .futuristic-toast) {
-  box-shadow:
-    0 10px 30px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.05),
-    0 0 15px rgba(240, 171, 252, 0.2) !important;
-}
-
-:global(.futuristic-toast-title) {
-  font-size: 1rem !important;
-  font-weight: 500 !important;
-  letter-spacing: 0.3px !important;
-  margin-left: 5px !important;
-}
-
-:global(.futuristic-progress) {
-  background: linear-gradient(
-    90deg,
-    var(--color-accent-primary, #6d1a36),
-    var(--color-accent-magenta, #f0abfc)
-  ) !important;
-  height: 3px !important;
-  bottom: 0 !important;
-  border-radius: 0 0 16px 16px !important;
-}
-
-:global(.swal2-icon) {
-  margin: 0 0 5px 0 !important;
-  transform: scale(0.8) !important;
-}
-
-/* Add the required animation classes from animate.css or define your own */
-@keyframes fadeInRight {
-  from {
-    opacity: 0;
-    transform: translate3d(100%, 0, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-@keyframes fadeOutRight {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-    transform: translate3d(100%, 0, 0);
-  }
-}
-
-:global(.animate__animated) {
-  animation-duration: 0.5s;
-  animation-fill-mode: both;
-}
-
-:global(.animate__fadeInRight) {
-  animation-name: fadeInRight;
-}
-
-:global(.animate__fadeOutRight) {
-  animation-name: fadeOutRight;
-}
-
-:global(.animate__faster) {
-  animation-duration: 0.3s;
 }
 </style>

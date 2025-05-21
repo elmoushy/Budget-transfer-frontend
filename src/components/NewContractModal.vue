@@ -62,6 +62,15 @@
       </div>
     </div>
   </div>
+
+  <!-- Add FuturisticPopup component -->
+  <FuturisticPopup
+    v-model:show="showPopup"
+    :type="popupType"
+    :title="popupTitle"
+    :message="popupMessage"
+    :timer="3000"
+  />
 </template>
 
 <script setup lang="ts">
@@ -70,7 +79,7 @@ import { useThemeStore } from '@/stores/themeStore'
 import { QuillEditor } from '@vueup/vue-quill'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/authStore'
-import Swal from 'sweetalert2'
+import FuturisticPopup from '@/components/FuturisticPopup.vue'
 
 // Define component props
 const props = defineProps({
@@ -118,50 +127,38 @@ const themeStore = useThemeStore()
 const isArabic = computed(() => themeStore.language === 'ar')
 const isDarkMode = computed(() => themeStore.darkMode)
 
-// Helper function for styled alerts
-const showAlert = (message: string, type: 'error' | 'success' | 'warning' | 'info' = 'info') => {
-  const isDark = isDarkMode.value
+// Add state for FuturisticPopup
+const showPopup = ref(false)
+const popupType = ref('info')
+const popupTitle = ref('')
+const popupMessage = ref('')
 
-  return Swal.fire({
-    title:
-      type === 'error'
-        ? isArabic.value
-          ? 'خطأ!'
-          : 'Error!'
-        : type === 'success'
-          ? isArabic.value
-            ? 'تم!'
-            : 'Success!'
-          : type === 'warning'
-            ? isArabic.value
-              ? 'تنبيه!'
-              : 'Warning!'
-            : isArabic.value
-              ? 'معلومات'
-              : 'Information',
-    text: message,
-    icon: type,
-    confirmButtonText: isArabic.value ? 'حسنًا' : 'OK',
-    background: isDark ? 'rgba(26, 26, 46, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-    color: isDark ? '#e2e2e2' : '#4a5568',
-    backdrop: `
-      rgba(10, 10, 20, 0.4)
-      url("/images/nyan-cat.gif")
-      left top
-      no-repeat
-    `,
-    showClass: {
-      popup: 'animate__animated animate__fadeInDown animate__faster',
-    },
-    hideClass: {
-      popup: 'animate__animated animate__fadeOutUp animate__faster',
-    },
-    customClass: {
-      confirmButton: `swal-confirm-btn ${isDark ? 'swal-dark' : 'swal-light'}`,
-      title: `swal-title ${isDark ? 'swal-dark' : 'swal-light'}`,
-      popup: `swal-popup ${isDark ? 'swal-dark' : 'swal-light'}`,
-    },
-    buttonsStyling: false,
+// Helper function for styled alerts - replace SweetAlert with FuturisticPopup
+const showAlert = (message: string, type: 'error' | 'success' | 'warning' | 'info' = 'info') => {
+  let title = ''
+  if (type === 'error') {
+    title = isArabic.value ? 'خطأ!' : 'Error!'
+  } else if (type === 'success') {
+    title = isArabic.value ? 'تم!' : 'Success!'
+  } else if (type === 'warning') {
+    title = isArabic.value ? 'تنبيه!' : 'Warning!'
+  } else {
+    title = isArabic.value ? 'معلومات' : 'Information'
+  }
+
+  popupTitle.value = title
+  popupMessage.value = message
+  popupType.value = type
+  showPopup.value = true
+
+  // Return a promise that resolves when the popup is closed
+  return new Promise((resolve) => {
+    const checkClosed = setInterval(() => {
+      if (!showPopup.value) {
+        clearInterval(checkClosed)
+        resolve(true)
+      }
+    }, 100)
   })
 }
 
@@ -194,7 +191,7 @@ async function submitForm() {
       editorError.value = true
     }
 
-    // Replace alert with SweetAlert2
+    // Replace alert with showAlert function
     showAlert(
       isArabic.value ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields',
       'warning',
@@ -235,7 +232,7 @@ async function submitForm() {
   } catch (error) {
     console.error('Error creating contract request:', error)
 
-    // Replace alert with SweetAlert2
+    // Replace alert with showAlert function
     showAlert(isArabic.value ? 'حدث خطأ أثناء إنشاء الطلب' : 'Error creating request', 'error')
   }
 }
@@ -864,101 +861,6 @@ watch(
 
 [dir='rtl'] .modal-footer {
   flex-direction: row-reverse;
-}
-
-/* SweetAlert2 custom styles */
-:global(.swal-popup) {
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow:
-    0 15px 40px rgba(0, 0, 0, 0.15),
-    0 0 0 1px rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-}
-
-:global(.swal-popup.swal-dark) {
-  background-color: rgba(26, 26, 46, 0.95);
-  border: 1px solid rgba(63, 63, 95, 0.3);
-  box-shadow:
-    0 15px 40px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(63, 63, 95, 0.6);
-}
-
-:global(.swal-title) {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
-
-:global(.swal-title.swal-dark) {
-  color: #e2e2e2;
-}
-
-:global(.swal-confirm-btn) {
-  padding: 0.7rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
-  overflow: hidden;
-  outline: none;
-  border: none;
-  cursor: pointer;
-  margin-top: 1rem;
-  font-family: inherit;
-}
-
-:global(.swal-confirm-btn::before) {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.2) 50%,
-    transparent 100%
-  );
-  transition: all 0.6s ease;
-}
-
-:global(.swal-confirm-btn:hover::before) {
-  left: 100%;
-}
-
-:global(.swal-confirm-btn.swal-light) {
-  background: linear-gradient(135deg, #6d1a36, #4a0d20);
-  color: #fff;
-  box-shadow:
-    0 4px 12px rgba(109, 26, 54, 0.25),
-    0 0 0 1px rgba(109, 26, 54, 0.5);
-}
-
-:global(.swal-confirm-btn.swal-light:hover) {
-  background: linear-gradient(135deg, #7d2a46, #5a1d30);
-  transform: translateY(-2px);
-  box-shadow:
-    0 6px 15px rgba(109, 26, 54, 0.3),
-    0 0 0 1px rgba(109, 26, 54, 0.6);
-}
-
-:global(.swal-confirm-btn.swal-dark) {
-  background: linear-gradient(135deg, #7d2a46, #5a1d30);
-  color: #fff;
-  box-shadow:
-    0 4px 8px rgba(0, 0, 0, 0.3),
-    0 0 20px rgba(125, 42, 70, 0.2);
-}
-
-:global(.swal-confirm-btn.swal-dark:hover) {
-  transform: translateY(-2px);
-  box-shadow:
-    0 6px 15px rgba(125, 42, 70, 0.4),
-    0 0 25px rgba(125, 42, 70, 0.3);
 }
 
 /* Add fade animations */
