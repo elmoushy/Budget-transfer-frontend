@@ -117,36 +117,30 @@ Track
         </td>
         <td>
           <div class="attachment-cell">
-          <span
-            class="attachment-text"
-            :class="{ 'with-attachments': row.attachment_count && row.attachment_count > 0 }"
-          >
-            {{ row.attachment }}
-          </span>
-          <div
-            class="attachment-indicator"
-            :class="{
-            'has-attachments': row.attachment_count && row.attachment_count > 0,
-            'no-attachments': !row.attachment_count,
-            disabled: row.status.toLowerCase() !== 'pending',
-            }"
-            @click="row.status.toLowerCase() === 'pending' ? openFileModal(row) : null"
-            :title="
-            row.status.toLowerCase() === 'pending'
-              ? getAttachmentTooltip(row)
-              : isArabic
-              ? 'لا يمكن تعديل المرفقات لهذا الطلب'
-              : 'Attachments cannot be modified for this request'
-            "
-          >
-            <PaperclipIcon :size="18" />
             <span
-            v-if="row.attachment_count && row.attachment_count > 0"
-            class="attachment-badge"
+              class="attachment-text"
+              :class="{ 'with-attachments': row.attachment_count && row.attachment_count > 0 }"
             >
-            {{ row.attachment_count }}
+              {{ row.attachment }}
             </span>
-          </div>
+            <div
+              class="attachment-indicator"
+              :class="{
+              'has-attachments': row.attachment_count && row.attachment_count > 0,
+              'no-attachments': !row.attachment_count,
+              disabled: row.status.toLowerCase() !== 'pending',
+              }"
+              @click="openFileModal(row)"
+              :title="getAttachmentTooltip(row)"
+            >
+              <PaperclipIcon :size="18" />
+              <span
+              v-if="row.attachment_count && row.attachment_count > 0"
+              class="attachment-badge"
+              >
+              {{ row.attachment_count }}
+              </span>
+            </div>
           </div>
         </td>
         </tr>
@@ -309,6 +303,7 @@ Track
     <AttachmentModal
       v-model:show="showFileModal"
       :transaction-id="currentTransactionId"
+      :status="currentTransactionStatus"
       @files-updated="handleFilesUpdated"
     />
 
@@ -422,6 +417,9 @@ const showPopup = ref(false)
 const popupType = ref<'success' | 'error' | 'warning' | 'info'>('info')
 const popupMessage = ref('')
 
+// Add new state for current transaction status
+const currentTransactionStatus = ref('pending')
+
 // ───────────────────────────────────────────────────────────── Helper Functions
 function formatDate(dateString: string): string {
   if (!dateString) return ''
@@ -519,6 +517,7 @@ function rowBg(status: string) {
 // Function to open the file modal
 function openFileModal(row: TransferData) {
   currentTransactionId.value = row.transaction_id
+  currentTransactionStatus.value = row.status
   showFileModal.value = true
 }
 
@@ -530,13 +529,20 @@ function handleFilesUpdated() {
 
 // Add function to generate attachment tooltip
 function getAttachmentTooltip(row: TransferData): string {
-  if (!row.attachment_count) {
-    return isArabic.value ? 'لا توجد مرفقات' : 'No attachments'
+  const baseMessage = !row.attachment_count 
+    ? (isArabic.value ? 'لا توجد مرفقات' : 'No attachments') 
+    : (isArabic.value 
+      ? `${row.attachment_count} مرفقات - انقر للعرض` 
+      : `${row.attachment_count} attachments - Click to view`);
+      
+  if (row.status.toLowerCase() !== 'pending') {
+    const readOnlyMessage = isArabic.value
+      ? ' (وضع القراءة فقط)'
+      : ' (read-only mode)';
+    return baseMessage + readOnlyMessage;
   }
-
-  return isArabic.value
-    ? `${row.attachment_count} مرفقات - انقر للعرض`
-    : `${row.attachment_count} attachments - Click to view`
+  
+  return baseMessage;
 }
 
 // Function to open the approval modal

@@ -14,6 +14,18 @@
           </router-link>
         </li>
 
+        <!-- Admin links shown directly if user is admin -->
+        <li 
+          v-for="adminItem in adminMenuItems" 
+          :key="adminItem.route"
+          :class="{ active: currentRoute === adminItem.route }"
+          v-if="isAdminUser"
+        >
+          <router-link :to="{ name: adminItem.route }">
+            {{ adminItem.label }}
+          </router-link>
+        </li>
+
         <!-- example dropdown (optional) -->
         <li class="dropdown" v-if="dropdownItem">
           <div @click="dropdownOpen = !dropdownOpen" class="dropdown-toggle">
@@ -37,6 +49,7 @@
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useThemeStore } from '@/stores/themeStore'
+import { useAuthStore } from '@/stores/authStore'
 
 // Define interfaces for menu items
 interface MenuItem {
@@ -51,14 +64,32 @@ interface DropdownItem {
 
 const route = useRoute()
 const themeStore = useThemeStore()
+const authStore = useAuthStore()
 const currentRoute = computed(() => route.name)
 const dropdownOpen = ref(false)
+
+// Check if user is an admin
+const isAdminUser = computed(() => {
+  return authStore.user?.role === 'admin'
+})
 
 // Define dropdownItem with proper typing
 const dropdownItem = ref<DropdownItem | null>(null)
 
 const isDarkMode = computed(() => themeStore.darkMode)
 const isArabic = computed(() => themeStore.language === 'ar')
+
+// Define admin menu items in both languages
+const adminMenuItemsData = {
+  ar: [
+    { label: 'إدارة المستخدمين', route: 'UserManagement' },
+    { label: 'إدارة الحسابات والكيانات', route: 'AccountEntityManagement' },
+  ],
+  en: [
+    { label: 'User Management', route: 'UserManagement' },
+    { label: 'Account-Entity Management', route: 'AccountEntityManagement' },
+  ],
+}
 
 // Define menu items in both languages
 const menuItemsData = {
@@ -82,8 +113,9 @@ const menuItemsData = {
   ],
 }
 
-// Create a computed property that returns the appropriate menu items based on language
+// Create computed properties for menu items
 const menuItems = computed(() => (isArabic.value ? menuItemsData.ar : menuItemsData.en))
+const adminMenuItems = computed(() => (isArabic.value ? adminMenuItemsData.ar : adminMenuItemsData.en))
 </script>
 
 <style scoped>
@@ -244,6 +276,10 @@ const menuItems = computed(() => (isArabic.value ? menuItemsData.ar : menuItemsD
   transition: transform 0.3s ease;
 }
 
+.dropdown-toggle i.open {
+  transform: rotate(180deg);
+}
+
 .dropdown-toggle:hover {
   color: #fff;
   transform: translateY(-2px);
@@ -288,14 +324,12 @@ const menuItems = computed(() => (isArabic.value ? menuItemsData.ar : menuItemsD
   min-width: 200px;
   opacity: 0;
   transform: translateY(10px);
-  animation: dropdownFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes dropdownFadeIn {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.dropdown-menu.open {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 [dir='ltr'] .dropdown-menu {

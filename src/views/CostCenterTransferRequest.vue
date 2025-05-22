@@ -14,15 +14,6 @@
       </div>
       <div class="header-actions">
         <div class="transaction-info">
-          <span class="transaction-label">{{
-            isArabic ? 'رقم المعاملة:' : 'Transaction ID:'
-          }}</span>
-          <span class="transaction-id">{{ transactionId }}</span>
-
-          <!-- Add status indicator -->
-          <span class="status-indicator" :class="statusClass">
-            {{ formattedStatus }}
-          </span>
         </div>
         <button
           class="btn-header-create"

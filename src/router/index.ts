@@ -65,6 +65,19 @@ const routes = [
     component: () => import('@/views/CostCenterTransferRequest.vue'),
     meta: { requiresAuth: true },
   },
+  // routes
+  {
+    path: '/admin/user-management',
+    name: 'UserManagement',
+    component: () => import('@/views/UserManagement.vue'),
+    meta: { requiresAuth: true },        
+  },
+  {
+    path: '/admin/account-entity-management',
+    name: 'AccountEntityManagement',
+    component: () => import('@/views/AccountEntityManagement.vue'),
+    meta: { requiresAuth: true },          
+  },
   // Catch-all route for 404
   {
     path: '/:pathMatch(.*)*',
@@ -82,10 +95,16 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
   const requiresAuth = to.meta.requiresAuth !== false
+  const requiresAdmin = to.meta.requiresAdmin === true
 
   // Check if route requires authentication and user is not authenticated
   if (requiresAuth && !authStore.isAuthenticated) {
     next({ name: 'Login' })
+  }
+  // Check if route requires admin role and user is not an admin
+  else if (requiresAdmin && authStore.user?.role !== 'admin') {
+    // Redirect to dashboard if trying to access admin route without admin privileges
+    next({ name: 'Dashboard' })
   }
   // If user is authenticated and trying to access login page, redirect to dashboard
   else if (authStore.isAuthenticated && to.name === 'Login') {
