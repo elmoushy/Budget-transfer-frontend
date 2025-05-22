@@ -40,7 +40,7 @@
       <thead key="head">
       <tr>
             <th :style="{ transform: isArabic ? 'translateX(70px)' : 'translateX(30px)' }">{{ tableHeaders.action }}</th>
-            <th :style="{ transform: isArabic ? 'translateX(45px)' : 'translateX(30px)' }">{{ tableHeaders.code }}</th>
+            <th :style="{ transform: isArabic ? 'translateX(45px)' : 'translateX(30px)', paddingBottom: '0 !important' }">{{ tableHeaders.code }}</th>
             <th :style="{ transform: isArabic ? 'translateX(35px)' : 'translateX(30px)' }">{{ tableHeaders.requestedBy }}</th>
             <th :style="{ transform: isArabic ? 'translateX(40px)' : 'translateX(30px)' }">{{ tableHeaders.transferDescription }}</th>
             <th :style="{ transform: isArabic ? 'translateX(50px)' : 'translateX(30px)' }">{{ tableHeaders.requestDate }}</th>
