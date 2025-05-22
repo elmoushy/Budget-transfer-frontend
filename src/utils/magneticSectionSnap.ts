@@ -122,6 +122,12 @@ export default class MagneticSectionSnap {
 
     // Check if we should switch sections
     const section = this.sections[this.currentSection]
+    
+    if (!section) {
+      console.warn(`Section at index ${this.currentSection} is undefined. Total sections: ${this.sections.length}`);
+      return; // Exit early if section is undefined
+    }
+    
     const rect = section.getBoundingClientRect()
     const threshold = rect.height * this.config.threshold
 

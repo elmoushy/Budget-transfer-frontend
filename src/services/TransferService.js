@@ -335,7 +335,11 @@ export default {
       )
       return response.data
     } catch (error) {
-      console.error('Error fetching pivot fund details:', error)
+      // Only log non-404 errors (404s are expected and handled by the component)
+      if (!error.response || error.response.status !== 404) {
+        console.error('Error fetching pivot fund details:', error)
+      }
+      // Make sure we re-throw the error for proper component handling
       throw error
     }
   },

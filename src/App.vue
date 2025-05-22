@@ -1,14 +1,9 @@
 <script setup lang="ts">
 import MainLayout from '@/components/MainLayout.vue'
-import { onMounted, ref, onUnmounted } from 'vue'
-import { computed, watch } from 'vue'
+import { onMounted } from 'vue'
+import { computed } from 'vue'
 import { useThemeStore } from '@/stores/themeStore'
 import SessionExpiredNotification from '@/components/SessionExpiredNotification.vue'
-import BackgroundConstellation from '@/plugins/backgroundConstellation'
-
-// Reference to the background element
-const bgContainer = ref<HTMLElement | null>(null)
-let constellationEffect: BackgroundConstellation | null = null
 
 // Add font loading via DOM for better error handling
 onMounted(() => {
@@ -30,40 +25,15 @@ onMounted(() => {
   fontLink.href =
     'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Tajawal:wght@400;500;700&display=swap'
   document.head.appendChild(fontLink)
-
-  // Initialize constellation effect if container is available
-  if (bgContainer.value) {
-    constellationEffect = new BackgroundConstellation(bgContainer.value, themeStore.darkMode)
-    constellationEffect.start()
-  }
-})
-
-// Clean up
-onUnmounted(() => {
-  if (constellationEffect) {
-    constellationEffect.dispose()
-    constellationEffect = null
-  }
 })
 
 const themeStore = useThemeStore()
 const isArabic = computed(() => themeStore.language === 'ar')
 const isDarkMode = computed(() => themeStore.darkMode)
-
-// Update constellation when theme changes
-watch(
-  () => themeStore.darkMode,
-  (newDarkMode) => {
-    if (constellationEffect) {
-      constellationEffect.updateMode(newDarkMode)
-    }
-  },
-)
 </script>
 
 <template>
   <div class="app-container" :class="{ rtl: isArabic, 'dark-theme': isDarkMode }">
-    <div ref="bgContainer" class="bg-constellation"></div>
     <div class="bg-animation"></div>
     <MainLayout />
     <SessionExpiredNotification />
@@ -133,16 +103,6 @@ body.dark-theme {
     transform: scale(1);
     opacity: 0.5;
   }
-}
-
-.bg-constellation {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -2;
-  pointer-events: none;
 }
 
 /* RTL support */

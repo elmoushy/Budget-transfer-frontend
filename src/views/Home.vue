@@ -16,7 +16,7 @@
 
       <div class="toolbar-right">
         <div class="search-container glass-field">
-          <SearchIcon class="search-icon" />
+            <SearchIcon class="search-icon" :style="{ transform: isArabic ? 'translateX(-200px)' : 'translateX(200px)' }" />
           <input
             v-model="searchQuery"
             type="search"
@@ -37,132 +37,130 @@
     <!-- table -->
     <div class="table-container glass-panel" v-motion-slide-bottom :delay="200">
       <transition-group name="table-fade" tag="table" class="main-table">
-        <thead key="head">
-          <tr>
-            <th>{{ tableHeaders.attachment }}</th>
-            <th>{{ tableHeaders.statusLevel }}</th>
-            <th>{{ tableHeaders.giPostingStatus }}</th>
-            <th>{{ tableHeaders.transferPeriod }}</th>
-            <th>{{ tableHeaders.requestDate }}</th>
-            <th>{{ tableHeaders.transferDescription }}</th>
-            <th>{{ tableHeaders.requestedBy }}</th>
-            <th>{{ tableHeaders.code }}</th>
-            <th></th>
+      <thead key="head">
+      <tr>
+            <th :style="{ transform: isArabic ? 'translateX(70px)' : 'translateX(30px)' }">{{ tableHeaders.action }}</th>
+            <th :style="{ transform: isArabic ? 'translateX(45px)' : 'translateX(30px)' }">{{ tableHeaders.code }}</th>
+            <th :style="{ transform: isArabic ? 'translateX(35px)' : 'translateX(30px)' }">{{ tableHeaders.requestedBy }}</th>
+            <th :style="{ transform: isArabic ? 'translateX(40px)' : 'translateX(30px)' }">{{ tableHeaders.transferDescription }}</th>
+            <th :style="{ transform: isArabic ? 'translateX(50px)' : 'translateX(30px)' }">{{ tableHeaders.requestDate }}</th>
+            <th :style="{ transform: isArabic ? 'translateX(45px)' : 'translateX(30px)' }">{{ tableHeaders.transferPeriod }}</th>
+            <th :style="{ transform: isArabic ? 'translateX(56px)' : 'translateX(30px)' }">{{ tableHeaders.giPostingStatus }}</th>
+            <th :style="{ transform: isArabic ? 'translateX(69px)' : 'translateX(30px)' }">{{ tableHeaders.statusLevel }}</th>
+            <th :style="{ transform: isArabic ? 'translateX(45px)' : 'translateX(30px)' }">{{ tableHeaders.attachment }}</th>
           </tr>
-        </thead>
-        <tbody key="body">
-          <tr
-            v-for="(row, index) in displayedRows"
-            :key="row.transaction_id"
-            :class="rowBg(row.status)"
-            class="table-row"
-            v-motion-slide-right
-            :delay="300 + index * 50"
+      </thead>
+      <tbody key="body">
+        <tr
+        v-for="(row, index) in displayedRows"
+        :key="row.transaction_id"
+        :class="rowBg(row.status)"
+        class="table-row"
+        v-motion-slide-right
+        :delay="300 + index * 50"
+        >
+        <td>
+          <div class="action-buttons">
+          <button
+            v-if="row.status.toLowerCase() === 'pending'"
+            class="icon-btn delete-btn"
+            @click="deleteRow(row)"
           >
-            <td>
-              <div class="attachment-cell">
-                <div
-                  class="attachment-indicator"
-                  :class="{
-                    'has-attachments': row.attachment_count && row.attachment_count > 0,
-                    'no-attachments': !row.attachment_count,
-                    disabled: row.status.toLowerCase() !== 'pending',
-                  }"
-                  @click="row.status.toLowerCase() === 'pending' ? openFileModal(row) : null"
-                  :title="
-                    row.status.toLowerCase() === 'pending'
-                      ? getAttachmentTooltip(row)
-                      : isArabic
-                        ? 'لا يمكن تعديل المرفقات لهذا الطلب'
-                        : 'Attachments cannot be modified for this request'
-                  "
-                >
-                  <PaperclipIcon :size="18" />
-                  <span
-                    v-if="row.attachment_count && row.attachment_count > 0"
-                    class="attachment-badge"
-                  >
-                    {{ row.attachment_count }}
-                  </span>
-                </div>
-                <span
-                  class="attachment-text"
-                  :class="{ 'with-attachments': row.attachment_count && row.attachment_count > 0 }"
-                >
-                  {{ row.attachment }}
-                </span>
-              </div>
-            </td>
-            <td>
-              <span
-                class="status-badge"
-                :class="'status-' + row.status.toLowerCase()"
-                @click="openApprovalModal(row)"
-                role="button"
-              >
-                {{ row.status }}
-              </span>
-            </td>
-            <td>
-              <button class="icon-btn" @click="editGI(row)">
-                <EditIcon />
-              </button>
-            </td>
-            <td>{{ row.transaction_date }}</td>
-            <td>{{ formatDate(row.request_date) }}</td>
-            <td>
-              <div class="description-cell">
-                <button
-                  class="icon-btn view-desc-btn"
-                  @click="viewDesc(row)"
-                  title="View full description"
-                >
-                  <FileTextIcon />
-                </button>
-              </div>
-            </td>
-            <td>{{ row.requested_by }}</td>
-            <td class="code-cell">
-              <router-link :to="`/cost-center-transfer/${row.transaction_id}`" class="code-link">
-                {{ row.code }}
-              </router-link>
-            </td>
-            <td>
-              <div class="action-buttons">
-                <button
-                  class="icon-btn"
-                  :class="{ 'disabled-btn': row.status.toLowerCase() !== 'pending' }"
-                  @click="row.status.toLowerCase() === 'pending' ? editRow(row) : null"
-                  :disabled="row.status.toLowerCase() !== 'pending'"
-                  :title="
-                    row.status.toLowerCase() === 'pending'
-                      ? 'Edit'
-                      : 'Cannot edit non-pending items'
-                  "
-                >
-                  <EditIcon />
-                </button>
-                <button
-                  v-if="row.status.toLowerCase() === 'pending'"
-                  class="icon-btn delete-btn"
-                  @click="deleteRow(row)"
-                >
-                  <TrashIcon />
-                </button>
-              </div>
-            </td>
-          </tr>
-          <tr v-if="loading" key="loading">
-            <td colspan="9" class="loading-row">
-              {{ isArabic ? 'جاري التحميل...' : 'Loading...' }}
-            </td>
-          </tr>
-          <tr v-else-if="displayedRows.length === 0" key="no-results">
-            <td colspan="9" class="no-results">
-              {{ isArabic ? 'لا توجد نتائج' : 'No results found' }}
-            </td>
-          </tr>
-        </tbody>
+            <TrashIcon />
+          </button>
+          <button
+            class="icon-btn"
+            :class="{ 'disabled-btn': row.status.toLowerCase() !== 'pending' }"
+            @click="row.status.toLowerCase() === 'pending' ? editRow(row) : null"
+            :disabled="row.status.toLowerCase() !== 'pending'"
+            :title="
+            row.status.toLowerCase() === 'pending'
+              ? 'Edit'
+              : 'Cannot edit non-pending items'
+            "
+          >
+            <EditIcon />
+          </button>
+          </div>
+        </td>
+        <td class="code-cell">
+          <router-link :to="`/cost-center-transfer/${row.transaction_id}`" class="code-link">
+          {{ row.code }}
+          </router-link>
+        </td>
+        <td>{{ row.requested_by }}</td>
+        <td>
+          <div class="description-cell">
+          <button
+            class="icon-btn view-desc-btn"
+            @click="viewDesc(row)"
+            title="View full description"
+          >
+            <FileTextIcon />
+          </button>
+          </div>
+        </td>
+        <td>{{ formatDate(row.request_date) }}</td>
+        <td>{{ row.transaction_date }}</td>
+          <td>
+Track
+        </td>
+        <td>
+          <span
+          class="status-badge"
+          :class="'status-' + row.status.toLowerCase()"
+          @click="openApprovalModal(row)"
+          role="button"
+          >
+          {{ row.status }}
+          </span>
+        </td>
+        <td>
+          <div class="attachment-cell">
+          <span
+            class="attachment-text"
+            :class="{ 'with-attachments': row.attachment_count && row.attachment_count > 0 }"
+          >
+            {{ row.attachment }}
+          </span>
+          <div
+            class="attachment-indicator"
+            :class="{
+            'has-attachments': row.attachment_count && row.attachment_count > 0,
+            'no-attachments': !row.attachment_count,
+            disabled: row.status.toLowerCase() !== 'pending',
+            }"
+            @click="row.status.toLowerCase() === 'pending' ? openFileModal(row) : null"
+            :title="
+            row.status.toLowerCase() === 'pending'
+              ? getAttachmentTooltip(row)
+              : isArabic
+              ? 'لا يمكن تعديل المرفقات لهذا الطلب'
+              : 'Attachments cannot be modified for this request'
+            "
+          >
+            <PaperclipIcon :size="18" />
+            <span
+            v-if="row.attachment_count && row.attachment_count > 0"
+            class="attachment-badge"
+            >
+            {{ row.attachment_count }}
+            </span>
+          </div>
+          </div>
+        </td>
+        </tr>
+        <tr v-if="loading" key="loading">
+        <td colspan="9" class="loading-row">
+          {{ isArabic ? 'جاري التحميل...' : 'Loading...' }}
+        </td>
+        </tr>
+        <tr v-else-if="displayedRows.length === 0" key="no-results">
+        <td colspan="9" class="no-results">
+          {{ isArabic ? 'لا توجد نتائج' : 'No results found' }}
+        </td>
+        </tr>
+      </tbody>
       </transition-group>
     </div>
 
@@ -681,6 +679,7 @@ const englishHeaders = {
   transferDescription: 'Transfer Description',
   requestedBy: 'Requested By',
   code: 'Code',
+  action: 'Action',
 }
 const arabicHeaders = {
   attachment: 'مرفقات',
@@ -691,6 +690,7 @@ const arabicHeaders = {
   transferDescription: 'وصف المعاملة',
   requestedBy: 'طلب من',
   code: 'الرمز',
+  action: 'الإجراء',
 }
 const tableHeaders = computed(() => (isArabic.value ? arabicHeaders : englishHeaders))
 

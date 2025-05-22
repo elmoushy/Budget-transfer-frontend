@@ -274,6 +274,13 @@
         @close="closeFileModal"
         @upload-success="handleUploadSuccess"
       />
+
+      <!-- Add TransferReport Component -->
+      <TransferReport
+        :show="showReportModal"
+        :transaction-id="transactionId"
+        @close="closeReportModal"
+      />
     </div>
 
     <!-- Error details modal (outside table structure) -->
@@ -290,14 +297,6 @@
         </div>
       </div>
     </div>
-    <!-- Add the FuturisticPopup component at the end of the template -->
-    <FuturisticPopup
-      v-model:show="showPopup"
-      :type="popupType"
-      :message="popupMessage"
-      :duration="popupDuration"
-      @complete="handlePopupComplete"
-    />
   </div>
 </template>
 
@@ -310,7 +309,8 @@ import axios from 'axios'
 import transferService from '@/services/transferService'
 import FileUploadModal from '@/components/FileUploadModal.vue'
 import { useNavigationStore } from '@/stores/navigationStore'
-import FuturisticPopup from '@/components/FuturisticPopup.vue'
+// Add import for TransferReport
+import TransferReport from '@/components/TransferReport.vue'
 
 // Component setup
 const route = useRoute()
@@ -394,7 +394,9 @@ const isReopenButtonEnabled = computed(() => {
 })
 
 const isUploadButtonEnabled = computed(() => {
-  return currentStatus.value === 'not yet sent for approval'
+  return (
+    currentStatus.value === 'is rejected' || currentStatus.value === 'not yet sent for approval'
+  )
 })
 
 // Format status for display
@@ -638,30 +640,6 @@ const addNewRow = () => {
   changesMade.value = true
 }
 
-// Helper function for FuturisticPopup notifications
-const showNotification = (title, icon = 'success', willNavigate = false) => {
-  popupType.value = icon
-  popupMessage.value = title
-  popupDuration.value = willNavigate ? 1500 : 3000
-  pendingNavigation.value = willNavigate
-  showPopup.value = true
-
-  // Return a promise that resolves when the notification is complete (for compatibility)
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ dismiss: 'timer' })
-    }, popupDuration.value)
-  })
-}
-
-// Handle popup completion (for navigation)
-const handlePopupComplete = () => {
-  if (pendingNavigation.value) {
-    router.push('/')
-    pendingNavigation.value = false
-  }
-}
-
 // Create transfer function
 const createTransfer = async () => {
   try {
@@ -670,10 +648,7 @@ const createTransfer = async () => {
       (item) => item.cost_center_code && item.account_code,
     )
     if (!validRows.length) {
-      showNotification(
-        isArabic.value ? 'لا توجد بيانات صالحة للإرسال' : 'No valid rows to send',
-        'error',
-      )
+      alert(isArabic.value ? 'لا توجد بيانات صالحة للإرسال' : 'No valid rows to send')
       return
     }
 
@@ -704,18 +679,30 @@ const createTransfer = async () => {
 
     // Pass the auth token as second argument to the API call
     await transferService.createTransfer(dataToSend, authStore.token)
-    showNotification(isArabic.value ? 'تم إنشاء النقل بنجاح' : 'Transfer created successfully')
-    await loadData()
+
+    // Create styled alert message with emoji and formatting
+    const successPrefix = '✅ ';
+    const successMessage = isArabic.value 
+      ? 'تم إنشاء النقل بنجاح' 
+      : 'Transfer created successfully';
+    alert(successPrefix + successMessage);
+
+    await loadData();
 
     // After successful save, reset the changesMade flag
-    changesMade.value = false
+    changesMade.value = false;
 
     // Store a new snapshot of the current state
-    originalData.value = JSON.parse(JSON.stringify(transferData.value))
-  } catch (err) {
-    showNotification(isArabic.value ? 'فشل في إنشاء النقل' : 'Failed to create transfer', 'error')
-    console.error('Error creating transfer:', err)
-  }
+    originalData.value = JSON.parse(JSON.stringify(transferData.value));
+    } catch (err) {
+    // Enhanced error alert with emoji
+    const errorPrefix = '❌ ';
+    const errorMessage = isArabic.value 
+      ? 'فشل في إنشاء النقل: ' + (err.response?.data?.message || err.message || '')
+      : 'Failed to create transfer: ' + (err.response?.data?.message || err.message || '');
+    alert(errorPrefix + errorMessage);
+    console.error('Error creating transfer:', err);
+    }
 }
 
 // Delete row function
@@ -727,10 +714,7 @@ const deleteRow = (index) => {
     // Mark that changes have been made
     changesMade.value = true
   } else {
-    showNotification(
-      isArabic.value ? 'يجب أن يكون هناك صف واحد على الأقل' : 'At least one row must exist',
-      'warning',
-    )
+    alert(isArabic.value ? 'يجب أن يكون هناك صف واحد على الأقل' : 'At least one row must exist')
   }
 }
 
@@ -866,53 +850,71 @@ const formatNumber = (value) => {
   }).format(value)
 }
 
+const alertState = ref({
+  show: false,
+  message: '',
+  type: 'success', // 'success' or 'error'
+  timer: null
+})
+
+const showAlert = (message, type = 'success') => {
+  // Clear any existing timer
+  if (alertState.value.timer) {
+    clearTimeout(alertState.value.timer)
+  }
+  
+  // Set alert properties
+  alertState.value.message = message
+  alertState.value.type = type
+  alertState.value.show = true
+  
+  // Auto-hide after 4 seconds
+  alertState.value.timer = setTimeout(() => {
+    alertState.value.show = false
+  }, 4000)
+}
+
+const closeAlert = () => {
+  alertState.value.show = false
+}
+
 const submitRequest = async () => {
   try {
     await transferService.submitTransferRequest(transactionId.value)
-    const notification = await showNotification(
-      isArabic.value ? 'تم تقديم الطلب بنجاح' : 'Request submitted successfully',
-      'success',
-      true,
-    )
-
-    // Navigation is now handled by the handlePopupComplete method
+    showAlert(isArabic.value ? 'تم تقديم الطلب بنجاح' : 'Request submitted successfully')
+    // Delay navigation to allow alert to be seen
+    setTimeout(() => {
+      router.push('/')
+    }, 1500)
   } catch (err) {
-    showNotification(isArabic.value ? 'فشل في تقديم الطلب' : 'Failed to submit request', 'error')
+    showAlert(
+      isArabic.value ? 'فشل في تقديم الطلب' : 'Failed to submit request', 
+      'error'
+    )
   }
 }
 
 const reopenRequest = async () => {
   try {
     await transferService.reopenTransferRequest(transactionId.value)
-    showNotification(isArabic.value ? 'تم إعادة فتح الطلب بنجاح' : 'Request reopened successfully')
+    showAlert(isArabic.value ? 'تم إعادة فتح الطلب بنجاح' : 'Request reopened successfully')
     await loadData()
   } catch (err) {
-    showNotification(
+    showAlert(
       isArabic.value ? 'فشل في إعادة فتح الطلب' : 'Failed to reopen request',
-      'error',
+      'error'
     )
   }
 }
 
-const generateReport = async () => {
-  try {
-    const blob = await transferService.generateReport(transactionId.value)
+// Update generateReport method to show the modal instead of making API call
+const generateReport = () => {
+  showReportModal.value = true
+}
 
-    // Create download link and trigger download
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    // Changed: call setAttribute on the link element
-    link.setAttribute('download', `transfer-report-${transactionId.value}.pdf`)
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    window.URL.revokeObjectURL(url)
-
-    showNotification(isArabic.value ? 'تم إنشاء التقرير بنجاح' : 'Report generated successfully')
-  } catch (err) {
-    showNotification(isArabic.value ? 'فشل في إنشاء التقرير' : 'Failed to generate report', 'error')
-  }
+// Add method to close the report modal
+const closeReportModal = () => {
+  showReportModal.value = false
 }
 
 // Watch for route changes
@@ -1024,11 +1026,10 @@ const fetchPivotFundDetails = async (item) => {
     // Check if the error is a 404 (Not Found)
     if (error.response && error.response.status === 404) {
       // Alert the user with the specific IDs that failed
-      showNotification(
+      alert(
         isArabic.value
           ? `لا توجد بيانات لهذا التحديد. المركز: ${item.cost_center_code}, الحساب: ${item.account_code}`
           : `This doesn't have data for Cost Center: ${item.cost_center_code}, Account: ${item.account_code}`,
-        'warning',
       )
 
       // Reset the last changed selection
@@ -1052,6 +1053,9 @@ const fetchPivotFundDetails = async (item) => {
     }
   }
 }
+
+// Add state variable to control report modal visibility
+const showReportModal = ref(false)
 </script>
 
 <style src="@/styles/CostCenterTransferRequest.css" scoped></style>

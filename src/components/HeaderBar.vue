@@ -83,7 +83,7 @@ async function logout() {
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  background: rgba(109, 26, 54, 0.9);
+  background: linear-gradient(135deg, rgba(80, 19, 39, 0.85), rgba(99, 12, 41, 0.85));
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   color: #fff;
