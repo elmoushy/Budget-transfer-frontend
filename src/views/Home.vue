@@ -1257,7 +1257,6 @@ function handleEditSubmit(updatedData: Record<string, unknown>) {
 
 .modal-header {
   padding: 1.25rem;
-  border-bottom: 1px solid #e2e8f0;
   display: flex;
   justify-content: space-between;
   align-items: center;
