@@ -30,10 +30,13 @@
         </label>
       </div>
 
-      <button class="icon bell">
-        <BellIcon />
-        <span class="badge"></span>
-      </button>
+      <div class="notification-container">
+        <button class="icon bell" @click="toggleNotifications">
+          <BellIcon />
+          <span v-if="hasUnreadNotifications" class="badge"></span>
+        </button>
+        <NotificationsPanel v-if="showNotifications" :is-active="showNotifications" @close="showNotifications = false" />
+      </div>
       <!-- Logout Button -->
       <button class="icon logout" @click="logout">
         <LogOutIcon />
@@ -48,6 +51,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useRouter } from 'vue-router'
+import NotificationsPanel from './NotificationsPanel.vue'
 
 const themeStore = useThemeStore()
 const authStore = useAuthStore()
@@ -56,6 +60,10 @@ const router = useRouter()
 const isDarkMode = ref(false)
 const isArabic = ref(false)
 const username = computed(() => authStore.user?.username || '')
+
+// Notifications
+const showNotifications = ref(false)
+const hasUnreadNotifications = ref(true) // This would be dynamically set based on actual notifications
 
 onMounted(() => {
   isDarkMode.value = themeStore.darkMode
@@ -73,6 +81,11 @@ function toggleLanguage() {
 async function logout() {
   await authStore.logout()
   router.push({ name: 'Login' })
+}
+
+// Toggle notifications panel
+function toggleNotifications() {
+  showNotifications.value = !showNotifications.value
 }
 </script>
 
@@ -140,6 +153,7 @@ async function logout() {
   align-items: center;
   gap: 18px;
   height: 100%;
+  position: relative;
 }
 
 .icon {
@@ -179,6 +193,11 @@ async function logout() {
 
 .icon:active {
   transform: scale(0.95);
+}
+
+.notification-container {
+  position: relative;
+  z-index: 200;
 }
 
 .bell {

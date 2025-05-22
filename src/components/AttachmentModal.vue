@@ -84,7 +84,6 @@
                 <button @click="downloadAttachment(file)" class="icon-btn" title="Download">
                   <DownloadIcon size="18" />
                 </button>
-                <!-- Add delete button if needed -->
               </div>
             </li>
           </ul>

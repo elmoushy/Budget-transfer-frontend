@@ -141,14 +141,8 @@ Track
                     'no-attachments': !row.attachment_count,
                     disabled: row.status.toLowerCase() !== 'pending',
                   }"
-                  @click="row.status.toLowerCase() === 'pending' ? openFileModal(row) : null"
-                  :title="
-                    row.status.toLowerCase() === 'pending'
-                      ? getAttachmentTooltip(row)
-                      : isArabic
-                        ? 'لا يمكن تعديل المرفقات لهذا الطلب'
-                        : 'Attachments cannot be modified for this request'
-                  "
+                  @click="openFileModal(row)"
+                  :title="getAttachmentTooltip(row)"
                 >
                   <PaperclipIcon :size="18" />
                   <span
@@ -320,6 +314,7 @@ Track
     <AttachmentModal
       v-model:show="showFileModal"
       :transaction-id="currentTransactionId"
+      :status="currentTransactionStatus"
       @files-updated="handleFilesUpdated"
     />
 
@@ -434,6 +429,9 @@ const showPopup = ref(false)
 const popupType = ref<'success' | 'error' | 'warning' | 'info'>('info')
 const popupMessage = ref('')
 
+// Add state for current transaction status
+const currentTransactionStatus = ref('pending')
+
 // ───────────────────────────────────────────────────────────── Helper Functions
 function formatDate(dateString: string): string {
   if (!dateString) return ''
@@ -528,9 +526,10 @@ function rowBg(status: string) {
   return 'row-none'
 }
 
-// Function to open the file modal
+// Function to open the file modal - updated to pass status
 function openFileModal(row) {
   currentTransactionId.value = row.transaction_id
+  currentTransactionStatus.value = row.status
   showFileModal.value = true
 }
 
@@ -540,15 +539,22 @@ function handleFilesUpdated() {
   fetchData()
 }
 
-// Add function to generate attachment tooltip
+// Updated function to generate attachment tooltip with read-only indication
 function getAttachmentTooltip(row: TransferData): string {
-  if (!row.attachment_count) {
-    return isArabic.value ? 'لا توجد مرفقات' : 'No attachments'
+  const baseMessage = !row.attachment_count 
+    ? (isArabic.value ? 'لا توجد مرفقات' : 'No attachments') 
+    : (isArabic.value 
+      ? `${row.attachment_count} مرفقات - انقر للعرض` 
+      : `${row.attachment_count} attachments - Click to view`);
+      
+  if (row.status.toLowerCase() !== 'pending') {
+    const readOnlyMessage = isArabic.value
+      ? ' (وضع القراءة فقط)'
+      : ' (read-only mode)';
+    return baseMessage + readOnlyMessage;
   }
-
-  return isArabic.value
-    ? `${row.attachment_count} مرفقات - انقر للعرض`
-    : `${row.attachment_count} attachments - Click to view`
+  
+  return baseMessage;
 }
 
 // Function to open the approval modal

@@ -96,7 +96,7 @@ const menuItemsData = {
   ar: [
     { label: 'لوحة القيادة', route: 'Dashboard' },
     { label: 'المناقلات', route: 'Home' },
-    { label: 'العقود', route: 'Settlements' },
+    { label: 'التسويه', route: 'Settlements' },
     { label: 'التعزيزات', route: 'Enhancements' },
     { label: 'التعزيزات قيد الاعتماد', route: 'EnhancementsPendingApproval' },
     { label: 'العقود قيد الاعتماد', route: 'ContractsPendingApproval' },
@@ -105,11 +105,11 @@ const menuItemsData = {
   en: [
     { label: 'Dashboard', route: 'Dashboard' },
     { label: 'Transfers', route: 'Home' },
-    { label: 'Contracts', route: 'Settlements' },
-    { label: 'Enhancements', route: 'Enhancements' },
-    { label: 'Transfers Pending Approval', route: 'EnhancementsPendingApproval' },
-    { label: 'Contracts Pending Approval', route: 'ContractsPendingApproval' },
-    { label: 'Settlements Pending Approval', route: 'SettlementsPendingApproval' },
+    { label: 'Fund Adjustment department', route: 'Settlements' },
+    { label: 'Additional fund request', route: 'Enhancements' },
+    { label: 'Pending Transfers', route: 'EnhancementsPendingApproval' },
+    { label: 'Pending Fund Adjustment', route: 'ContractsPendingApproval' },
+    { label: 'Pending Additional fund', route: 'SettlementsPendingApproval' },
   ],
 }
 
