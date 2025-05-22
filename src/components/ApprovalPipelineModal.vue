@@ -33,7 +33,7 @@
             </div>
           </div>
 
-          <div class="step-arrow"></div>
+          <div class="step-arrow" :class="{ 'rtl-arrow': isArabic }"></div>
 
           <!-- Step 2 -->
           <div
@@ -61,7 +61,7 @@
             </div>
           </div>
 
-          <div class="step-arrow"></div>
+          <div class="step-arrow" :class="{ 'rtl-arrow': isArabic }"></div>
 
           <!-- Step 3 -->
           <div
@@ -89,7 +89,7 @@
             </div>
           </div>
 
-          <div class="step-arrow"></div>
+          <div class="step-arrow" :class="{ 'rtl-arrow': isArabic }"></div>
 
           <!-- Step 4 -->
           <div
@@ -381,6 +381,12 @@ function formatApprovalDate(dateString: string): string {
   height: 8px;
   border-top: 2px solid #d1d5db;
   border-right: 2px solid #d1d5db;
+}
+
+.step-arrow.rtl-arrow::after {
+  right: auto;
+  left: 0;
+  transform: translateY(-50%) rotate(-135deg);
 }
 
 /* Dark Mode Styles */
