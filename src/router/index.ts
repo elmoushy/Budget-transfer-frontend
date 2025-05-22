@@ -65,18 +65,24 @@ const routes = [
     component: () => import('@/views/CostCenterTransferRequest.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/notifications',
+    name: 'NotificationsPage',
+    component: () => import('@/views/NotificationsPage.vue'),
+    meta: { requiresAuth: true },
+  },
   // routes
   {
     path: '/admin/user-management',
     name: 'UserManagement',
     component: () => import('@/views/UserManagement.vue'),
-    meta: { requiresAuth: true },        
+    meta: { requiresAuth: true },
   },
   {
     path: '/admin/account-entity-management',
     name: 'AccountEntityManagement',
     component: () => import('@/views/AccountEntityManagement.vue'),
-    meta: { requiresAuth: true },          
+    meta: { requiresAuth: true },
   },
   // Catch-all route for 404
   {

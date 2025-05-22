@@ -2,7 +2,7 @@
 <template>
   <div class="account-entity-management">
     <h1>{{ isArabic ? 'إدارة الحسابات والكيانات' : 'Account-Entity Management' }}</h1>
-    
+
     <div class="filter-section">
       <div class="filter-container">
         <label for="cost-center">{{ isArabic ? 'مركز التكلفة:' : 'Cost Center:' }}</label>
@@ -17,20 +17,21 @@
           </select>
         </div>
       </div>
-      
+
       <div v-if="selectedCostCenter" class="pagination-info">
-        {{ isArabic 
-          ? `عرض ${(currentPage - 1) * 10 + 1} - ${Math.min(currentPage * 10, totalItems)} من ${totalItems}` 
-          : `Showing ${(currentPage - 1) * 10 + 1} - ${Math.min(currentPage * 10, totalItems)} of ${totalItems}` 
+        {{
+          isArabic
+            ? `عرض ${(currentPage - 1) * 10 + 1} - ${Math.min(currentPage * 10, totalItems)} من ${totalItems}`
+            : `Showing ${(currentPage - 1) * 10 + 1} - ${Math.min(currentPage * 10, totalItems)} of ${totalItems}`
         }}
       </div>
     </div>
-    
+
     <div v-if="selectedCostCenter" class="account-limits-container">
       <div v-if="loading" class="loading-indicator">
         {{ isArabic ? 'جاري التحميل...' : 'Loading...' }}
       </div>
-      
+
       <table v-else class="limits-table">
         <thead>
           <tr>
@@ -57,42 +58,40 @@
           </tr>
         </tbody>
       </table>
-      
+
       <!-- Pagination controls -->
       <div v-if="totalPages > 1" class="pagination">
-        <button 
-          @click="previousPage" 
-          :disabled="currentPage === 1"
-          class="pagination-btn"
-        >
+        <button @click="previousPage" :disabled="currentPage === 1" class="pagination-btn">
           {{ isArabic ? 'السابق' : 'Previous' }}
         </button>
-        
+
         <div class="page-numbers">
-          <button 
-            v-for="page in visiblePageNumbers" 
-            :key="page" 
+          <button
+            v-for="page in visiblePageNumbers"
+            :key="page"
             @click="goToPage(page)"
             :class="['page-number', { active: currentPage === page }]"
           >
             {{ page }}
           </button>
         </div>
-        
-        <button 
-          @click="nextPage" 
-          :disabled="currentPage === totalPages"
-          class="pagination-btn"
-        >
+
+        <button @click="nextPage" :disabled="currentPage === totalPages" class="pagination-btn">
           {{ isArabic ? 'التالي' : 'Next' }}
         </button>
       </div>
     </div>
-    
+
     <div v-if="!selectedCostCenter && !loading" class="no-selection">
-      <p>{{ isArabic ? 'الرجاء اختيار مركز تكلفة لعرض حدود الحسابات.' : 'Please select a cost center to view account limits.' }}</p>
+      <p>
+        {{
+          isArabic
+            ? 'الرجاء اختيار مركز تكلفة لعرض حدود الحسابات.'
+            : 'Please select a cost center to view account limits.'
+        }}
+      </p>
     </div>
-    
+
     <!-- Edit Limit Modal -->
     <div v-if="showEditModal" class="modal-overlay">
       <div class="modal-content">
@@ -112,7 +111,7 @@
               <span class="info-value">{{ selectedCostCenter }}</span>
             </div>
           </div>
-          
+
           <div class="form-group">
             <label for="source-allowed">{{ isArabic ? 'مسموح للمصدر:' : 'Source Allowed:' }}</label>
             <select id="source-allowed" v-model="editingLimit.is_transer_allowed_for_source">
@@ -120,7 +119,7 @@
               <option value="No">{{ isArabic ? 'لا' : 'No' }}</option>
             </select>
           </div>
-          
+
           <div class="form-group">
             <label for="target-allowed">{{ isArabic ? 'مسموح للهدف:' : 'Target Allowed:' }}</label>
             <select id="target-allowed" v-model="editingLimit.is_transer_allowed_for_target">
@@ -128,15 +127,17 @@
               <option value="No">{{ isArabic ? 'لا' : 'No' }}</option>
             </select>
           </div>
-          
+
           <div class="form-group">
-            <label for="transfer-allowed">{{ isArabic ? 'مسموح للنقل:' : 'Transfer Allowed:' }}</label>
+            <label for="transfer-allowed">{{
+              isArabic ? 'مسموح للنقل:' : 'Transfer Allowed:'
+            }}</label>
             <select id="transfer-allowed" v-model="editingLimit.is_transer_allowed">
               <option value="Yes">{{ isArabic ? 'نعم' : 'Yes' }}</option>
               <option value="No">{{ isArabic ? 'لا' : 'No' }}</option>
             </select>
           </div>
-          
+
           <div class="modal-actions">
             <button type="button" @click="showEditModal = false" class="cancel-btn">
               {{ isArabic ? 'إلغاء' : 'Cancel' }}
@@ -187,8 +188,8 @@ async function fetchEntities() {
     loading.value = true
     const response = await axios.get(`${BASE_URL}/api/accounts-entities/entities/`, {
       headers: {
-        Authorization: `Bearer ${authStore.token}`
-      }
+        Authorization: `Bearer ${authStore.token}`,
+      },
     })
     entities.value = response.data.data
   } catch (error) {
@@ -201,19 +202,22 @@ async function fetchEntities() {
 // Fetch account limits for a specific cost center
 async function fetchLimits(page: number = 1) {
   if (!selectedCostCenter.value) return
-  
+
   try {
     loading.value = true
-    const response = await axios.get(`${BASE_URL}/api/accounts-entities/account-entity-limit/list`, {
-      params: {
-        cost_center: selectedCostCenter.value,
-        page: page
+    const response = await axios.get(
+      `${BASE_URL}/api/accounts-entities/account-entity-limit/list`,
+      {
+        params: {
+          cost_center: selectedCostCenter.value,
+          page: page,
+        },
+        headers: {
+          Authorization: `Bearer ${authStore.token}`,
+        },
       },
-      headers: {
-        Authorization: `Bearer ${authStore.token}`
-      }
-    })
-    
+    )
+
     accountLimits.value = response.data.results
     totalItems.value = response.data.count
     totalPages.value = Math.ceil(response.data.count / 10)
@@ -234,21 +238,25 @@ function editLimit(limit: any) {
 // Update limit
 async function updateLimit() {
   try {
-    await axios.put(`${BASE_URL}/api/accounts-entities/account-entity-limit/update/?pk=${editingLimit.value.id}`, {
-      is_transer_allowed_for_source: editingLimit.value.is_transer_allowed_for_source,
-      is_transer_allowed_for_target: editingLimit.value.is_transer_allowed_for_target,
-      is_transer_allowed: editingLimit.value.is_transer_allowed,
-      account_id: editingLimit.value.account,
-      entity_id: selectedCostCenter.value,
-      source_count: editingLimit.value.source_count,
-      target_count: editingLimit.value.target_count
-    }, {
-      headers: {
-        Authorization: `Bearer ${authStore.token}`,
-        'Content-Type': 'application/json'
-      }
-    })
-    
+    await axios.put(
+      `${BASE_URL}/api/accounts-entities/account-entity-limit/update/?pk=${editingLimit.value.id}`,
+      {
+        is_transer_allowed_for_source: editingLimit.value.is_transer_allowed_for_source,
+        is_transer_allowed_for_target: editingLimit.value.is_transer_allowed_for_target,
+        is_transer_allowed: editingLimit.value.is_transer_allowed,
+        account_id: editingLimit.value.account,
+        entity_id: selectedCostCenter.value,
+        source_count: editingLimit.value.source_count,
+        target_count: editingLimit.value.target_count,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${authStore.token}`,
+          'Content-Type': 'application/json',
+        },
+      },
+    )
+
     // Close modal and refresh
     showEditModal.value = false
     await fetchLimits(currentPage.value)
@@ -280,7 +288,7 @@ function goToPage(page: number) {
 const visiblePageNumbers = computed(() => {
   const pages = []
   const maxVisiblePages = 5
-  
+
   if (totalPages.value <= maxVisiblePages) {
     // Show all pages if total is less than max visible
     for (let i = 1; i <= totalPages.value; i++) {
@@ -289,36 +297,36 @@ const visiblePageNumbers = computed(() => {
   } else {
     // Always show first page
     pages.push(1)
-    
+
     let startPage = Math.max(2, currentPage.value - 1)
     let endPage = Math.min(totalPages.value - 1, currentPage.value + 1)
-    
+
     // Adjust if at the beginning or end
     if (currentPage.value <= 2) {
       endPage = Math.min(totalPages.value - 1, maxVisiblePages - 1)
     } else if (currentPage.value >= totalPages.value - 1) {
       startPage = Math.max(2, totalPages.value - maxVisiblePages + 2)
     }
-    
+
     // Add ellipsis if needed
     if (startPage > 2) {
       pages.push('...')
     }
-    
+
     // Add middle pages
     for (let i = startPage; i <= endPage; i++) {
       pages.push(i)
     }
-    
+
     // Add ellipsis if needed
     if (endPage < totalPages.value - 1) {
       pages.push('...')
     }
-    
+
     // Always show last page
     pages.push(totalPages.value)
   }
-  
+
   return pages
 })
 
@@ -399,432 +407,216 @@ h1::after {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2.5rem;
+  margin-bottom: 1.5rem;
   background: var(--card-bg);
-  border-radius: 16px;
-  padding: 1.2rem 1.5rem;
-  box-shadow: 
-    0 8px 20px var(--shadow-color),
-    0 0 0 1px var(--border-color);
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-.filter-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background: linear-gradient(90deg, var(--accent-color), transparent);
-  opacity: 0.7;
-}
-
-[dir='rtl'] .filter-section::before {
-  background: linear-gradient(90deg, transparent, var(--accent-color));
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 1rem;
 }
 
 .filter-container {
   display: flex;
   align-items: center;
   gap: 1rem;
-  position: relative;
 }
 
 .filter-container label {
   font-weight: 600;
   color: var(--text-color);
-  font-size: 1rem;
-  letter-spacing: 0.01em;
 }
 
 .select-container {
   position: relative;
-  width: 300px;
-  overflow: hidden;
+  width: 250px;
 }
 
 .select-container select {
   width: 100%;
-  padding: 0.85rem 1.2rem;
+  padding: 0.75rem 1rem;
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 4px;
   appearance: none;
   background-color: var(--card-bg);
   color: var(--text-color);
   font-size: 1rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 6px var(--shadow-color);
 }
 
 .select-container select:focus {
   border-color: var(--accent-color);
   outline: none;
-  box-shadow: 
-    0 0 0 3px rgba(var(--accent-color-rgb), 0.15),
-    0 2px 8px var(--shadow-color);
 }
 
 .select-container::after {
   content: '▼';
   position: absolute;
-  right: 1.2rem;
+  right: 1rem;
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
   font-size: 0.8rem;
   color: var(--text-color);
   opacity: 0.7;
-  transition: all 0.3s ease;
-}
-
-.select-container:hover::after {
-  color: var(--accent-color);
 }
 
 [dir='rtl'] .select-container::after {
   right: auto;
-  left: 1.2rem;
+  left: 1rem;
 }
 
 .pagination-info {
   color: var(--text-color);
-  font-size: 0.95rem;
-  padding: 0.5rem 1rem;
-  background: rgba(var(--accent-color-rgb), 0.08);
-  border-radius: 10px;
-  display: inline-block;
-  font-weight: 500;
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  font-size: 0.9rem;
 }
 
+/* Simplified table styles */
 .account-limits-container {
   background: var(--card-bg);
-  border-radius: 16px;
-  box-shadow: 
-    0 8px 30px var(--shadow-color),
-    0 0 0 1px var(--border-color);
-  overflow: hidden;
-  padding-bottom: 1rem;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-  position: relative;
-}
-
-.account-limits-container::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 30%;
-  height: 3px;
-  background: linear-gradient(90deg, 
-    transparent, var(--accent-color), transparent);
-  opacity: 0.3;
-  border-radius: 3px;
+  border: 1px solid var(--border-color);
+  overflow-x: auto;
 }
 
 .limits-table {
   width: 100%;
-  border-collapse: separate;
+  border-collapse: collapse;
   border-spacing: 0;
+  text-align: left;
 }
 
 .limits-table th,
 .limits-table td {
-  padding: 1.2rem 1.5rem;
-  text-align: left;
+  padding: 0.8rem 1rem;
   border-bottom: 1px solid var(--border-color);
-  transition: all 0.2s ease;
 }
 
 .limits-table th {
-  background: rgba(var(--accent-color-rgb), 0.08);
+  background-color: rgba(0, 0, 0, 0.03);
   font-weight: 600;
   color: var(--heading-color);
-  position: relative;
-  overflow: hidden;
-  text-transform: uppercase;
-  font-size: 0.9rem;
-  letter-spacing: 0.03em;
 }
 
-.limits-table th::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, var(--accent-color), transparent);
-  opacity: 0.3;
-}
-
-[dir='rtl'] .limits-table th::after {
-  background: linear-gradient(90deg, transparent, var(--accent-color));
+.dark-theme .limits-table th {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .limits-table tr:last-child td {
   border-bottom: none;
 }
 
-.limits-table tr {
-  transition: all 0.2s ease;
-  position: relative;
-}
-
 .limits-table tbody tr:hover td {
-  background: var(--hover-bg);
+  background-color: rgba(0, 0, 0, 0.02);
 }
 
-.limits-table tbody tr::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--accent-color);
-  opacity: 0;
-  transition: opacity 0.2s ease;
+.dark-theme .limits-table tbody tr:hover td {
+  background-color: rgba(255, 255, 255, 0.02);
 }
 
-[dir='rtl'] .limits-table tbody tr::before {
-  left: auto;
-  right: 0;
+.edit-btn {
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+  background-color: #e0f0ff;
+  color: #0078d4;
 }
 
-.limits-table tbody tr:hover::before {
-  opacity: 1;
+.edit-btn:hover {
+  background-color: #cce5ff;
 }
 
+.dark-theme .edit-btn {
+  background-color: rgba(0, 120, 212, 0.2);
+  color: #4db5ff;
+}
+
+.dark-theme .edit-btn:hover {
+  background-color: rgba(0, 120, 212, 0.3);
+}
+
+/* Simplified pagination */
 .pagination {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 1.8rem 0 0.8rem;
-  gap: 0.8rem;
+  padding: 1rem 0;
+  gap: 0.5rem;
 }
 
 .pagination-btn {
-  background: rgba(var(--text-color-rgb), 0.08);
+  background-color: #f0f0f0;
   border: none;
-  padding: 0.7rem 1.2rem;
-  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 0.2s ease;
   color: var(--text-color);
   font-weight: 500;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 2px 5px var(--shadow-color);
-}
-
-.pagination-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, 
-    rgba(var(--accent-color-rgb), 0), 
-    rgba(var(--accent-color-rgb), 0.1), 
-    rgba(var(--accent-color-rgb), 0));
-  transform: translateX(-100%);
-  transition: transform 0.6s ease;
 }
 
 .pagination-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
 }
 
 .pagination-btn:not(:disabled):hover {
-  background: rgba(var(--accent-color-rgb), 0.1);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px var(--shadow-color);
-  color: var(--accent-color);
+  background-color: #e0e0e0;
 }
 
-.pagination-btn:not(:disabled):hover::before {
-  transform: translateX(100%);
+.dark-theme .pagination-btn {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
-.pagination-btn:not(:disabled):active {
-  transform: translateY(-1px);
+.dark-theme .pagination-btn:not(:disabled):hover {
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .page-numbers {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.3rem;
 }
 
 .page-number {
-  min-width: 2.8rem;
-  height: 2.8rem;
+  min-width: 2rem;
+  height: 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   background: transparent;
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 500;
+  transition: background-color 0.2s ease;
   color: var(--text-color);
-  position: relative;
-  overflow: hidden;
 }
 
 .page-number.active {
-  background: rgba(var(--accent-color-rgb), 0.15);
+  background-color: rgba(var(--accent-color-rgb), 0.15);
   color: var(--accent-color);
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(var(--accent-color-rgb), 0.2);
 }
 
 .page-number:not(.active):hover {
-  background: rgba(var(--text-color-rgb), 0.08);
-  transform: translateY(-1px);
-}
-
-.page-number::before {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%) scaleX(0);
-  width: 60%;
-  height: 2px;
-  background: var(--accent-color);
-  transition: transform 0.3s ease;
-  border-radius: 2px;
-}
-
-.page-number:not(.active):hover::before {
-  transform: translateX(-50%) scaleX(1);
-}
-
-.edit-btn {
-  padding: 0.6rem 1.2rem;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  background: rgba(0, 120, 212, 0.1);
-  color: #0078d4;
-}
-
-.dark-theme .edit-btn {
-  background: rgba(0, 120, 212, 0.2);
-  color: #4db5ff;
-}
-
-.edit-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: currentColor;
-  opacity: 0;
-  transition: opacity 0.25s ease;
-}
-
-.edit-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  color: white;
-}
-
-.edit-btn:hover::before {
-  opacity: 1;
-  background: #0078d4;
-}
-
-.dark-theme .edit-btn:hover::before {
-  background: #1890ff;
-}
-
-.edit-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-}
-
-.edit-btn > * {
-  position: relative;
-  z-index: 1;
+  background-color: rgba(var(--text-color-rgb), 0.08);
 }
 
 .no-selection {
   background: var(--card-bg);
-  border-radius: 16px;
-  box-shadow: 
-    0 8px 30px var(--shadow-color),
-    0 0 0 1px var(--border-color);
-  padding: 4rem 3rem;
+  border: 1px solid var(--border-color);
+  padding: 2rem;
   text-align: center;
   color: var(--text-color);
-  font-style: italic;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1.5rem;
-  position: relative;
-  overflow: hidden;
-}
-
-.no-selection::before {
-  content: '';
-  position: absolute;
-  width: 200px;
-  height: 200px;
-  background: radial-gradient(circle, 
-    rgba(var(--accent-color-rgb), 0.05) 0%, 
-    transparent 70%);
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  pointer-events: none;
-  opacity: 0.8;
-}
-
-.no-selection p {
-  font-size: 1.1rem;
-  max-width: 400px;
-  margin: 0 auto;
-  line-height: 1.6;
 }
 
 .loading-indicator {
-  padding: 4rem 3rem;
+  padding: 2rem;
   text-align: center;
   color: var(--text-color);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
-  position: relative;
+  gap: 1rem;
 }
 
 .loading-indicator::before {
@@ -839,8 +631,12 @@ h1::after {
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Modal styles */
@@ -857,103 +653,35 @@ h1::after {
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  animation: fadeIn 0.3s ease forwards;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
 }
 
 .modal-content {
   background: var(--card-bg);
-  border-radius: 16px;
-  padding: 2.5rem;
+  border-radius: 8px;
+  padding: 2rem;
   width: 100%;
   max-width: 500px;
-  box-shadow: 
-    0 20px 60px rgba(0, 0, 0, 0.3),
-    0 0 0 1px var(--border-color),
-    0 0 0 3px rgba(var(--accent-color-rgb), 0.1);
-  animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  transform-origin: center;
-  overflow: hidden;
-  position: relative;
-}
-
-@keyframes slideIn {
-  from { 
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.modal-content::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 4px;
-  background: linear-gradient(90deg, var(--accent-color), var(--accent-color-dark));
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
 }
 
 .modal-content h2 {
   margin-top: 0;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   color: var(--heading-color);
-  font-size: 1.6rem;
-  position: relative;
-  padding-bottom: 0.8rem;
-}
-
-.modal-content h2::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 60px;
-  height: 3px;
-  background: var(--accent-color);
-  border-radius: 3px;
-  opacity: 0.6;
-}
-
-[dir='rtl'] .modal-content h2::after {
-  left: auto;
-  right: 0;
+  font-size: 1.5rem;
 }
 
 .limit-info {
-  background: rgba(var(--accent-color-rgb), 0.06);
-  padding: 1.2rem;
-  border-radius: 12px;
-  margin-bottom: 2rem;
+  background-color: rgba(var(--accent-color-rgb), 0.06);
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
   border: 1px solid rgba(var(--accent-color-rgb), 0.1);
-  position: relative;
-  overflow: hidden;
-}
-
-.limit-info::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 100px;
-  height: 100px;
-  background: radial-gradient(circle, 
-    rgba(var(--accent-color-rgb), 0.1) 0%, 
-    transparent 70%);
-  border-radius: 50%;
 }
 
 .info-row {
   display: flex;
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.5rem;
   align-items: center;
 }
 
@@ -970,88 +698,36 @@ h1::after {
 }
 
 .form-group {
-  margin-bottom: 1.8rem;
-  position: relative;
+  margin-bottom: 1.5rem;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 0.7rem;
+  margin-bottom: 0.5rem;
   font-weight: 500;
   color: var(--text-color);
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
-  opacity: 0.85;
 }
 
 .form-group select {
   width: 100%;
-  padding: 0.9rem 1rem;
+  padding: 0.75rem 1rem;
   border: 1px solid var(--border-color);
-  border-radius: 10px;
-  font-size: 1rem;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 4px;
   background: var(--card-bg);
   color: var(--text-color);
-  box-shadow: 0 2px 5px rgba(0,0,0,0.02) inset;
   appearance: none;
-}
-
-.dark-theme .form-group select {
-  background: rgba(0,0,0,0.2);
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2) inset;
 }
 
 .form-group select:focus {
   border-color: var(--accent-color);
   outline: none;
-  box-shadow: 
-    0 0 0 3px rgba(var(--accent-color-rgb), 0.15),
-    0 1px 2px rgba(0,0,0,0.05) inset;
-}
-
-.form-group::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: var(--accent-color);
-  transition: width 0.3s ease;
-}
-
-.form-group:focus-within::after {
-  width: 100%;
-}
-
-/* Add a custom dropdown arrow */
-.form-group::before {
-  content: '▼';
-  position: absolute;
-  right: 1rem;
-  bottom: 1.1rem;
-  font-size: 0.8rem;
-  color: var(--accent-color);
-  pointer-events: none;
-  opacity: 0.7;
-  transition: all 0.2s ease;
-}
-
-[dir='rtl'] .form-group::before {
-  right: auto;
-  left: 1rem;
-}
-
-.form-group:focus-within::before {
-  transform: translateY(2px);
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 1.2rem;
-  margin-top: 2.5rem;
+  gap: 1rem;
+  margin-top: 2rem;
 }
 
 [dir='rtl'] .modal-actions {
@@ -1060,90 +736,43 @@ h1::after {
 
 .cancel-btn,
 .submit-btn {
-  padding: 0.85rem 1.7rem;
+  padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 12px;
+  border-radius: 4px;
   cursor: pointer;
   font-weight: 600;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
-  overflow: hidden;
+  transition: background-color 0.2s ease;
 }
 
 .cancel-btn {
-  background: rgba(var(--text-color-rgb), 0.08);
+  background-color: #f0f0f0;
   color: var(--text-color);
 }
 
-.dark-theme .cancel-btn {
-  background: rgba(255, 255, 255, 0.1);
-}
-
 .submit-btn {
-  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-dark));
+  background-color: var(--accent-color);
   color: white;
-  box-shadow: 
-    0 4px 15px rgba(var(--accent-color-rgb), 0.25),
-    0 0 0 1px rgba(var(--accent-color-rgb), 0.3);
-}
-
-.cancel-btn::before,
-.submit-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, 
-    rgba(255,255,255,0), 
-    rgba(255,255,255,0.2), 
-    rgba(255,255,255,0));
-  transform: translateX(-100%);
-  transition: transform 0.8s ease;
-}
-
-.cancel-btn:hover,
-.submit-btn:hover {
-  transform: translateY(-3px);
 }
 
 .cancel-btn:hover {
-  background: rgba(var(--text-color-rgb), 0.12);
-}
-
-.dark-theme .cancel-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background-color: #e0e0e0;
 }
 
 .submit-btn:hover {
-  box-shadow: 
-    0 8px 25px rgba(var(--accent-color-rgb), 0.35),
-    0 0 0 1px rgba(var(--accent-color-rgb), 0.4);
+  background-color: var (--accent-color-dark);
 }
 
-.cancel-btn:hover::before,
-.submit-btn:hover::before {
-  transform: translateX(100%);
+.dark-theme .cancel-btn {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
-.cancel-btn:active,
-.submit-btn:active {
-  transform: translateY(-1px);
+.dark-theme .cancel-btn:hover {
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 /* RTL adjustments */
 [dir='rtl'] .limits-table th,
 [dir='rtl'] .limits-table td {
   text-align: right;
-}
-
-[dir='rtl'] .info-label {
-  margin-right: 0;
-  margin-left: 1rem;
-}
-
-[dir='rtl'] .modal-actions {
-  justify-content: flex-start;
 }
 </style>

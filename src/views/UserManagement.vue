@@ -2,13 +2,13 @@
 <template>
   <div class="user-management">
     <h1>{{ isArabic ? 'إدارة المستخدمين' : 'User Management' }}</h1>
-    
+
     <div class="actions">
       <button @click="showAddUserModal = true" class="add-user-btn">
         {{ isArabic ? 'إضافة مستخدم جديد' : 'Add New User' }}
       </button>
     </div>
-    
+
     <div class="user-list-container">
       <div v-if="loading" class="loading-indicator">
         {{ isArabic ? 'جاري التحميل...' : 'Loading...' }}
@@ -41,7 +41,7 @@
         </tbody>
       </table>
     </div>
-    
+
     <!-- Add User Modal -->
     <div v-if="showAddUserModal" class="modal-overlay">
       <div class="modal-content">
@@ -49,21 +49,11 @@
         <form @submit.prevent="addUser">
           <div class="form-group">
             <label for="username">{{ isArabic ? 'اسم المستخدم' : 'Username' }}</label>
-            <input 
-              type="text" 
-              id="username" 
-              v-model="newUser.username" 
-              required
-            />
+            <input type="text" id="username" v-model="newUser.username" required />
           </div>
           <div class="form-group">
             <label for="password">{{ isArabic ? 'كلمة المرور' : 'Password' }}</label>
-            <input 
-              type="password" 
-              id="password" 
-              v-model="newUser.password" 
-              required
-            />
+            <input type="password" id="password" v-model="newUser.password" required />
           </div>
           <div class="form-group">
             <label for="role">{{ isArabic ? 'الدور' : 'Role' }}</label>
@@ -83,7 +73,7 @@
         </form>
       </div>
     </div>
-    
+
     <!-- Edit User Modal -->
     <div v-if="showEditUserModal" class="modal-overlay">
       <div class="modal-content">
@@ -91,12 +81,7 @@
         <form @submit.prevent="updateUser">
           <div class="form-group">
             <label for="edit-username">{{ isArabic ? 'اسم المستخدم' : 'Username' }}</label>
-            <input 
-              type="text" 
-              id="edit-username" 
-              v-model="editingUser.username" 
-              required
-            />
+            <input type="text" id="edit-username" v-model="editingUser.username" required />
           </div>
           <div class="form-group">
             <label for="edit-role">{{ isArabic ? 'الدور' : 'Role' }}</label>
@@ -116,15 +101,16 @@
         </form>
       </div>
     </div>
-    
+
     <!-- Delete Confirmation Modal -->
     <div v-if="showDeleteModal" class="modal-overlay">
       <div class="modal-content">
         <h2>{{ isArabic ? 'تأكيد الحذف' : 'Confirm Delete' }}</h2>
         <p>
-          {{ isArabic 
-            ? `هل أنت متأكد من أنك تريد حذف المستخدم "${userToDelete?.username}"؟` 
-            : `Are you sure you want to delete user "${userToDelete?.username}"?` 
+          {{
+            isArabic
+              ? `هل أنت متأكد من أنك تريد حذف المستخدم "${userToDelete?.username}"؟`
+              : `Are you sure you want to delete user "${userToDelete?.username}"?`
           }}
         </p>
         <div class="modal-actions">
@@ -172,7 +158,7 @@ const editingUser = ref({
   role: '',
 })
 
-const userToDelete = ref<{ id: number, username: string } | null>(null)
+const userToDelete = ref<{ id: number; username: string } | null>(null)
 
 // API URLs
 const BASE_URL = 'http://localhost:8000'
@@ -188,8 +174,8 @@ async function fetchUsers() {
     loading.value = true
     const response = await axios.get(`${BASE_URL}/api/auth/users/`, {
       headers: {
-        Authorization: `Bearer ${authStore.token}`
-      }
+        Authorization: `Bearer ${authStore.token}`,
+      },
     })
     users.value = response.data
   } catch (error) {
@@ -205,10 +191,10 @@ async function addUser() {
     await axios.post(`${BASE_URL}/api/auth/register/`, newUser.value, {
       headers: {
         Authorization: `Bearer ${authStore.token}`,
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+      },
     })
-    
+
     // Reset form and close modal
     newUser.value = {
       username: '',
@@ -216,7 +202,7 @@ async function addUser() {
       role: 'user',
     }
     showAddUserModal.value = false
-    
+
     // Refresh user list
     await fetchUsers()
   } catch (error) {
@@ -237,16 +223,20 @@ function editUser(user: any) {
 // Update user
 async function updateUser() {
   try {
-    await axios.put(`${BASE_URL}/api/auth/users/update/?pk=${editingUser.value.id}`, {
-      username: editingUser.value.username,
-      role: editingUser.value.role
-    }, {
-      headers: {
-        Authorization: `Bearer ${authStore.token}`,
-        'Content-Type': 'application/json'
-      }
-    })
-    
+    await axios.put(
+      `${BASE_URL}/api/auth/users/update/?pk=${editingUser.value.id}`,
+      {
+        username: editingUser.value.username,
+        role: editingUser.value.role,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${authStore.token}`,
+          'Content-Type': 'application/json',
+        },
+      },
+    )
+
     // Close modal and refresh user list
     showEditUserModal.value = false
     await fetchUsers()
@@ -259,7 +249,7 @@ async function updateUser() {
 function confirmDeleteUser(user: any) {
   userToDelete.value = {
     id: user.id,
-    username: user.username
+    username: user.username,
   }
   showDeleteModal.value = true
 }
@@ -267,14 +257,14 @@ function confirmDeleteUser(user: any) {
 // Delete user
 async function deleteUser() {
   if (!userToDelete.value) return
-  
+
   try {
     await axios.delete(`${BASE_URL}/api/auth/users/delete/?pk=${userToDelete.value.id}`, {
       headers: {
-        Authorization: `Bearer ${authStore.token}`
-      }
+        Authorization: `Bearer ${authStore.token}`,
+      },
     })
-    
+
     // Close modal and refresh user list
     showDeleteModal.value = false
     userToDelete.value = null
@@ -293,7 +283,7 @@ function formatDate(dateString: string): string {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   }).format(date)
 }
 </script>
@@ -365,511 +355,166 @@ h1::after {
 }
 
 .add-user-btn {
-  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-dark));
+  background: var(--accent-color);
   color: var(--btn-text);
   border: none;
-  padding: 0.85rem 1.8rem;
-  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
   cursor: pointer;
   font-weight: 600;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 
-    0 4px 12px rgba(0,0,0,0.12),
-    0 0 0 1px rgba(255,255,255,0.1) inset;
-  position: relative;
-  overflow: hidden;
-  letter-spacing: 0.02em;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.add-user-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.1), rgba(255,255,255,0));
-  transform: translateX(-100%);
-  transition: transform 0.8s ease;
+  transition: background-color 0.2s ease;
 }
 
 .add-user-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 
-    0 8px 20px rgba(0,0,0,0.15),
-    0 0 0 1px rgba(255,255,255,0.15) inset;
+  background: var(--accent-color-dark);
 }
 
-.add-user-btn:hover::before {
-  transform: translateX(100%);
-}
-
-.add-user-btn:active {
-  transform: translateY(-1px);
-}
-
+/* Simplified table styles */
 .user-list-container {
   background: var(--card-bg);
-  border-radius: 16px;
-  box-shadow: 
-    0 8px 30px var(--shadow-color),
-    0 0 0 1px var(--border-color);
-  overflow: hidden;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
+  border: 1px solid var(--border-color);
+  overflow-x: auto;
 }
 
 .user-table {
   width: 100%;
-  border-collapse: separate;
+  border-collapse: collapse;
   border-spacing: 0;
+  text-align: left;
 }
 
 .user-table th,
 .user-table td {
-  padding: 1.2rem 1.5rem;
-  text-align: left;
+  padding: 0.8rem 1rem;
   border-bottom: 1px solid var(--border-color);
-  transition: all 0.2s ease;
 }
 
 .user-table th {
-  background: rgba(var(--accent-color-rgb, 138, 42, 68), 0.08);
+  background-color: rgba(0, 0, 0, 0.03);
   font-weight: 600;
   color: var(--heading-color);
-  position: relative;
-  overflow: hidden;
 }
 
-.user-table th::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, var(--accent-color), transparent);
-  opacity: 0.3;
-}
-
-[dir='rtl'] .user-table th::after {
-  background: linear-gradient(90deg, transparent, var(--accent-color));
+.dark-theme .user-table th {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .user-table tr:last-child td {
   border-bottom: none;
 }
 
-.user-table tr {
-  transition: all 0.2s ease;
-  position: relative;
-}
-
 .user-table tbody tr:hover td {
-  background: var(--hover-bg);
+  background-color: rgba(0, 0, 0, 0.02);
 }
 
-.user-table tbody tr::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--accent-color);
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-[dir='rtl'] .user-table tbody tr::before {
-  left: auto;
-  right: 0;
-}
-
-.user-table tbody tr:hover::before {
-  opacity: 1;
+.dark-theme .user-table tbody tr:hover td {
+  background-color: rgba(255, 255, 255, 0.02);
 }
 
 .actions-cell {
   display: flex;
-  gap: 0.8rem;
+  gap: 0.5rem;
 }
 
-.edit-btn, .delete-btn {
-  padding: 0.6rem 1.2rem;
+.edit-btn,
+.delete-btn {
+  padding: 0.4rem 0.8rem;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   cursor: pointer;
   font-weight: 500;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  transition: background-color 0.2s ease;
 }
 
 .edit-btn {
-  background: rgba(0, 120, 212, 0.1);
+  background-color: #e0f0ff;
   color: #0078d4;
 }
 
-.dark-theme .edit-btn {
-  background: rgba(0, 120, 212, 0.2);
-  color: #4db5ff;
-}
-
 .delete-btn {
-  background: rgba(209, 52, 56, 0.1);
+  background-color: #ffe0e0;
   color: #d13438;
 }
 
+.edit-btn:hover {
+  background-color: #cce5ff;
+}
+
+.delete-btn:hover {
+  background-color: #ffc9c9;
+}
+
+.dark-theme .edit-btn {
+  background-color: rgba(0, 120, 212, 0.2);
+  color: #4db5ff;
+}
+
 .dark-theme .delete-btn {
-  background: rgba(209, 52, 56, 0.2);
+  background-color: rgba(209, 52, 56, 0.2);
   color: #ff6a6e;
 }
 
-.edit-btn::before, .delete-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: currentColor;
-  opacity: 0;
-  transition: opacity 0.25s ease;
+.dark-theme .edit-btn:hover {
+  background-color: rgba(0, 120, 212, 0.3);
 }
 
-.edit-btn:hover, .delete-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  color: white;
+.dark-theme .delete-btn:hover {
+  background-color: rgba(209, 52, 56, 0.3);
 }
 
-.edit-btn:hover::before {
-  opacity: 1;
-  background: #0078d4;
-}
-
-.dark-theme .edit-btn:hover::before {
-  background: #1890ff;
-}
-
-.delete-btn:hover::before {
-  opacity: 1;
-  background: #d13438;
-}
-
-.dark-theme .delete-btn:hover::before {
-  background: #eb4d51;
-}
-
-.edit-btn:active, .delete-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-}
-
-.edit-btn > *, .delete-btn > * {
-  position: relative;
-  z-index: 1;
-}
-
-/* Modal styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: fadeIn 0.3s ease forwards;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.modal-content {
-  background: var(--card-bg);
-  border-radius: 16px;
-  padding: 2.5rem;
-  width: 100%;
-  max-width: 500px;
-  box-shadow: 
-    0 20px 60px rgba(0, 0, 0, 0.3),
-    0 0 0 1px var(--border-color),
-    0 0 0 3px rgba(var(--accent-color-rgb, 138, 42, 68), 0.1);
-  animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  transform-origin: center;
-  overflow: hidden;
-  position: relative;
-}
-
-@keyframes slideIn {
-  from { 
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.modal-content::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 4px;
-  background: linear-gradient(90deg, var(--accent-color), var(--accent-color-dark));
-}
-
-.modal-content h2 {
-  margin-top: 0;
-  margin-bottom: 2rem;
-  color: var(--heading-color);
-  font-size: 1.6rem;
-  position: relative;
-  padding-bottom: 0.8rem;
-}
-
-.modal-content h2::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 60px;
-  height: 3px;
-  background: var(--accent-color);
-  border-radius: 3px;
-  opacity: 0.6;
-}
-
-[dir='rtl'] .modal-content h2::after {
-  left: auto;
-  right: 0;
-}
-
-.form-group {
-  margin-bottom: 1.8rem;
-  position: relative;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.7rem;
-  font-weight: 500;
-  color: var(--text-color);
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
-  opacity: 0.85;
-}
-
-.form-group input,
-.form-group select {
-  width: 100%;
-  padding: 0.9rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  font-size: 1rem;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  background: var(--card-bg);
-  color: var(--text-color);
-  box-shadow: 0 2px 5px rgba(0,0,0,0.02) inset;
-}
-
-.dark-theme .form-group input,
-.dark-theme .form-group select {
-  background: rgba(0,0,0,0.2);
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2) inset;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-  border-color: var(--accent-color);
-  outline: none;
-  box-shadow: 
-    0 0 0 3px rgba(var(--accent-color-rgb, 138, 42, 68), 0.15),
-    0 1px 2px rgba(0,0,0,0.05) inset;
-}
-
-.form-group input::placeholder {
-  color: rgba(var(--text-color-rgb, 68, 68, 68), 0.5);
-}
-
-.form-group::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: var(--accent-color);
-  transition: width 0.3s ease;
-}
-
-.form-group:focus-within::after {
-  width: 100%;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1.2rem;
-  margin-top: 2.5rem;
-}
-
-[dir='rtl'] .modal-actions {
-  justify-content: flex-start;
-}
-
-.cancel-btn,
-.submit-btn,
-.delete-confirm-btn {
-  padding: 0.85rem 1.7rem;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.cancel-btn {
-  background: rgba(var(--text-color-rgb, 68, 68, 68), 0.08);
-  color: var(--text-color);
-}
-
-.dark-theme .cancel-btn {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.submit-btn {
-  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-dark));
-  color: white;
-  box-shadow: 
-    0 4px 15px rgba(var(--accent-color-rgb, 138, 42, 68), 0.25),
-    0 0 0 1px rgba(var(--accent-color-rgb, 138, 42, 68), 0.3);
-}
-
-.delete-confirm-btn {
-  background: linear-gradient(135deg, #d13438, #bf2e32);
-  color: white;
-  box-shadow: 
-    0 4px 15px rgba(209, 52, 56, 0.25),
-    0 0 0 1px rgba(209, 52, 56, 0.3);
-}
-
-.cancel-btn::before,
-.submit-btn::before,
-.delete-confirm-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, 
-    rgba(255,255,255,0), 
-    rgba(255,255,255,0.2), 
-    rgba(255,255,255,0));
-  transform: translateX(-100%);
-  transition: transform 0.8s ease;
-}
-
-.cancel-btn:hover,
-.submit-btn:hover,
-.delete-confirm-btn:hover {
-  transform: translateY(-3px);
-}
-
-.cancel-btn:hover {
-  background: rgba(var(--text-color-rgb, 68, 68, 68), 0.12);
-}
-
-.dark-theme .cancel-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.submit-btn:hover {
-  box-shadow: 
-    0 8px 25px rgba(var(--accent-color-rgb, 138, 42, 68), 0.35),
-    0 0 0 1px rgba(var(--accent-color-rgb, 138, 42, 68), 0.4);
-}
-
-.delete-confirm-btn:hover {
-  box-shadow: 
-    0 8px 25px rgba(209, 52, 56, 0.35),
-    0 0 0 1px rgba(209, 52, 56, 0.4);
-}
-
-.cancel-btn:hover::before,
-.submit-btn:hover::before,
-.delete-confirm-btn:hover::before {
-  transform: translateX(100%);
-}
-
-.cancel-btn:active,
-.submit-btn:active,
-.delete-confirm-btn:active {
-  transform: translateY(-1px);
-}
-
-.loading-indicator {
-  padding: 3rem;
-  text-align: center;
-  color: var(--text-color);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  position: relative;
-}
-
-.loading-indicator::before {
-  content: '';
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 3px solid transparent;
-  border-top-color: var(--accent-color);
-  border-left-color: var(--accent-color);
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* RTL adjustments */
+/* RTL adjustments for table */
 [dir='rtl'] .user-table th,
 [dir='rtl'] .user-table td {
   text-align: right;
 }
 
-[dir='rtl'] .actions {
-  justify-content: flex-start;
+/* ...existing code for modals and other elements... */
+
+.cancel-btn,
+.submit-btn,
+.delete-confirm-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
 }
 
-[dir='rtl'] .modal-actions {
-  justify-content: flex-start;
+.cancel-btn {
+  background-color: #f0f0f0;
+  color: var(--text-color);
 }
+
+.submit-btn {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.delete-confirm-btn {
+  background-color: #d13438;
+  color: white;
+}
+
+.cancel-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.submit-btn:hover {
+  background-color: var(--accent-color-dark);
+}
+
+.delete-confirm-btn:hover {
+  background-color: #bf2e32;
+}
+
+.dark-theme .cancel-btn {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark-theme .cancel-btn:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* ...existing code... */
 </style>

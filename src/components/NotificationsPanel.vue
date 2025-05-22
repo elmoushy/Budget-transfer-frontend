@@ -1,49 +1,58 @@
 <!-- NotificationsPanel.vue -->
-<template>  <div 
-    class="notifications-panel" 
-    :class="{ 
-      active: isActive, 
-      'dark-theme': isDarkMode, 
-      'rtl': isArabic 
+<template>
+  <div
+    class="notifications-panel"
+    :class="{
+      active: isActive,
+      'dark-theme': isDarkMode,
+      rtl: isArabic,
     }"
   >
     <div class="panel-header">
       <h3>{{ isArabic ? 'الإشعارات' : 'Notifications' }}</h3>
       <div class="actions">
+        <button class="action-btn view-all" @click="viewAllNotifications">
+          {{ isArabic ? 'عرض الكل' : 'View all' }}
+        </button>
         <button class="action-btn mark-all" @click="markAllAsRead">
           {{ isArabic ? 'تعليم كمقروءة' : 'Mark all as read' }}
         </button>
         <button class="close-btn" @click="closePanel">
-          <X size="18" />
+          <X :size="18" />
         </button>
       </div>
     </div>
-    
-    <div class="panel-content">
-      <div v-if="notifications.length === 0" class="empty-state">
-        <Bell size="32" />
+
+    <div class="panel-content" :class="{ loading: isLoading }">
+      <div v-if="isLoading" class="loading-state">
+        <div class="loader"></div>
+        <p>{{ isArabic ? 'جاري التحميل...' : 'Loading...' }}</p>
+      </div>
+
+      <div v-else-if="notifications.length === 0" class="empty-state">
+        <Bell :size="32" />
         <p>{{ isArabic ? 'ليس لديك إشعارات جديدة' : 'You have no new notifications' }}</p>
       </div>
-      
+
       <template v-else>
-        <div 
-          v-for="(notification, index) in notifications" 
-          :key="index"
+        <div
+          v-for="notification in notifications"
+          :key="notification.id"
           class="notification-item"
-          :class="{ unread: !notification.read }"
-          @click="readNotification(index)"
+          :class="{ unread: !notification.is_read }"
+          @click="readNotification(notification)"
         >
-          <div class="notification-icon" :class="notification.type">
-            <component :is="getIconForType(notification.type)" size="18" />
+          <div class="notification-icon" :class="getNotificationType(notification)">
+            <component :is="getIconForType(getNotificationType(notification))" :size="18" />
           </div>
           <div class="notification-content">
-            <h4>{{ notification.title }}</h4>
+            <h4>{{ getNotificationTitle(notification) }}</h4>
             <p>{{ notification.message }}</p>
-            <span class="timestamp">{{ formatTime(notification.timestamp) }}</span>
+            <span class="timestamp">{{ formatTime(new Date(notification.created_at)) }}</span>
           </div>
           <div class="notification-actions">
-            <button class="action-btn" @click.stop="removeNotification(index)">
-              <Trash2 size="16" />
+            <button class="action-btn" @click.stop="removeNotification(notification)">
+              <Trash2 :size="16" />
             </button>
           </div>
         </div>
@@ -53,81 +62,168 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useThemeStore } from '@/stores/themeStore'
-import { Bell, AlertTriangle, CheckCircle, FileText, DollarSign, X, Trash2, User } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
+import {
+  Bell,
+  AlertTriangle,
+  CheckCircle,
+  FileText,
+  DollarSign,
+  X,
+  Trash2,
+  User,
+} from 'lucide-vue-next'
+import notificationService from '@/services/NotificationService'
+import type { Notification } from '@/services/NotificationService'
 
 const props = defineProps({
   isActive: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 })
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'update:hasUnread'])
 
+const router = useRouter()
 const themeStore = useThemeStore()
 const isDarkMode = computed(() => themeStore.darkMode)
 const isArabic = computed(() => themeStore.language === 'ar')
 
-// Mock notifications data
-const notifications = ref([
-  {
-    type: 'success',
-    title: isArabic.value ? 'تم تحديث الميزانية' : 'Budget Updated',
-    message: isArabic.value 
-      ? 'تم تحديث ميزانية قسم تكنولوجيا المعلومات بنجاح'
-      : 'IT Department budget has been successfully updated.',
-    timestamp: new Date(Date.now() - 3600000 * 2), // 2 hours ago
-    read: false
-  },
-  {
-    type: 'warning',
-    title: isArabic.value ? 'طلب تحويل في انتظار الموافقة' : 'Transfer Request Pending',
-    message: isArabic.value 
-      ? 'طلب تحويل #TR-2025-053 بحاجة للموافقة'
-      : 'Transfer request #TR-2025-053 is waiting for your approval.',
-    timestamp: new Date(Date.now() - 86400000), // 1 day ago
-    read: false
-  },
-  {
-    type: 'info',
-    title: isArabic.value ? 'تم تحديث النظام' : 'System Update',
-    message: isArabic.value 
-      ? 'تم تحديث النظام إلى الإصدار 2.4.0، اطلع على الميزات الجديدة'
-      : 'System has been updated to version 2.4.0. Check out new features!',
-    timestamp: new Date(Date.now() - 172800000), // 2 days ago
-    read: true
-  },
-  {
-    type: 'danger',
-    title: isArabic.value ? 'تجاوز ميزانية' : 'Budget Exceeded',
-    message: isArabic.value 
-      ? 'تجاوزت ميزانية قسم التسويق الحد المخصص لهذا الربع'
-      : 'Marketing department has exceeded budget limit for this quarter.',
-    timestamp: new Date(Date.now() - 259200000), // 3 days ago
-    read: true
-  },
-  {
-    type: 'user',
-    title: isArabic.value ? 'مستخدم جديد' : 'New User Added',
-    message: isArabic.value 
-      ? 'تم إضافة محمد أحمد كمستخدم جديد في النظام'
-      : 'Mohammed Ahmed has been added as a new user to the system.',
-    timestamp: new Date(Date.now() - 345600000), // 4 days ago
-    read: true
+// Notifications data
+const notifications = ref<Notification[]>([])
+const isLoading = ref(false)
+const hasNewNotifications = ref(false)
+let pollingInterval: number | null = null
+
+// Fetch notifications on mount
+onMounted(() => {
+  fetchUnreadNotifications()
+  startPolling()
+})
+
+// Clean up on unmount
+onUnmounted(() => {
+  stopPolling()
+})
+
+// Start polling for new notifications
+function startPolling() {
+  pollingInterval = window.setInterval(() => {
+    checkForNewNotifications()
+  }, 30000) // Poll every 30 seconds
+}
+
+// Stop polling
+function stopPolling() {
+  if (pollingInterval) {
+    clearInterval(pollingInterval)
+    pollingInterval = null
   }
-])
+}
+
+// Check for new notifications
+async function checkForNewNotifications() {
+  try {
+    const response = await notificationService.checkSystemNotifications()
+    hasNewNotifications.value = response.Number_Of_Notifications > 0
+
+    // Emit event to update the parent component
+    emit('update:hasUnread', hasNewNotifications.value)
+
+    // If panel is active, refresh the notifications list
+    if (props.isActive) {
+      fetchUnreadNotifications()
+    }
+  } catch (error) {
+    console.error('Error checking for new notifications:', error)
+  }
+}
+
+// Fetch unread notifications
+async function fetchUnreadNotifications() {
+  isLoading.value = true
+  try {
+    const response = await notificationService.getUnreadNotifications()
+    notifications.value = response.notifications || []
+
+    // Update the notification status
+    hasNewNotifications.value = notifications.value.length > 0
+    emit('update:hasUnread', hasNewNotifications.value)
+  } catch (error) {
+    console.error('Error fetching unread notifications:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Get notification type based on content
+function getNotificationType(notification: Notification): string {
+  const message = notification.message.toLowerCase()
+  if (message.includes('budget') || message.includes('ميزانية')) {
+    return 'success'
+  } else if (message.includes('transfer') || message.includes('تحويل')) {
+    return 'warning'
+  } else if (message.includes('system') || message.includes('نظام')) {
+    return 'info'
+  } else if (message.includes('error') || message.includes('خطأ')) {
+    return 'danger'
+  } else if (message.includes('user') || message.includes('مستخدم')) {
+    return 'user'
+  }
+  return 'info'
+}
+
+// Get notification title based on content
+function getNotificationTitle(notification: Notification): string {
+  const message = notification.message.toLowerCase()
+
+  if (isArabic.value) {
+    if (message.includes('budget') || message.includes('ميزانية')) {
+      return 'تحديث الميزانية'
+    } else if (message.includes('transfer') || message.includes('تحويل')) {
+      return 'طلب تحويل'
+    } else if (message.includes('system') || message.includes('نظام')) {
+      return 'تحديث النظام'
+    } else if (message.includes('error') || message.includes('خطأ')) {
+      return 'تنبيه'
+    } else if (message.includes('user') || message.includes('مستخدم')) {
+      return 'مستخدم جديد'
+    }
+    return 'إشعار'
+  } else {
+    if (message.includes('budget') || message.includes('ميزانية')) {
+      return 'Budget Update'
+    } else if (message.includes('transfer') || message.includes('تحويل')) {
+      return 'Transfer Request'
+    } else if (message.includes('system') || message.includes('نظام')) {
+      return 'System Update'
+    } else if (message.includes('error') || message.includes('خطأ')) {
+      return 'Alert'
+    } else if (message.includes('user') || message.includes('مستخدم')) {
+      return 'New User'
+    }
+    return 'Notification'
+  }
+}
 
 // Get appropriate icon based on notification type
 function getIconForType(type: string) {
   switch (type) {
-    case 'success': return CheckCircle
-    case 'warning': return AlertTriangle
-    case 'info': return FileText
-    case 'danger': return DollarSign
-    case 'user': return User
-    default: return Bell
+    case 'success':
+      return CheckCircle
+    case 'warning':
+      return AlertTriangle
+    case 'info':
+      return FileText
+    case 'danger':
+      return DollarSign
+    case 'user':
+      return User
+    default:
+      return Bell
   }
 }
 
@@ -138,7 +234,7 @@ function formatTime(timestamp: Date): string {
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
   const diffMinutes = Math.floor(diffMs / (1000 * 60))
-  
+
   if (isArabic.value) {
     if (diffMinutes < 60) {
       return `منذ ${diffMinutes} دقيقة`
@@ -159,20 +255,54 @@ function formatTime(timestamp: Date): string {
 }
 
 // Mark notification as read
-function readNotification(index: number) {
-  notifications.value[index].read = true
+async function readNotification(notification: Notification) {
+  if (!notification.is_read) {
+    try {
+      await notificationService.markNotificationAsRead(notification.id)
+      notification.is_read = true
+
+      // Update notification status
+      checkForNewNotifications()
+    } catch (error) {
+      console.error(`Error marking notification ${notification.id} as read:`, error)
+    }
+  }
 }
 
 // Mark all notifications as read
-function markAllAsRead() {
-  notifications.value = notifications.value.map(notification => {
-    return { ...notification, read: true }
-  })
+async function markAllAsRead() {
+  try {
+    await notificationService.markAllNotificationsAsRead()
+
+    // Refresh notifications list instead of just updating local state
+    await fetchUnreadNotifications()
+
+    // Update notification status
+    hasNewNotifications.value = false
+    emit('update:hasUnread', false)
+  } catch (error) {
+    console.error('Error marking all notifications as read:', error)
+  }
 }
 
 // Remove a notification
-function removeNotification(index: number) {
-  notifications.value.splice(index, 1)
+async function removeNotification(notification: Notification) {
+  try {
+    await notificationService.deleteNotification(notification.id)
+    notifications.value = notifications.value.filter((n) => n.id !== notification.id)
+
+    // Update notification status
+    hasNewNotifications.value = notifications.value.some((n) => !n.is_read)
+    emit('update:hasUnread', hasNewNotifications.value)
+  } catch (error) {
+    console.error(`Error deleting notification ${notification.id}:`, error)
+  }
+}
+
+// Navigate to all notifications page
+function viewAllNotifications() {
+  router.push({ name: 'NotificationsPage' })
+  closePanel()
 }
 
 // Close the panel
@@ -192,7 +322,7 @@ function closePanel() {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: 16px;
-  box-shadow: 
+  box-shadow:
     0 10px 30px rgba(0, 0, 0, 0.15),
     0 0 0 1px rgba(0, 0, 0, 0.05),
     0 0 40px rgba(0, 0, 0, 0.05);
@@ -213,7 +343,7 @@ function closePanel() {
 
 .dark-theme.notifications-panel {
   background: rgba(30, 30, 35, 0.95);
-  box-shadow: 
+  box-shadow:
     0 10px 35px rgba(0, 0, 0, 0.35),
     0 0 0 1px rgba(255, 255, 255, 0.05),
     0 0 50px rgba(0, 0, 0, 0.15);
@@ -273,7 +403,8 @@ function closePanel() {
   color: #f0f0f0;
 }
 
-.action-btn.mark-all {
+.action-btn.mark-all,
+.action-btn.view-all {
   font-weight: 500;
 }
 
@@ -310,6 +441,13 @@ function closePanel() {
   padding: 0;
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.panel-content.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
 }
 
 .panel-content::-webkit-scrollbar {
@@ -469,7 +607,8 @@ function closePanel() {
   opacity: 1;
 }
 
-.empty-state {
+.empty-state,
+.loading-state {
   padding: 40px 20px;
   display: flex;
   flex-direction: column;
@@ -478,13 +617,36 @@ function closePanel() {
   color: #999;
 }
 
-.dark-theme .empty-state {
+.dark-theme .empty-state,
+.dark-theme .loading-state {
   color: #777;
 }
 
-.empty-state p {
+.empty-state p,
+.loading-state p {
   margin-top: 15px;
   text-align: center;
+}
+
+/* Loading spinner */
+.loader {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(138, 42, 68, 0.2);
+  border-radius: 50%;
+  border-top-color: rgba(138, 42, 68, 0.8);
+  animation: spin 1s ease-in-out infinite;
+}
+
+.dark-theme .loader {
+  border: 3px solid rgba(138, 42, 68, 0.3);
+  border-top-color: rgba(138, 42, 68, 0.8);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes panel-appear {
@@ -501,5 +663,41 @@ function closePanel() {
 /* RTL support */
 .rtl .notification-item {
   text-align: right;
+}
+
+/* New notification alert */
+.new-notification-alert {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: #e53e3e;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(229, 62, 62, 0.7);
+  }
+
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(229, 62, 62, 0);
+  }
+
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(229, 62, 62, 0);
+  }
 }
 </style>

@@ -16,7 +16,10 @@
 
       <div class="toolbar-right">
         <div class="search-container glass-field">
-            <SearchIcon class="search-icon" :style="{ transform: isArabic ? 'translateX(-200px)' : 'translateX(200px)' }" />
+          <SearchIcon
+            class="search-icon"
+            :style="{ transform: isArabic ? 'translateX(-200px)' : 'translateX(200px)' }"
+          />
           <input
             v-model="searchQuery"
             type="search"
@@ -37,19 +40,37 @@
     <!-- table -->
     <div class="table-container glass-panel" v-motion-slide-bottom :delay="200">
       <transition-group name="table-fade" tag="table" class="main-table">
-              <thead key="head">
-      <tr>
-            <th :style="{ transform: isArabic ? 'translateX(70px)' : 'translateX(30px)' }">{{ tableHeaders.action }}</th>
-            <th :style="{ transform: isArabic ? 'translateX(45px)' : 'translateX(30px)' }">{{ tableHeaders.code }}</th>
-            <th :style="{ transform: isArabic ? 'translateX(35px)' : 'translateX(30px)' }">{{ tableHeaders.requestedBy }}</th>
-            <th :style="{ transform: isArabic ? 'translateX(40px)' : 'translateX(30px)' }">{{ tableHeaders.contractDescription }}</th>
-            <th :style="{ transform: isArabic ? 'translateX(50px)' : 'translateX(30px)' }">{{ tableHeaders.requestDate }}</th>
-            <th :style="{ transform: isArabic ? 'translateX(45px)' : 'translateX(30px)' }">{{ tableHeaders.contractPeriod }}</th>
-            <th :style="{ transform: isArabic ? 'translateX(56px)' : 'translateX(30px)' }">{{ tableHeaders.giPostingStatus }}</th>
-            <th :style="{ transform: isArabic ? 'translateX(69px)' : 'translateX(30px)' }">{{ tableHeaders.statusLevel }}</th>
-            <th :style="{ transform: isArabic ? 'translateX(45px)' : 'translateX(30px)' }">{{ tableHeaders.attachment }}</th>
+        <thead key="head">
+          <tr>
+            <th :style="{ transform: isArabic ? 'translateX(70px)' : 'translateX(30px)' }">
+              {{ tableHeaders.action }}
+            </th>
+            <th :style="{ transform: isArabic ? 'translateX(45px)' : 'translateX(30px)' }">
+              {{ tableHeaders.code }}
+            </th>
+            <th :style="{ transform: isArabic ? 'translateX(35px)' : 'translateX(30px)' }">
+              {{ tableHeaders.requestedBy }}
+            </th>
+            <th :style="{ transform: isArabic ? 'translateX(40px)' : 'translateX(30px)' }">
+              {{ tableHeaders.contractDescription }}
+            </th>
+            <th :style="{ transform: isArabic ? 'translateX(50px)' : 'translateX(30px)' }">
+              {{ tableHeaders.requestDate }}
+            </th>
+            <th :style="{ transform: isArabic ? 'translateX(45px)' : 'translateX(30px)' }">
+              {{ tableHeaders.contractPeriod }}
+            </th>
+            <th :style="{ transform: isArabic ? 'translateX(56px)' : 'translateX(30px)' }">
+              {{ tableHeaders.giPostingStatus }}
+            </th>
+            <th :style="{ transform: isArabic ? 'translateX(69px)' : 'translateX(30px)' }">
+              {{ tableHeaders.statusLevel }}
+            </th>
+            <th :style="{ transform: isArabic ? 'translateX(45px)' : 'translateX(30px)' }">
+              {{ tableHeaders.attachment }}
+            </th>
           </tr>
-      </thead>
+        </thead>
         <tbody key="body">
           <tr
             v-for="(row, index) in displayedRows"
@@ -102,9 +123,7 @@
             </td>
             <td>{{ formatDate(row.request_date) }}</td>
             <td>{{ row.transaction_date }}</td>
-          <td>
-Track
-        </td>
+            <td>Track</td>
             <td>
               <span
                 class="status-badge"
@@ -529,20 +548,20 @@ function handleFilesUpdated() {
 
 // Updated function to generate attachment tooltip with read-only indication
 function getAttachmentTooltip(row: ContractData): string {
-  const baseMessage = !row.attachment_count 
-    ? (isArabic.value ? 'لا توجد مرفقات' : 'No attachments') 
-    : (isArabic.value 
-      ? `${row.attachment_count} مرفقات - انقر للعرض` 
-      : `${row.attachment_count} attachments - Click to view`);
-      
+  const baseMessage = !row.attachment_count
+    ? isArabic.value
+      ? 'لا توجد مرفقات'
+      : 'No attachments'
+    : isArabic.value
+      ? `${row.attachment_count} مرفقات - انقر للعرض`
+      : `${row.attachment_count} attachments - Click to view`
+
   if (row.status.toLowerCase() !== 'pending') {
-    const readOnlyMessage = isArabic.value
-      ? ' (وضع القراءة فقط)'
-      : ' (read-only mode)';
-    return baseMessage + readOnlyMessage;
+    const readOnlyMessage = isArabic.value ? ' (وضع القراءة فقط)' : ' (read-only mode)'
+    return baseMessage + readOnlyMessage
   }
-  
-  return baseMessage;
+
+  return baseMessage
 }
 
 // Function to open the approval modal
@@ -670,7 +689,7 @@ const englishHeaders = {
   contractPeriod: 'Contract Period',
   giPostingStatus: 'Posting Status - Oracle System',
   statusLevel: 'Status Level',
-  attachment: 'Attachment'
+  attachment: 'Attachment',
 }
 const arabicHeaders = {
   action: 'إجراء',
@@ -681,7 +700,7 @@ const arabicHeaders = {
   contractPeriod: 'فترة العقد',
   giPostingStatus: 'حالة العقد في نظام الأوراكل',
   statusLevel: 'مستوى حالة الطلب',
-  attachment: 'مرفقات'
+  attachment: 'مرفقات',
 }
 const tableHeaders = computed(() => (isArabic.value ? arabicHeaders : englishHeaders))
 
@@ -1050,7 +1069,7 @@ function showFuturisticPopup(type: 'success' | 'error' | 'info', message: string
 }
 
 .dark-mode .main-table thead th {
-  color: #94a3b8;
+  border-bottom: none;
 }
 
 .main-table tbody td {

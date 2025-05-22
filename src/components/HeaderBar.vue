@@ -4,7 +4,9 @@
     <!-- logo + title -->
     <div class="left">
       <img src="@/assets/img/lightidea_logo.png" alt="LightIdea Logo" class="logo-img" />
-      <h1 class="logo-text" style="transform: translateY(12px)!important;">{{ isArabic ? 'مناقلة' : 'Budget Transfer' }}</h1>
+      <h1 class="logo-text" style="transform: translateY(12px) !important">
+        {{ isArabic ? 'مناقلة' : 'Budget Transfer' }}
+      </h1>
     </div>
 
     <!-- action icons -->
@@ -34,8 +36,16 @@
         <button class="icon bell" @click="toggleNotifications">
           <BellIcon />
           <span v-if="hasUnreadNotifications" class="badge"></span>
+          <span v-if="newNotificationToast" class="notification-toast">
+            {{ isArabic ? 'لديك إشعارات جديدة' : 'You have new notifications' }}
+          </span>
         </button>
-        <NotificationsPanel v-if="showNotifications" :is-active="showNotifications" @close="showNotifications = false" />
+        <NotificationsPanel
+          v-if="showNotifications"
+          :is-active="showNotifications"
+          @close="showNotifications = false"
+          @update:hasUnread="updateNotificationStatus"
+        />
       </div>
       <!-- Logout Button -->
       <button class="icon logout" @click="logout">
@@ -47,11 +57,12 @@
 
 <script setup lang="ts">
 import { BellIcon, LogOutIcon } from 'lucide-vue-next'
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useRouter } from 'vue-router'
 import NotificationsPanel from './NotificationsPanel.vue'
+import notificationService from '@/services/NotificationService'
 
 const themeStore = useThemeStore()
 const authStore = useAuthStore()
@@ -63,11 +74,33 @@ const username = computed(() => authStore.user?.username || '')
 
 // Notifications
 const showNotifications = ref(false)
-const hasUnreadNotifications = ref(true) // This would be dynamically set based on actual notifications
+const hasUnreadNotifications = ref(false)
+const newNotificationToast = ref(false)
+let notificationPolling: number | null = null
+let toastTimeout: number | null = null
 
 onMounted(() => {
   isDarkMode.value = themeStore.darkMode
   isArabic.value = themeStore.language === 'ar'
+
+  // Initialize notification status
+  checkNotificationStatus()
+
+  // Set up polling for notifications when not viewing the panel
+  notificationPolling = window.setInterval(() => {
+    if (!showNotifications.value) {
+      checkNotificationStatus()
+    }
+  }, 30000) // Check every 30 seconds
+})
+
+onUnmounted(() => {
+  if (notificationPolling) {
+    clearInterval(notificationPolling)
+  }
+  if (toastTimeout) {
+    clearTimeout(toastTimeout)
+  }
 })
 
 function toggleDarkMode() {
@@ -83,9 +116,51 @@ async function logout() {
   router.push({ name: 'Login' })
 }
 
+// Check for new notifications
+async function checkNotificationStatus() {
+  if (!authStore.isAuthenticated) return
+
+  try {
+    const response = await notificationService.checkSystemNotifications()
+    const newStatus = response.Number_Of_Notifications > 0
+
+    // If we're getting new notifications and didn't have any before, show the toast
+    if (newStatus && !hasUnreadNotifications.value) {
+      showNewNotificationToast()
+    }
+
+    hasUnreadNotifications.value = newStatus
+  } catch (error) {
+    console.error('Error checking notification status:', error)
+  }
+}
+
+// Show the notification toast for 5 seconds
+function showNewNotificationToast() {
+  newNotificationToast.value = true
+
+  if (toastTimeout) {
+    clearTimeout(toastTimeout)
+  }
+
+  toastTimeout = window.setTimeout(() => {
+    newNotificationToast.value = false
+  }, 5000)
+}
+
+// Update notification status from child component
+function updateNotificationStatus(status: boolean) {
+  hasUnreadNotifications.value = status
+}
+
 // Toggle notifications panel
 function toggleNotifications() {
   showNotifications.value = !showNotifications.value
+
+  // If opening the panel, hide toast
+  if (showNotifications.value) {
+    newNotificationToast.value = false
+  }
 }
 </script>
 
@@ -217,6 +292,45 @@ function toggleNotifications() {
   z-index: 1;
 }
 
+.notification-toast {
+  position: absolute;
+  top: 40px;
+  right: -20px;
+  background: #e53e3e;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 300;
+  animation: toast-slide-in 0.3s ease-out forwards;
+}
+
+.notification-toast::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 26px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid #e53e3e;
+}
+
+[dir='rtl'] .notification-toast {
+  right: auto;
+  left: -20px;
+}
+
+[dir='rtl'] .notification-toast::before {
+  right: auto;
+  left: 26px;
+}
+
 .logout {
   color: #ffcccb;
   box-shadow: 0 0 0 1px rgba(255, 204, 203, 0.2);
@@ -323,6 +437,17 @@ input:checked + .slider:before {
   }
   100% {
     box-shadow: 0 0 0 0 rgba(255, 152, 0, 0);
+  }
+}
+
+@keyframes toast-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
