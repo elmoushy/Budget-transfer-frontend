@@ -1,5 +1,5 @@
 <template>
-  <div class="home-page" :class="{ 'dark-mode': isDarkMode }">
+  <div class="page-container enhancements-page" :class="{ 'dark-mode': isDarkMode }">
     <div class="page-background">
       <div class="gradient-orb orb-1"></div>
       <div class="gradient-orb orb-2"></div>
@@ -7,7 +7,7 @@
     </div>
 
     <!-- top bar: new request / actions / search -->
-    <div class="toolbar glass-panel" v-motion-slide-top>
+    <div class="page-toolbar toolbar glass-panel" v-motion-slide-top>
       <button class="btn-primary glass-btn" @click="openNewRequestModal">
         <span class="btn-icon">+</span>
         <span class="btn-text">{{ isArabic ? 'طلب ملاحظة جديدة' : 'New Request' }}</span>
@@ -15,7 +15,7 @@
       </button>
 
       <div class="toolbar-right">
-        <div class="search-container glass-field">
+        <div class="search-container">
           <SearchIcon
             class="search-icon"
             :style="{ transform: isArabic ? 'translateX(-200px)' : 'translateX(200px)' }"
@@ -38,36 +38,62 @@
     </div>
 
     <!-- table -->
-    <div class="table-container glass-panel" v-motion-slide-bottom :delay="200">
-      <transition-group name="table-fade" tag="table" class="main-table">
+    <div
+      class="page-table-container table-container glass-panel"
+      v-motion-slide-bottom
+      :delay="200"
+    >
+      <transition-group name="table-fade" tag="table" class="page-table main-table">
         <thead key="head">
           <tr>
-            <th :style="{ transform: isArabic ? 'translateX(70px)' : 'translateX(30px)' }">
-              {{ tableHeaders.action }}
+            <th>
+              <p :style="{ transform: isArabic ? 'translateX(70px)' : 'translateX(30px)' }">
+                {{ tableHeaders.action }}
+              </p>
             </th>
-            <th :style="{ transform: isArabic ? 'translateX(45px)' : 'translateX(30px)' }">
-              {{ tableHeaders.code }}
+            <th>
+              <p :style="{ transform: isArabic ? 'translateX(75px)' : 'translateX(40px)' }">
+                {{ tableHeaders.code }}
+              </p>
             </th>
-            <th :style="{ transform: isArabic ? 'translateX(35px)' : 'translateX(30px)' }">
-              {{ tableHeaders.requestedBy }}
+            <th>
+              <p :style="{ transform: isArabic ? 'translateX(35px)' : 'translateX(30px)' }">
+                {{ tableHeaders.requestedBy }}
+              </p>
             </th>
-            <th :style="{ transform: isArabic ? 'translateX(40px)' : 'translateX(30px)' }">
-              {{ tableHeaders.transferDescription }}
+            <th>
+              <p :style="{ transform: isArabic ? 'translateX(40px)' : 'translateX(30px)' }">
+                {{ tableHeaders.transferDescription }}
+              </p>
             </th>
-            <th :style="{ transform: isArabic ? 'translateX(50px)' : 'translateX(30px)' }">
-              {{ tableHeaders.requestDate }}
+            <th>
+              <p :style="{ transform: isArabic ? 'translateX(50px)' : 'translateX(30px)' }">
+                {{ tableHeaders.requestDate }}
+              </p>
             </th>
-            <th :style="{ transform: isArabic ? 'translateX(45px)' : 'translateX(30px)' }">
-              {{ tableHeaders.transferPeriod }}
+            <th>
+              <p :style="{ transform: isArabic ? 'translateX(45px)' : 'translateX(30px)' }">
+                {{ tableHeaders.transferPeriod }}
+              </p>
             </th>
-            <th :style="{ transform: isArabic ? 'translateX(56px)' : 'translateX(30px)' }">
-              {{ tableHeaders.giPostingStatus }}
+            <th>
+              <p :style="{ transform: isArabic ? 'translateX(56px)' : 'translateX(30px)' }">
+                {{ tableHeaders.giPostingStatus }}
+              </p>
             </th>
-            <th :style="{ transform: isArabic ? 'translateX(69px)' : 'translateX(30px)' }">
-              {{ tableHeaders.statusLevel }}
+            <th>
+              <p :style="{ transform: isArabic ? 'translateX(69px)' : 'translateX(30px)' }">
+                {{ tableHeaders.statusLevel }}
+              </p>
             </th>
-            <th :style="{ transform: isArabic ? 'translateX(45px)' : 'translateX(30px)' }">
-              {{ tableHeaders.attachment }}
+            <th>
+              <p
+                :style="{
+                  transform: isArabic ? 'translateX(95px)!important' : 'translateX(30px)',
+                }"
+              >
+                {{ tableHeaders.attachment }}
+              </p>
             </th>
           </tr>
         </thead>
@@ -77,16 +103,26 @@
             v-for="(row, index) in displayedRows"
             :key="row.transaction_id"
             :class="rowBg(row.status)"
-            class="table-row"
+            class="page-table-row table-row"
             v-motion-slide-right
             :delay="300 + index * 50"
           >
             <td>
               <div class="action-buttons">
                 <button
-                  v-if="row.status.toLowerCase() === 'pending'"
                   class="icon-btn delete-btn"
-                  @click="deleteRow(row)"
+                  @click="row.status.toLowerCase() === 'pending' ? deleteRow(row) : null"
+                  :class="{ 'disabled-btn': row.status.toLowerCase() !== 'pending' }"
+                  :disabled="row.status.toLowerCase() !== 'pending'"
+                  :title="
+                    row.status.toLowerCase() === 'pending'
+                      ? isArabic
+                        ? 'حذف'
+                        : 'Delete'
+                      : isArabic
+                        ? 'لا يمكن حذف العناصر غير المعلقة'
+                        : 'Cannot delete non-pending items'
+                  "
                 >
                   <TrashIcon />
                 </button>
@@ -105,10 +141,7 @@
                 </button>
               </div>
             </td>
-            <td
-              class="code-cell"
-              :style="{ transform: isArabic ? 'translateX(25px)' : 'translateX(-25px)' }"
-            >
+            <td class="code-cell">
               <router-link
                 :to="{
                   path: `/cost-center-transfer/${row.transaction_id}`,
@@ -170,6 +203,16 @@
                   >
                     {{ row.attachment_count }}
                   </span>
+                </div>
+                <div
+                  :class="[
+                    'rejection-indicator',
+                    { disabled: row.status.toLowerCase() !== 'rejected' },
+                  ]"
+                  :title="isArabic ? 'تقارير الرفض' : 'Rejection reports'"
+                  @click="row.status.toLowerCase() === 'rejected' && openRejectionModal(row)"
+                >
+                  <FileTextIcon :size="18" />
                 </div>
               </div>
             </td>
@@ -340,6 +383,9 @@
     <!-- Approval Pipeline Modal Component -->
     <ApprovalPipelineModal v-model="showApprovalModal" :approval-data="currentApproval" />
 
+    <!-- Rejection Reports Modal Component -->
+    <RejectionReportModal v-model:show="showRejectionModal" :transaction-id="currentRejectionId" />
+
     <!-- Add our custom popup component -->
     <FuturisticPopup
       v-model:show="showPopup"
@@ -360,11 +406,13 @@ import EnhancementsRequestModel from '@/components/EnhancementsRequestModel.vue'
 import EditTransferModal from '@/components/EditTransferModal.vue'
 import AttachmentModal from '@/components/AttachmentModal.vue'
 import ApprovalPipelineModal from '@/components/ApprovalPipelineModal.vue'
+import RejectionReportModal from '@/components/RejectionReportModal.vue'
 import FuturisticPopup from '@/components/FuturisticPopup.vue'
 import enhancementsService from '@/services/Enhancements'
 import { useNavigationStore } from '@/stores/navigationStore'
 
-// Import CSS - changed to use Enhancements.css
+// Import CSS
+import '@/assets/css/shared-page-styles.css'
 import '@/assets/css/Enhancements.css'
 
 // Define component name explicitly to satisfy the multi-word rule
@@ -372,8 +420,7 @@ defineOptions({
   name: 'EnhancementsPage',
 })
 
-// Page size constant
-const PAGE_SIZE = 10
+// Use the page size from the API response - don't hardcode it
 
 // ───────────────────────────────────────────────────────────── Type Declarations
 interface ApiResponse {
@@ -450,6 +497,10 @@ const popupMessage = ref('')
 
 // Add state for current transaction status
 const currentTransactionStatus = ref('pending')
+
+// Add state for rejection reports modal
+const showRejectionModal = ref(false)
+const currentRejectionId = ref(0)
 
 // ───────────────────────────────────────────────────────────── Helper Functions
 function formatDate(dateString: string): string {
@@ -558,7 +609,7 @@ function handleFilesUpdated() {
   fetchData()
 }
 
-// Updated function to generate attachment tooltip with read-only indication
+// Add function to generate attachment tooltip
 function getAttachmentTooltip(row: TransferData): string {
   const baseMessage = !row.attachment_count
     ? isArabic.value
@@ -580,6 +631,15 @@ function getAttachmentTooltip(row: TransferData): string {
 function openApprovalModal(row: TransferData) {
   currentApproval.value = row
   showApprovalModal.value = true
+}
+
+// Function to open rejection report modal
+function openRejectionModal(row: TransferData) {
+  // Check if status is rejected before showing the modal
+  if (row.status.toLowerCase() === 'rejected') {
+    currentRejectionId.value = row.transaction_id
+    showRejectionModal.value = true
+  }
 }
 
 // Replace SweetAlert2 showFuturisticNotification with our custom function
@@ -705,7 +765,19 @@ function prevPage() {
 }
 
 const totalPages = computed(() => {
-  return Math.ceil(totalCount.value / PAGE_SIZE) || 1
+  if (totalCount.value === 0) return 1
+
+  // Get page size from API response URL if available
+  if (apiData.value && apiData.value.next) {
+    const url = new URL(apiData.value.next)
+    const pageSize = url.searchParams.get('page_size')
+    if (pageSize) {
+      return Math.ceil(totalCount.value / parseInt(pageSize))
+    }
+  }
+
+  // Fallback to default page size of 6
+  return Math.ceil(totalCount.value / 6)
 })
 
 // ───────────────────────────────────────────────────────────── Modal Functions
@@ -762,7 +834,7 @@ function handleSearchBlur(e: Event) {
 
 // Apply magnetic snapping effect to table rows
 function applyMagneticEffect() {
-  const tableRows = document.querySelectorAll('.table-row')
+  const tableRows = document.querySelectorAll('.page-table-row')
 
   tableRows.forEach((row) => {
     row.addEventListener('mousemove', (e: Event) => {
@@ -818,17 +890,17 @@ function animateBackgroundOrbs() {
 
 <style scoped>
 /* Base page styles */
-.home-page {
+.enhancements-page {
   min-height: 100vh;
   padding: 1.5rem;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, var(--color-bg-light, #f8fafc) 0%, #e4e8f0 100%);
+  background: linear-gradient(135deg, var(--color-bg-light) 0%, #e4e8f0 100%);
 }
 
-.home-page.dark-mode {
-  background: linear-gradient(135deg, var(--color-bg-dark, #1a1a2e) 0%, #111122 100%);
-  color: var(--color-text-light, #e2e2e2);
+.enhancements-page.dark-mode {
+  background: linear-gradient(135deg, var(--color-bg-dark) 0%, #111122 100%);
+  color: var(--color-text-light);
 }
 
 /* Background animation elements */
@@ -855,11 +927,7 @@ function animateBackgroundOrbs() {
   left: 10%;
   width: 450px;
   height: 450px;
-  background: radial-gradient(
-    circle,
-    var(--color-accent-magenta, #f0abfc) 0%,
-    rgba(240, 171, 252, 0) 70%
-  );
+  background: radial-gradient(circle, var(--color-accent-magenta) 0%, rgba(240, 171, 252, 0) 70%);
   animation: pulse 15s ease-in-out infinite alternate;
 }
 
@@ -868,11 +936,7 @@ function animateBackgroundOrbs() {
   right: 10%;
   width: 500px;
   height: 500px;
-  background: radial-gradient(
-    circle,
-    var(--color-accent-cyan, #5eead4) 0%,
-    rgba(94, 234, 212, 0) 70%
-  );
+  background: radial-gradient(circle, var(--color-accent-cyan) 0%, rgba(94, 234, 212, 0) 70%);
   animation: pulse 18s ease-in-out infinite alternate-reverse;
 }
 
@@ -1096,6 +1160,7 @@ function animateBackgroundOrbs() {
 
 .dark-mode .main-table thead th {
   border-bottom: none;
+  color: #94a3b8;
 }
 
 .main-table tbody td {
@@ -1114,6 +1179,7 @@ function animateBackgroundOrbs() {
   transition:
     transform var(--transition-fast, 0.2s ease),
     background-color var(--transition-fast, 0.2s ease);
+  animation: fadeIn 0.3s ease-out forwards;
 }
 
 .table-row:hover {
@@ -1124,6 +1190,123 @@ function animateBackgroundOrbs() {
 
 .dark-mode .table-row:hover {
   background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* Make each row appear with delay based on its index */
+.table-row:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.table-row:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.table-row:nth-child(3) {
+  animation-delay: 0.15s;
+}
+.table-row:nth-child(4) {
+  animation-delay: 0.2s;
+}
+.table-row:nth-child(5) {
+  animation-delay: 0.25s;
+}
+.table-row:nth-child(6) {
+  animation-delay: 0.3s;
+}
+.table-row:nth-child(7) {
+  animation-delay: 0.35s;
+}
+.table-row:nth-child(8) {
+  animation-delay: 0.4s;
+}
+.table-row:nth-child(9) {
+  animation-delay: 0.45s;
+}
+.table-row:nth-child(10) {
+  animation-delay: 0.5s;
+}
+
+/* Add styles for action buttons container */
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* Button styles */
+.icon-btn {
+  background: transparent;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  transition: all var(--transition-fast, 0.2s ease);
+}
+
+.icon-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--color-accent-primary, #6d1a36);
+  transform: translateY(-2px);
+}
+
+.dark-mode .icon-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-accent-magenta, #f0abfc);
+  box-shadow: var(--shadow-glow-magenta, 0 0 10px rgba(240, 171, 252, 0.4));
+}
+
+.delete-btn {
+  color: #dc2626;
+}
+
+.delete-btn:hover {
+  background-color: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
+.dark-mode .delete-btn {
+  color: #ef4444;
+}
+
+.dark-mode .delete-btn:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.disabled-btn {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Code cell link styling */
+.code-cell {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.code-link {
+  color: var(--color-accent-primary, #6d1a36);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  transition: all var(--transition-fast, 0.2s ease);
+}
+
+.code-link:hover {
+  background: rgba(109, 26, 54, 0.1);
+  transform: translateY(-1px);
+}
+
+.dark-mode .code-link {
+  color: var(--color-accent-magenta, #f0abfc);
+}
+
+.dark-mode .code-link:hover {
+  background: rgba(240, 171, 252, 0.1);
 }
 
 /* Status badge */
@@ -1185,49 +1368,13 @@ function animateBackgroundOrbs() {
   box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
 }
 
-/* Pagination styling */
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.page-btn {
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 10px;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 500;
-  backdrop-filter: blur(5px);
-}
-
-.page-btn:hover:not(.disabled) {
-  background: rgba(255, 255, 255, 0.8);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.page-btn.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.dark-mode .page-btn {
-  background: rgba(30, 30, 46, 0.6);
-  border-color: rgba(255, 255, 255, 0.05);
-  color: #e2e2e2;
-}
-
-.dark-mode .page-btn:hover:not(.disabled) {
-  background: rgba(40, 40, 56, 0.8);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-}
-
 /* Enhanced attachment styles */
+.attachment-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .attachment-indicator {
   position: relative;
   min-width: 36px;
@@ -1238,19 +1385,37 @@ function animateBackgroundOrbs() {
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .attachment-indicator:hover {
   transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .has-attachments {
   color: var(--color-accent-cyan, #5eead4);
+  background: rgba(94, 234, 212, 0.15);
 }
 
 .dark-mode .has-attachments {
   color: var(--color-accent-cyan, #5eead4);
   text-shadow: 0 0 8px rgba(94, 234, 212, 0.4);
+  background: rgba(94, 234, 212, 0.1);
+}
+
+.no-attachments {
+  color: #64748b;
+}
+
+.dark-mode .no-attachments {
+  color: #94a3b8;
+}
+
+.attachment-indicator.disabled {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
 }
 
 .attachment-badge {
@@ -1280,31 +1445,71 @@ function animateBackgroundOrbs() {
   box-shadow: var(--shadow-glow-magenta, 0 0 10px rgba(240, 171, 252, 0.4));
 }
 
-/* Button styles */
-.icon-btn {
-  background: transparent;
-  border: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+/* Rejection indicator styles */
+.rejection-indicator {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 59, 48, 0.15);
   cursor: pointer;
-  color: #64748b;
-  transition: all var(--transition-fast, 0.2s ease);
+  margin-left: 8px;
+  color: #ff3b30;
+  transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+  position: relative;
+  overflow: hidden;
 }
 
-.icon-btn:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: var(--color-accent-primary, #6d1a36);
+.rejection-indicator::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, rgba(255, 59, 48, 0.4) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.rejection-indicator:hover {
   transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(255, 59, 48, 0.3);
 }
 
-.dark-mode .icon-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--color-accent-magenta, #f0abfc);
-  box-shadow: var(--shadow-glow-magenta, 0 0 10px rgba(240, 171, 252, 0.4));
+.rejection-indicator:hover::before {
+  opacity: 1;
+}
+
+.dark-mode .rejection-indicator {
+  background: rgba(255, 69, 58, 0.15);
+  color: #ff453a;
+}
+
+.dark-mode .rejection-indicator:hover {
+  box-shadow: 0 4px 8px rgba(255, 69, 58, 0.3);
+}
+
+/* Disabled rejection indicator */
+.rejection-indicator.disabled {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+}
+
+.rejection-indicator.disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.rejection-indicator.disabled::before {
+  display: none;
+}
+
+.dark-mode .rejection-indicator.disabled {
+  opacity: 0.4;
 }
 
 /* Animation keyframes */
@@ -1342,6 +1547,56 @@ function animateBackgroundOrbs() {
   transform: translateY(20px);
 }
 
+/* Pagination styling */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.page-btn {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  backdrop-filter: blur(5px);
+}
+
+.page-btn:hover:not(.disabled) {
+  background: rgba(255, 255, 255, 0.8);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.page-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-info {
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.dark-mode .page-btn {
+  background: rgba(30, 30, 46, 0.6);
+  border-color: rgba(255, 255, 255, 0.05);
+  color: #e2e2e2;
+}
+
+.dark-mode .page-btn:hover:not(.disabled) {
+  background: rgba(40, 40, 56, 0.8);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .page-info {
+  color: #a0a0b8;
+}
 /* Responsive adjustments */
 @media (max-width: 1024px) {
   .home-page {
@@ -1734,7 +1989,7 @@ function animateBackgroundOrbs() {
     rgba(255, 255, 255, 0.3) 50%,
     rgba(255, 255, 255, 0) 100%
   );
-  transform: skewX(-30deg);
+  transform: rotate(45deg);
   transition: all 0.6s ease;
 }
 

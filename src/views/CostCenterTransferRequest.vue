@@ -13,8 +13,6 @@
         </span>
       </div>
       <div class="header-actions">
-        <div class="transaction-info">
-        </div>
         <button
           class="btn-header-create"
           @click="createTransfer"
@@ -143,44 +141,66 @@
               <td class="name-display">
                 {{ item.account_name || getAccountName(item.account_code) || '-' }}
               </td>
-              <td>
-                <select
+              <td class="dropdown-cell">
+                <SearchableDropdown
                   v-model="item.account_code"
-                  class="account-select"
-                  @change="updateAccountName(item, $event)"
-                  :disabled="!isScreenEditable"
-                  :class="{ 'readonly-input': !isScreenEditable }"
-                >
-                  <option value="">{{ isArabic ? 'اختر رقم الحساب' : 'Select Account' }}</option>
-                  <option
-                    v-for="account in accountEntities"
-                    :key="account.account"
-                    :value="account.account"
-                  >
-                    {{ account.account }}
-                  </option>
-                </select>
+                  :options="
+                    accountEntities.map((account) => ({
+                      value: account.account,
+                      label: account.alias_default
+                        ? `${account.account} - ${account.alias_default}`
+                        : account.account,
+                    }))
+                  "
+                  :placeholder="
+                    accountEntitiesLoading
+                      ? isArabic
+                        ? 'جاري التحميل...'
+                        : 'Loading...'
+                      : isArabic
+                        ? 'اختر رقم الحساب'
+                        : 'Select Account'
+                  "
+                  :disabled="!isScreenEditable || accountEntitiesLoading"
+                  :is-dark-mode="isDarkMode"
+                  :is-rtl="isRTL"
+                  :search-placeholder="isArabic ? 'البحث في الحسابات...' : 'Search accounts...'"
+                  :no-results-text="isArabic ? 'لا توجد نتائج' : 'No results found'"
+                  @change="(value) => updateAccountName(item, { target: { value } })"
+                />
               </td>
               <td class="name-display">
                 {{ item.cost_center_name || getCostCenterName(item.cost_center_code) || '-' }}
               </td>
-              <td>
-                <select
+              <td class="dropdown-cell">
+                <SearchableDropdown
                   v-model="item.cost_center_code"
-                  class="cost-center-select"
-                  @change="updateCostCenterName(item, $event)"
-                  :disabled="!isScreenEditable"
-                  :class="{ 'readonly-input': !isScreenEditable }"
-                >
-                  <option value="">{{ isArabic ? 'اختر رقم البند' : 'Select Cost Center' }}</option>
-                  <option
-                    v-for="entity in costCenterEntities"
-                    :key="entity.entity"
-                    :value="entity.entity"
-                  >
-                    {{ entity.entity }}
-                  </option>
-                </select>
+                  :options="
+                    costCenterEntities.map((entity) => ({
+                      value: entity.entity,
+                      label: entity.alias_default
+                        ? `${entity.entity} - ${entity.alias_default}`
+                        : entity.entity,
+                    }))
+                  "
+                  :placeholder="
+                    costCenterEntitiesLoading
+                      ? isArabic
+                        ? 'جاري التحميل...'
+                        : 'Loading...'
+                      : isArabic
+                        ? 'اختر رقم البند'
+                        : 'Select Cost Center'
+                  "
+                  :disabled="!isScreenEditable || costCenterEntitiesLoading"
+                  :is-dark-mode="isDarkMode"
+                  :is-rtl="isRTL"
+                  :search-placeholder="
+                    isArabic ? 'البحث في مراكز التكلفة...' : 'Search cost centers...'
+                  "
+                  :no-results-text="isArabic ? 'لا توجد نتائج' : 'No results found'"
+                  @change="(value) => updateCostCenterName(item, { target: { value } })"
+                />
               </td>
             </tr>
           </tbody>
@@ -291,7 +311,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, watch, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore } from '@/stores/themeStore'
@@ -300,6 +320,7 @@ import axios from 'axios'
 import transferService from '@/services/transferService'
 import FileUploadModal from '@/components/FileUploadModal.vue'
 import { useNavigationStore } from '@/stores/navigationStore'
+import SearchableDropdown from '@/components/SearchableDropdown.vue'
 // Add import for TransferReport
 import TransferReport from '@/components/TransferReport.vue'
 
@@ -509,7 +530,8 @@ const getCostCenterName = (code) => {
 }
 
 const updateCostCenterName = (item, event) => {
-  const code = event.target.value
+  // Handle both direct value from SearchableDropdown and event from select
+  const code = event.target ? event.target.value : event
   item.cost_center_code = code
   item.cost_center_name = getCostCenterName(code)
 
@@ -529,7 +551,8 @@ const getAccountName = (code) => {
 }
 
 const updateAccountName = (item, event) => {
-  const code = event.target.value
+  // Handle both direct value from SearchableDropdown and event from select
+  const code = event.target ? event.target.value : event
   item.account_code = code
   item.account_name = getAccountName(code)
 
@@ -672,28 +695,26 @@ const createTransfer = async () => {
     await transferService.createTransfer(dataToSend, authStore.token)
 
     // Create styled alert message with emoji and formatting
-    const successPrefix = '✅ ';
-    const successMessage = isArabic.value 
-      ? 'تم إنشاء النقل بنجاح' 
-      : 'Transfer created successfully';
-    alert(successPrefix + successMessage);
+    const successPrefix = '✅ '
+    const successMessage = isArabic.value ? 'تم إنشاء النقل بنجاح' : 'Transfer created successfully'
+    alert(successPrefix + successMessage)
 
-    await loadData();
+    await loadData()
 
     // After successful save, reset the changesMade flag
-    changesMade.value = false;
+    changesMade.value = false
 
     // Store a new snapshot of the current state
-    originalData.value = JSON.parse(JSON.stringify(transferData.value));
-    } catch (err) {
+    originalData.value = JSON.parse(JSON.stringify(transferData.value))
+  } catch (err) {
     // Enhanced error alert with emoji
-    const errorPrefix = '❌ ';
-    const errorMessage = isArabic.value 
+    const errorPrefix = '❌ '
+    const errorMessage = isArabic.value
       ? 'فشل في إنشاء النقل: ' + (err.response?.data?.message || err.message || '')
-      : 'Failed to create transfer: ' + (err.response?.data?.message || err.message || '');
-    alert(errorPrefix + errorMessage);
-    console.error('Error creating transfer:', err);
-    }
+      : 'Failed to create transfer: ' + (err.response?.data?.message || err.message || '')
+    alert(errorPrefix + errorMessage)
+    console.error('Error creating transfer:', err)
+  }
 }
 
 // Delete row function
@@ -845,7 +866,7 @@ const alertState = ref({
   show: false,
   message: '',
   type: 'success', // 'success' or 'error'
-  timer: null
+  timer: null,
 })
 
 const showAlert = (message, type = 'success') => {
@@ -853,12 +874,12 @@ const showAlert = (message, type = 'success') => {
   if (alertState.value.timer) {
     clearTimeout(alertState.value.timer)
   }
-  
+
   // Set alert properties
   alertState.value.message = message
   alertState.value.type = type
   alertState.value.show = true
-  
+
   // Auto-hide after 4 seconds
   alertState.value.timer = setTimeout(() => {
     alertState.value.show = false
@@ -878,10 +899,7 @@ const submitRequest = async () => {
       router.push('/')
     }, 1500)
   } catch (err) {
-    showAlert(
-      isArabic.value ? 'فشل في تقديم الطلب' : 'Failed to submit request', 
-      'error'
-    )
+    showAlert(isArabic.value ? 'فشل في تقديم الطلب' : 'Failed to submit request', 'error')
   }
 }
 
@@ -891,10 +909,7 @@ const reopenRequest = async () => {
     showAlert(isArabic.value ? 'تم إعادة فتح الطلب بنجاح' : 'Request reopened successfully')
     await loadData()
   } catch (err) {
-    showAlert(
-      isArabic.value ? 'فشل في إعادة فتح الطلب' : 'Failed to reopen request',
-      'error'
-    )
+    showAlert(isArabic.value ? 'فشل في إعادة فتح الطلب' : 'Failed to reopen request', 'error')
   }
 }
 
@@ -1118,5 +1133,77 @@ const showReportModal = ref(false)
 .btn-disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* SearchableDropdown custom styling for this component */
+.searchable-dropdown {
+  width: 100%;
+}
+
+/* Style for cells that contain dropdowns */
+.dropdown-cell {
+  min-width: 200px;
+  max-width: 280px;
+}
+
+.searchable-dropdown .dropdown-trigger {
+  padding: 8px 12px;
+  border-radius: 6px;
+  min-height: 38px;
+  font-size: 14px;
+}
+
+/* Match dropdown style with table inputs */
+.searchable-dropdown .value-text,
+.searchable-dropdown .placeholder-text {
+  font-size: 14px;
+}
+
+/* Ensure dropdown panels have proper z-index to appear above the table */
+.dropdown-panel-portal {
+  z-index: 999999 !important;
+}
+
+/* Improve dropdown panel styling */
+.searchable-dropdown .dropdown-panel-portal .options-container {
+  max-height: 250px;
+}
+
+/* Improve search input styling */
+.searchable-dropdown .search-input {
+  font-size: 14px;
+}
+
+.dark-mode .searchable-dropdown {
+  --text-color: #f9fafb;
+  --placeholder-color: #9ca3af;
+  --border-color: #4b5563;
+  --background-color: #374151;
+  --hover-background: #4b5563;
+}
+
+/* Maintain consistent dropdown panel width */
+.dropdown-panel-portal {
+  min-width: 280px;
+}
+
+/* Ensure the dropdown panel is visible above other elements */
+.dropdown-overlay {
+  z-index: 999998;
+}
+
+/* Style for disabled dropdowns to match other inputs */
+.searchable-dropdown.disabled .dropdown-trigger {
+  background-color: #f0f0f0;
+  cursor: not-allowed;
+  border-color: #ddd;
+  color: #666;
+  opacity: 0.6;
+}
+
+.dark-mode .searchable-dropdown.disabled .dropdown-trigger {
+  background-color: #444;
+  border-color: #555;
+  color: #aaa;
 }
 </style>

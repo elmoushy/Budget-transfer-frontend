@@ -88,6 +88,7 @@ import { useRouter } from 'vue-router'
 import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
 import { EyeIcon, EyeOffIcon } from 'lucide-vue-next'
+import apiService from '@/services/apiService'
 
 // Component name for debugging
 defineOptions({
@@ -165,29 +166,14 @@ async function handleLogin() {
   isLoading.value = true
 
   try {
-    // Call login API
-    const response = await fetch('http://localhost:8000/api/auth/login/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: username.value,
-        password: password.value,
-      }),
+    // Call login API using centralized apiService
+    const data = await apiService.auth.login({
+      username: username.value,
+      password: password.value,
     })
 
-    const data = await response.json()
-
-    if (!response.ok) {
-      // Handle API error response
-      error.value =
-        data.message ||
-        (isArabic.value
-          ? 'فشل تسجيل الدخول. تحقق من اسم المستخدم وكلمة المرور.'
-          : 'Login failed. Please check your username and password.')
-      return
-    }
+    // Note: apiService throws errors for non-200 responses,
+    // so we won't have to check response.ok
 
     // Store auth token and user data
     await authStore.setAuth({

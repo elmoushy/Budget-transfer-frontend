@@ -78,9 +78,8 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useThemeStore } from '@/stores/themeStore'
-import { useAuthStore } from '@/stores/authStore'
 import { QuillEditor } from '@vueup/vue-quill'
-import axios from 'axios'
+import apiService from '@/services/apiService'
 import FuturisticPopup from '@/components/FuturisticPopup.vue'
 
 // Define component props
@@ -98,12 +97,6 @@ const props = defineProps({
 
 // Define emits
 const emit = defineEmits(['update:modelValue', 'submit'])
-
-// API configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
-
-// Get auth store for token
-const authStore = useAuthStore()
 
 // Track editor state
 const editorContent = ref('')
@@ -205,16 +198,10 @@ async function submitForm() {
       type: 'CTR', // Contract type
     }
 
-    // Make API call to update the contract
-    const response = await axios.put(
-      `${API_BASE_URL}/api/budget/transfers/${editContract.value.contractId}/update/`,
+    // Make API call to update the contract using centralized API service
+    const response = await apiService.transfers.updateTransfer(
+      editContract.value.contractId,
       payload,
-      {
-        headers: {
-          Authorization: `Bearer ${authStore.token}`,
-          'Content-Type': 'application/json',
-        },
-      },
     )
 
     // Success notification with FuturisticPopup

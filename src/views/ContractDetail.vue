@@ -304,11 +304,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, watchEffect } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
-import axios from 'axios'
+import apiService from '@/services/apiService'
 import contractService from '@/services/contractService'
 import FileUploadModal from '@/components/FileUploadModal.vue'
 import FuturisticPopup from '@/components/FuturisticPopup.vue'
@@ -463,15 +463,10 @@ const fetchCostCenterEntities = async () => {
   costCenterEntitiesError.value = false
 
   try {
-    const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
-    const response = await axios.get(`${BASE_URL}/api/accounts-entities/entities/`, {
-      headers: {
-        Authorization: `Bearer ${authStore.token}`,
-      },
-    })
+    const response = await apiService.accountEntities.getEntities()
 
-    if (response.data && response.data.data) {
-      costCenterEntities.value = response.data.data
+    if (response.data) {
+      costCenterEntities.value = response.data
     }
   } catch (err) {
     console.error('Failed to fetch cost center entities:', err)
@@ -487,12 +482,7 @@ const fetchAccountEntities = async () => {
   accountEntitiesError.value = false
 
   try {
-    const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
-    const response = await axios.get(`${BASE_URL}/api/accounts-entities/accounts/`, {
-      headers: {
-        Authorization: `Bearer ${authStore.token}`,
-      },
-    })
+    const response = await apiService.accountEntities.getAccounts()
 
     if (response.data && response.data.data) {
       accountEntities.value = response.data.data

@@ -77,7 +77,7 @@
 import { ref, computed, watch } from 'vue'
 import { useThemeStore } from '@/stores/themeStore'
 import { QuillEditor } from '@vueup/vue-quill'
-import axios from 'axios'
+import apiService from '@/services/apiService'
 import { useAuthStore } from '@/stores/authStore'
 import FuturisticPopup from '@/components/FuturisticPopup.vue'
 
@@ -91,9 +91,6 @@ const props = defineProps({
 
 // Define emits
 const emit = defineEmits(['update:modelValue', 'submit'])
-
-// API configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
 // Get auth store for token
 const authStore = useAuthStore()
@@ -183,13 +180,8 @@ async function submitForm() {
       type: 'FAR', // Changed from 'AFR' to 'FAR'
     }
 
-    // Make API call to create new transfer
-    const response = await axios.post(`${API_BASE_URL}/api/budget/transfers/create/`, payload, {
-      headers: {
-        Authorization: `Bearer ${authStore.token}`,
-        'Content-Type': 'application/json',
-      },
-    })
+    // Make API call to create new transfer using centralized service
+    const response = await apiService.transfers.createTransfer(payload)
 
     // Emit the submit event with the response data
     emit('submit', response.data)

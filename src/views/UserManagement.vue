@@ -1,6 +1,6 @@
 <!-- UserManagement.vue -->
 <template>
-  <div class="user-management">
+  <div class="user-management" :class="{ 'dark-mode': isDarkMode }">
     <h1>{{ isArabic ? 'إدارة المستخدمين' : 'User Management' }}</h1>
 
     <div class="actions">
@@ -19,7 +19,6 @@
             <th>ID</th>
             <th>{{ isArabic ? 'اسم المستخدم' : 'Username' }}</th>
             <th>{{ isArabic ? 'الدور' : 'Role' }}</th>
-            <th>{{ isArabic ? 'تاريخ الانضمام' : 'Date Joined' }}</th>
             <th>{{ isArabic ? 'الإجراءات' : 'Actions' }}</th>
           </tr>
         </thead>
@@ -28,7 +27,6 @@
             <td>{{ user.id }}</td>
             <td>{{ user.username }}</td>
             <td>{{ user.role }}</td>
-            <td>{{ formatDate(user.date_joined) }}</td>
             <td class="actions-cell">
               <button @click="editUser(user)" class="edit-btn">
                 {{ isArabic ? 'تعديل' : 'Edit' }}
@@ -129,12 +127,11 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useThemeStore } from '@/stores/themeStore'
-import { useAuthStore } from '@/stores/authStore'
-import axios from 'axios'
+import apiService from '@/services/apiService'
 
 const themeStore = useThemeStore()
-const authStore = useAuthStore()
 const isArabic = computed(() => themeStore.language === 'ar')
+const isDarkMode = computed(() => themeStore.darkMode)
 
 // User list data
 const users = ref<any[]>([])
@@ -160,8 +157,7 @@ const editingUser = ref({
 
 const userToDelete = ref<{ id: number; username: string } | null>(null)
 
-// API URLs
-const BASE_URL = 'http://localhost:8000'
+// Using centralized apiService instead of direct axios calls
 
 // Fetch users on component mount
 onMounted(async () => {
@@ -172,12 +168,8 @@ onMounted(async () => {
 async function fetchUsers() {
   try {
     loading.value = true
-    const response = await axios.get(`${BASE_URL}/api/auth/users/`, {
-      headers: {
-        Authorization: `Bearer ${authStore.token}`,
-      },
-    })
-    users.value = response.data
+    const response = await apiService.auth.getUsers()
+    users.value = response
   } catch (error) {
     console.error('Error fetching users:', error)
   } finally {
@@ -188,12 +180,7 @@ async function fetchUsers() {
 // Add new user
 async function addUser() {
   try {
-    await axios.post(`${BASE_URL}/api/auth/register/`, newUser.value, {
-      headers: {
-        Authorization: `Bearer ${authStore.token}`,
-        'Content-Type': 'application/json',
-      },
-    })
+    await apiService.auth.registerUser(newUser.value)
 
     // Reset form and close modal
     newUser.value = {
@@ -211,7 +198,7 @@ async function addUser() {
 }
 
 // Edit user
-function editUser(user: any) {
+function editUser(user: { id: number; username: string; role: string }) {
   editingUser.value = {
     id: user.id,
     username: user.username,
@@ -223,19 +210,10 @@ function editUser(user: any) {
 // Update user
 async function updateUser() {
   try {
-    await axios.put(
-      `${BASE_URL}/api/auth/users/update/?pk=${editingUser.value.id}`,
-      {
-        username: editingUser.value.username,
-        role: editingUser.value.role,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${authStore.token}`,
-          'Content-Type': 'application/json',
-        },
-      },
-    )
+    await apiService.auth.updateUser(editingUser.value.id as number, {
+      username: editingUser.value.username,
+      role: editingUser.value.role,
+    })
 
     // Close modal and refresh user list
     showEditUserModal.value = false
@@ -246,7 +224,7 @@ async function updateUser() {
 }
 
 // Confirm delete user
-function confirmDeleteUser(user: any) {
+function confirmDeleteUser(user: { id: number; username: string }) {
   userToDelete.value = {
     id: user.id,
     username: user.username,
@@ -259,11 +237,7 @@ async function deleteUser() {
   if (!userToDelete.value) return
 
   try {
-    await axios.delete(`${BASE_URL}/api/auth/users/delete/?pk=${userToDelete.value.id}`, {
-      headers: {
-        Authorization: `Bearer ${authStore.token}`,
-      },
-    })
+    await apiService.auth.deleteUser(userToDelete.value.id)
 
     // Close modal and refresh user list
     showDeleteModal.value = false
@@ -516,5 +490,24 @@ h1::after {
   background-color: rgba(255, 255, 255, 0.15);
 }
 
-/* ...existing code... */
+/* Dark mode harmony */
+.dark-mode .user-management {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+.dark-mode .user-table th {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+.dark-mode .user-table tbody tr:hover td {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+.dark-mode .add-user-btn {
+  background-color: var(--accent-color-dark);
+}
+.dark-mode .cancel-btn,
+.dark-mode .submit-btn,
+.dark-mode .delete-confirm-btn {
+  background-color: #444;
+  color: #fff;
+}
 </style>

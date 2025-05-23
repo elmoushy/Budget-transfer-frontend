@@ -1,6 +1,6 @@
 <!-- AccountEntityManagement.vue -->
 <template>
-  <div class="account-entity-management">
+  <div class="account-entity-management" :class="{ 'dark-mode': isDarkMode }">
     <h1>{{ isArabic ? 'إدارة الحسابات والكيانات' : 'Account-Entity Management' }}</h1>
 
     <div class="filter-section">
@@ -156,11 +156,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
-import axios from 'axios'
+import apiService from '@/services/apiService'
 
 const themeStore = useThemeStore()
-const authStore = useAuthStore()
 const isArabic = computed(() => themeStore.language === 'ar')
+const isDarkMode = computed(() => themeStore.darkMode)
 
 // Data
 const entities = ref<any[]>([])
@@ -175,7 +175,7 @@ const currentPage = ref(1)
 const totalPages = ref(0)
 const totalItems = ref(0)
 
-const BASE_URL = 'http://localhost:8000'
+// Using centralized apiService instead of direct API calls
 
 // Fetch entities on component mount
 onMounted(async () => {
@@ -186,12 +186,8 @@ onMounted(async () => {
 async function fetchEntities() {
   try {
     loading.value = true
-    const response = await axios.get(`${BASE_URL}/api/accounts-entities/entities/`, {
-      headers: {
-        Authorization: `Bearer ${authStore.token}`,
-      },
-    })
-    entities.value = response.data.data
+    const response = await apiService.accountEntities.getEntities()
+    entities.value = response.data
   } catch (error) {
     console.error('Error fetching entities:', error)
   } finally {
@@ -205,22 +201,14 @@ async function fetchLimits(page: number = 1) {
 
   try {
     loading.value = true
-    const response = await axios.get(
-      `${BASE_URL}/api/accounts-entities/account-entity-limit/list`,
-      {
-        params: {
-          cost_center: selectedCostCenter.value,
-          page: page,
-        },
-        headers: {
-          Authorization: `Bearer ${authStore.token}`,
-        },
-      },
+    const response = await apiService.accountEntities.getAccountLimits(
+      selectedCostCenter.value,
+      page,
     )
 
-    accountLimits.value = response.data.results
-    totalItems.value = response.data.count
-    totalPages.value = Math.ceil(response.data.count / 10)
+    accountLimits.value = response.results
+    totalItems.value = response.count
+    totalPages.value = Math.ceil(response.count / 10)
     currentPage.value = page
   } catch (error) {
     console.error('Error fetching account limits:', error)
@@ -230,7 +218,15 @@ async function fetchLimits(page: number = 1) {
 }
 
 // Edit limit
-function editLimit(limit: any) {
+function editLimit(limit: {
+  id: number
+  account: string
+  is_transer_allowed_for_source: string
+  is_transer_allowed_for_target: string
+  is_transer_allowed: string
+  source_count: number
+  target_count: number
+}) {
   editingLimit.value = { ...limit }
   showEditModal.value = true
 }
@@ -238,24 +234,15 @@ function editLimit(limit: any) {
 // Update limit
 async function updateLimit() {
   try {
-    await axios.put(
-      `${BASE_URL}/api/accounts-entities/account-entity-limit/update/?pk=${editingLimit.value.id}`,
-      {
-        is_transer_allowed_for_source: editingLimit.value.is_transer_allowed_for_source,
-        is_transer_allowed_for_target: editingLimit.value.is_transer_allowed_for_target,
-        is_transer_allowed: editingLimit.value.is_transer_allowed,
-        account_id: editingLimit.value.account,
-        entity_id: selectedCostCenter.value,
-        source_count: editingLimit.value.source_count,
-        target_count: editingLimit.value.target_count,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${authStore.token}`,
-          'Content-Type': 'application/json',
-        },
-      },
-    )
+    await apiService.accountEntities.updateAccountLimit(editingLimit.value.id, {
+      is_transer_allowed_for_source: editingLimit.value.is_transer_allowed_for_source,
+      is_transer_allowed_for_target: editingLimit.value.is_transer_allowed_for_target,
+      is_transer_allowed: editingLimit.value.is_transer_allowed,
+      account_id: editingLimit.value.account,
+      entity_id: selectedCostCenter.value,
+      source_count: editingLimit.value.source_count,
+      target_count: editingLimit.value.target_count,
+    })
 
     // Close modal and refresh
     showEditModal.value = false
@@ -768,6 +755,39 @@ h1::after {
 
 .dark-theme .cancel-btn:hover {
   background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Dark mode adjustments */
+.dark-mode.account-entity-management {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+.dark-mode.account-entity-management h1 {
+  color: var(--heading-color);
+}
+.dark-mode.account-entity-management .limits-table th {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+.dark-mode.account-entity-management .limits-table tbody tr:hover td {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+.dark-mode.account-entity-management .filter-container select,
+.dark-mode.account-entity-management .select-container select {
+  background-color: var(--card-bg);
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+.dark-mode.account-entity-management .pagination-btn,
+.dark-mode.account-entity-management .page-number {
+  background-color: var(--card-bg);
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+.dark-mode.account-entity-management .edit-btn,
+.dark-mode.account-entity-management .submit-btn,
+.dark-mode.account-entity-management .cancel-btn {
+  background-color: #444;
+  color: #fff;
 }
 
 /* RTL adjustments */

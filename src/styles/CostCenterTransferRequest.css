@@ -1015,8 +1015,19 @@
   min-width: 280px;
   max-width: 380px;
   white-space: normal;
-  animation: fadeInTooltip 0.2s ease-out;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-10px) scale(0.95);
+  transition: all 0.2s ease-out;
   transform-origin: left center;
+}
+
+/* Show tooltip on hover of the error icon */
+.validation-error-indicator:hover .error-tooltip,
+.error-icon-svg:hover + .error-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0) scale(1);
 }
 
 .error-tooltip::before {
@@ -1076,6 +1087,10 @@
   box-shadow: 0 3px 7px rgba(220, 38, 38, 0.4);
 }
 
+.transfer-request-page.futuristic-container.dark-mode {
+  background-color: #1e293b !important;
+  color: #1e293b !important;
+}
 /* Dark mode variants */
 .dark-mode .error-tooltip {
   background-color: #1e293b;
@@ -1088,6 +1103,14 @@
 .dark-mode .error-tooltip::before {
   background-color: #1e293b;
   border-color: #ef4444;
+}
+
+/* Show tooltip on hover in dark mode */
+.dark-mode .validation-error-indicator:hover .error-tooltip,
+.dark-mode .error-icon-svg:hover + .error-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0) scale(1);
 }
 
 .dark-mode .error-list {

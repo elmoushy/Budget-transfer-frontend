@@ -77,8 +77,7 @@
 import { ref, computed, watch } from 'vue'
 import { useThemeStore } from '@/stores/themeStore'
 import { QuillEditor } from '@vueup/vue-quill'
-import axios from 'axios'
-import { useAuthStore } from '@/stores/authStore'
+import apiService from '@/services/apiService'
 import FuturisticPopup from '@/components/FuturisticPopup.vue'
 
 // Define component props
@@ -91,12 +90,6 @@ const props = defineProps({
 
 // Define emits
 const emit = defineEmits(['update:modelValue', 'submit'])
-
-// API configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
-
-// Get auth store for token
-const authStore = useAuthStore()
 
 // Track editor state
 const editorContent = ref('<p>Enter your reason here...</p>')
@@ -196,16 +189,11 @@ async function submitForm() {
       type: 'AFR',
     }
 
-    // Make API call to create new enhancement
-    const response = await axios.post(`${API_BASE_URL}/api/budget/transfers/create/`, payload, {
-      headers: {
-        Authorization: `Bearer ${authStore.token}`,
-        'Content-Type': 'application/json',
-      },
-    })
+    // Make API call to create new enhancement using centralized API service
+    const response = await apiService.transfers.createTransfer(payload)
 
     // Emit the submit event with the response data
-    emit('submit', response.data)
+    emit('submit', response)
 
     // Close the modal
     closeModal()
@@ -244,9 +232,7 @@ watch(
 }
 
 .modal-container {
-  background-color: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
+  background-color: #ffffff;
   width: 95%;
   max-width: 600px;
   border-radius: 16px;
@@ -258,6 +244,7 @@ watch(
   perspective: 1000px;
   animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #333333;
 }
 
 .modal-header {
@@ -295,11 +282,8 @@ watch(
   font-size: 1.35rem;
   font-weight: 600;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #1a1a2e, #4a0d20);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+  color: #1a1a2e;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
 }
 
 .close-modal {
@@ -392,14 +376,10 @@ watch(
   display: block;
   font-weight: 600;
   margin-bottom: 0.75rem;
-  color: #4a5568;
+  color: #333333;
   letter-spacing: 0.02em;
   font-size: 0.95rem;
   transition: all 0.3s ease;
-  background: linear-gradient(90deg, #4a5568, #64748b);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
 }
 
 .required::after {
@@ -439,9 +419,10 @@ watch(
   font-size: 1rem;
   border: none;
   border-radius: 10px;
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: #ffffff;
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
+  color: #333333;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
@@ -479,7 +460,7 @@ watch(
 }
 
 .btn-secondary {
-  background-color: rgba(241, 245, 249, 0.8);
+  background-color: #f1f5f9;
   color: #334155;
   border: none;
   padding: 0.7rem 1.4rem;
@@ -487,8 +468,6 @@ watch(
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
   box-shadow:
     0 2px 10px rgba(0, 0, 0, 0.05),
     0 0 0 1px rgba(226, 232, 240, 0.6);
@@ -522,8 +501,8 @@ watch(
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #6d1a36, #4a0d20);
-  color: #fff;
+  background-color: #6d1a36;
+  color: #ffffff;
   border: none;
   padding: 0.7rem 1.4rem;
   border-radius: 8px;
@@ -533,9 +512,7 @@ watch(
   align-items: center;
   gap: 8px;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow:
-    0 4px 12px rgba(109, 26, 54, 0.25),
-    0 0 0 1px rgba(109, 26, 54, 0.5);
+  box-shadow: 0 4px 12px rgba(109, 26, 54, 0.25);
   position: relative;
   overflow: hidden;
   letter-spacing: 0.01em;
@@ -596,14 +573,12 @@ watch(
 
 /* Dark mode modal styles */
 .dark-mode {
-  background-color: rgba(26, 26, 46, 0.9);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
+  background-color: #1a1a2e;
   border: 1px solid rgba(63, 63, 95, 0.3);
   box-shadow:
     0 15px 40px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(63, 63, 95, 0.6),
-    inset 0 0 50px rgba(0, 0, 0, 0.1);
+    0 0 0 1px rgba(63, 63, 95, 0.6);
+  color: #ffffff;
 }
 
 .dark-mode .modal-header {
@@ -617,11 +592,8 @@ watch(
 }
 
 .dark-mode .modal-header h2 {
-  background: linear-gradient(90deg, #5eead4, #c4b5fd);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  text-shadow: 0 0 20px rgba(94, 234, 212, 0.3);
+  color: #ffffff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 
 .dark-mode .close-modal {
@@ -637,11 +609,7 @@ watch(
 }
 
 .dark-mode .form-group label {
-  color: #a0a0b8;
-  background: linear-gradient(90deg, #a0a0b8, #d1d1e0);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: #e2e2e2;
 }
 
 .dark-mode .select-wrapper::after {
@@ -655,8 +623,8 @@ watch(
 }
 
 .dark-mode .select-wrapper select {
-  background-color: rgba(44, 44, 68, 0.8);
-  color: #e2e2e2;
+  background-color: #2c2c44;
+  color: #ffffff;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
@@ -675,23 +643,20 @@ watch(
 }
 
 .dark-mode .btn-secondary {
-  background-color: rgba(44, 44, 68, 0.7);
-  color: #e2e2e2;
+  background-color: #3f3f5f;
+  color: #ffffff;
   border: 1px solid rgba(63, 63, 95, 0.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
 }
 
 .dark-mode .btn-secondary:hover {
-  background-color: rgba(63, 63, 95, 0.7);
+  background-color: #4a4a6a;
   box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
 }
 
 .dark-mode .btn-primary {
-  background: linear-gradient(135deg, #7d2a46, #5a1d30);
-  box-shadow:
-    0 4px 8px rgba(0, 0, 0, 0.3),
-    0 0 20px rgba(125, 42, 70, 0.2);
+  background-color: #7d2a46;
+  color: #ffffff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   position: relative;
   overflow: hidden;
 }

@@ -14,11 +14,13 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 const API_ENDPOINT = '/api/budget/transfers/list/'
-const PAGE_SIZE = 10
+const PAGE_SIZE = 6
 
 /**
  * Service for handling transfer-related API operations
  */
+export { PAGE_SIZE }
+
 export default {
   /**
    * Fetch transfers with optional search and pagination
@@ -352,5 +354,30 @@ export default {
    */
   getTransfers(transactionId) {
     return axios.get(`${BASE_URL}/api/budget/transfers/?transaction=${transactionId}`)
+  },
+
+  /**
+   * Get rejection reports for a transaction
+   * @param {number} transactionId - The transaction ID to get rejection reports for
+   * @returns {Promise} - Promise with rejection reports
+   */
+  async getRejectionReports(transactionId) {
+    const authStore = useAuthStore()
+    try {
+      const response = await axios.get(
+        `${BASE_URL}/api/budget/transfers/list_reject/?transaction_id=${transactionId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${authStore.token}`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+        },
+      )
+      return response.data
+    } catch (error) {
+      console.error('Error fetching rejection reports:', error)
+      throw error
+    }
   },
 }

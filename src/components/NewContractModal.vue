@@ -77,9 +77,8 @@
 import { ref, computed, watch } from 'vue'
 import { useThemeStore } from '@/stores/themeStore'
 import { QuillEditor } from '@vueup/vue-quill'
-import axios from 'axios'
-import { useAuthStore } from '@/stores/authStore'
 import FuturisticPopup from '@/components/FuturisticPopup.vue'
+import apiService from '@/services/apiService'
 
 // Define component props
 const props = defineProps({
@@ -91,12 +90,6 @@ const props = defineProps({
 
 // Define emits
 const emit = defineEmits(['update:modelValue', 'submit'])
-
-// API configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
-
-// Get auth store for token
-const authStore = useAuthStore()
 
 // Track editor state
 const editorContent = ref('<p>Enter your reason here...</p>')
@@ -210,16 +203,11 @@ async function submitForm() {
       type: 'FAD', // Changed to 'FAD' for contracts
     }
 
-    // Make API call to create new contract
-    const response = await axios.post(`${API_BASE_URL}/api/budget/transfers/create/`, payload, {
-      headers: {
-        Authorization: `Bearer ${authStore.token}`,
-        'Content-Type': 'application/json',
-      },
-    })
+    // Make API call to create new contract using centralized API service
+    const response = await apiService.transfers.createTransfer(payload)
 
     // Emit the submit event with the response data
-    emit('submit', response.data)
+    emit('submit', response)
 
     // Close the modal
     closeModal()

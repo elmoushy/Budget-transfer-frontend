@@ -14,11 +14,12 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 const API_ENDPOINT = '/api/budget/transfers/list/'
-const PAGE_SIZE = 10
+const PAGE_SIZE = 6
 
 /**
  * Service for handling transfer-related API operations
  */
+export { PAGE_SIZE }
 export default {
   /**
    * Fetch transfers with optional search and pagination

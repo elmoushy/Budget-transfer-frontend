@@ -1,13 +1,13 @@
-/* filepath: c:\Users\iP\Full Stack\Budget-transfer-frontend\src\assets\css\Contracts.css */
-/* Contract-specific styles that extend the shared page styles */
+/* filepath: c:\Users\iP\Full Stack\Budget-transfer-frontend\src\assets\css\Enhancements.css */
+/* Enhancements-specific styles that extend the shared page styles */
 
-.contract-page {
-  /* Any specific styles for contract page container that differ from page-container */
+.enhancements-page {
+  /* Any specific styles for enhancements page container that differ from page-container */
 }
 
-/* Any contract-specific overrides that aren't in shared styles */
+/* Any enhancements-specific overrides that aren't in shared styles */
 
-/* Attachment styles */
+/* Attachment cell styling */
 .attachment-cell {
   display: flex;
   justify-content: center;
@@ -91,6 +91,16 @@
   }
 }
 
+.attachment-text {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.attachment-text.with-attachments {
+  color: #047857;
+  font-weight: 600;
+}
+
 /* Dark mode attachment styles */
 .dark-mode .has-attachments {
   color: #4ade80;
@@ -112,43 +122,10 @@
   background: #8a2a44;
 }
 
-/* Disabled button styles */
-.disabled-btn {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
+.dark-mode .attachment-text {
+  color: #9ca3af;
 }
 
-.dark-mode .disabled-btn {
-  opacity: 0.4;
-}
-
-/* Description cell */
-.description-cell {
-  display: flex;
-  justify-content: center;
-}
-
-.view-desc-btn {
-  background: transparent;
-  border: none;
-  color: #6d1a36;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-
-.attachment-indicator.disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.attachment-indicator.disabled:hover {
-  background: none;
-  transform: none;
-}
-
-.dark-mode .attachment-indicator.disabled {
-  opacity: 0.4;
+.dark-mode .attachment-text.with-attachments {
+  color: #4ade80;
 }
