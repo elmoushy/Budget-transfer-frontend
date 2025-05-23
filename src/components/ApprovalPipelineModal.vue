@@ -60,6 +60,7 @@
               pending: !approvalData?.approvel_2_date && !isRejectedAtLevel(2),
               rejected: isRejectedAtLevel(2),
               rtl: isArabic,
+              'greyed-out': shouldBeGreyedOut(2),
             }"
           >
             <div class="step-icon">
@@ -75,10 +76,10 @@
               <div class="step-date" v-if="approvalData?.approvel_2_date">
                 {{ formatApprovalDate(approvalData.approvel_2_date) }}
               </div>
-              <div class="step-status" v-else-if="!isRejectedAtLevel(2)">
+              <div class="step-status" v-else-if="!isRejectedAtLevel(2) && !shouldBeGreyedOut(2)">
                 {{ isArabic ? 'قيد الانتظار' : 'Pending' }}
               </div>
-              <div class="step-status rejected-text" v-else>
+              <div class="step-status rejected-text" v-else-if="isRejectedAtLevel(2)">
                 {{ isArabic ? 'مرفوض' : 'Rejected' }}
               </div>
             </div>
@@ -94,6 +95,7 @@
               pending: !approvalData?.approvel_3_date && !isRejectedAtLevel(3),
               rejected: isRejectedAtLevel(3),
               rtl: isArabic,
+              'greyed-out': shouldBeGreyedOut(3),
             }"
           >
             <div class="step-icon">
@@ -107,10 +109,10 @@
               <div class="step-date" v-if="approvalData?.approvel_3_date">
                 {{ formatApprovalDate(approvalData.approvel_3_date) }}
               </div>
-              <div class="step-status" v-else-if="!isRejectedAtLevel(3)">
+              <div class="step-status" v-else-if="!isRejectedAtLevel(3) && !shouldBeGreyedOut(3)">
                 {{ isArabic ? 'قيد الانتظار' : 'Pending' }}
               </div>
-              <div class="step-status rejected-text" v-else>
+              <div class="step-status rejected-text" v-else-if="isRejectedAtLevel(3)">
                 {{ isArabic ? 'مرفوض' : 'Rejected' }}
               </div>
             </div>
@@ -126,6 +128,7 @@
               pending: !approvalData?.approvel_4_date && !isRejectedAtLevel(4),
               rejected: isRejectedAtLevel(4),
               rtl: isArabic,
+              'greyed-out': shouldBeGreyedOut(4),
             }"
           >
             <div class="step-icon">
@@ -139,10 +142,10 @@
               <div class="step-date" v-if="approvalData?.approvel_4_date">
                 {{ formatApprovalDate(approvalData.approvel_4_date) }}
               </div>
-              <div class="step-status" v-else-if="!isRejectedAtLevel(4)">
+              <div class="step-status" v-else-if="!isRejectedAtLevel(4) && !shouldBeGreyedOut(4)">
                 {{ isArabic ? 'قيد الانتظار' : 'Pending' }}
               </div>
-              <div class="step-status rejected-text" v-else>
+              <div class="step-status rejected-text" v-else-if="isRejectedAtLevel(4)">
                 {{ isArabic ? 'مرفوض' : 'Rejected' }}
               </div>
             </div>
@@ -226,6 +229,16 @@ function isRejectedAtLevel(level: number): boolean {
     }
   }
 
+  return false
+}
+
+// Check if a specific level should be greyed out (any previous level was rejected)
+function shouldBeGreyedOut(level: number): boolean {
+  for (let i = 1; i < level; i++) {
+    if (isRejectedAtLevel(i)) {
+      return true
+    }
+  }
   return false
 }
 
@@ -405,6 +418,34 @@ function formatApprovalDate(dateString: string): string {
 .step-card.rtl.rejected {
   border-left: none;
   border-right: 4px solid #dc2626;
+}
+
+/* Greyed out step styling */
+.step-card.greyed-out {
+  background-color: #f3f4f6;
+  border-left-color: #d1d5db;
+  opacity: 0.7;
+}
+
+.step-card.rtl.greyed-out {
+  border-right-color: #d1d5db;
+  border-left: none;
+}
+
+.dark-mode .step-card.greyed-out {
+  background-color: #374151;
+  border-left-color: #6b7280;
+  opacity: 0.7;
+}
+
+.dark-mode .step-card.rtl.greyed-out {
+  border-right-color: #6b7280;
+  border-left: none;
+}
+
+.greyed-out .step-icon {
+  background-color: rgba(107, 114, 128, 0.15);
+  color: #6b7280;
 }
 
 /* Step Icon */

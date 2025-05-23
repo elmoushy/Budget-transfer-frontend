@@ -186,12 +186,12 @@
                 >
                   {{ row.attachment }}
                 </span>
+                <!-- File attachment indicator -->
                 <div
                   class="attachment-indicator"
                   :class="{
                     'has-attachments': row.attachment_count && row.attachment_count > 0,
                     'no-attachments': !row.attachment_count,
-                    disabled: row.status.toLowerCase() !== 'pending',
                   }"
                   @click="openFileModal(row)"
                   :title="getAttachmentTooltip(row)"
@@ -597,9 +597,10 @@ function rowBg(status: string) {
 }
 
 // Function to open the file modal - updated to pass status
-function openFileModal(row) {
+// Function to open the file modal
+function openFileModal(row: TransferData) {
   currentTransactionId.value = row.transaction_id
-  currentTransactionStatus.value = row.status
+  currentTransactionStatus.value = row.status.toLowerCase()
   showFileModal.value = true
 }
 

@@ -156,6 +156,65 @@ export default {
         throw error
       }
     },
+
+    /**
+     * Get all user levels
+     * @returns {Promise} User levels data
+     */
+    getUserLevels: async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}${ENDPOINTS.AUTH.LEVELS}`, {
+          headers: getAuthHeaders(),
+        })
+        return response.data
+      } catch (error) {
+        console.error('Error fetching user levels:', error)
+        throw error
+      }
+    },
+
+    /**
+     * Update user level
+     * @param {number} levelId - Level ID
+     * @param {Object} levelData - Updated level data
+     * @returns {Promise} Update response
+     */
+    updateUserLevel: async (levelId, levelData) => {
+      try {
+        const response = await axios.put(
+          `${API_BASE_URL}${ENDPOINTS.AUTH.LEVEL_UPDATE}?pk=${levelId}`,
+          levelData,
+          { headers: getAuthHeaders() },
+        )
+        return response.data
+      } catch (error) {
+        console.error('Error updating user level:', error)
+        throw error
+      }
+    },
+
+    /**
+     * Assign user to a level
+     * @param {number} userId - User ID
+     * @param {number} levelOrderId - Level order ID
+     * @returns {Promise} Assignment response
+     */
+    assignUserLevel: async (userId, levelOrderId) => {
+      try {
+        const response = await axios.put(
+          `${API_BASE_URL}${ENDPOINTS.AUTH.USER_LEVEL_ASSIGN}`,
+          {
+            user_id: userId,
+            level_order: levelOrderId,
+          },
+          { headers: getAuthHeaders() },
+        )
+        return response.data
+      } catch (error) {
+        console.error('Error assigning user level:', error)
+        throw error
+      }
+    },
   },
 
   /**
@@ -355,6 +414,22 @@ export default {
         throw error
       }
     },
+
+    /**
+     * Get dashboard analytics data
+     * @returns {Promise} - API response with dashboard data
+     */
+    getDashboardData: async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}${ENDPOINTS.BUDGET.DASHBOARD}`, {
+          headers: getAuthHeaders(),
+        })
+        return response.data
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error)
+        throw error
+      }
+    },
   },
 
   /**
@@ -378,6 +453,80 @@ export default {
     },
 
     /**
+     * Create a new entity
+     * @param {Object} entityData - Entity data
+     * @returns {Promise} Create response
+     */
+    createEntity: async (entityData) => {
+      try {
+        const response = await axios.post(
+          `${API_BASE_URL}${ENDPOINTS.ACCOUNTS_ENTITIES.ENTITIES_CREATE}`,
+          entityData,
+          { headers: getAuthHeaders() },
+        )
+        return response.data
+      } catch (error) {
+        console.error('Error creating entity:', error)
+        throw error
+      }
+    },
+
+    /**
+     * Get entity details by ID
+     * @param {number} entityId - Entity ID
+     * @returns {Promise} Entity details
+     */
+    getEntityDetails: async (entityId) => {
+      try {
+        const url = formatUrl(`${API_BASE_URL}${ENDPOINTS.ACCOUNTS_ENTITIES.ENTITY_DETAIL}`, {
+          id: entityId,
+        })
+        const response = await axios.get(url, { headers: getAuthHeaders() })
+        return response.data
+      } catch (error) {
+        console.error('Error fetching entity details:', error)
+        throw error
+      }
+    },
+
+    /**
+     * Update entity
+     * @param {number} entityId - Entity ID
+     * @param {Object} entityData - Updated entity data
+     * @returns {Promise} Update response
+     */
+    updateEntity: async (entityId, entityData) => {
+      try {
+        const url = formatUrl(`${API_BASE_URL}${ENDPOINTS.ACCOUNTS_ENTITIES.ENTITY_UPDATE}`, {
+          id: entityId,
+        })
+        const response = await axios.put(url, entityData, { headers: getAuthHeaders() })
+        return response.data
+      } catch (error) {
+        console.error('Error updating entity:', error)
+        throw error
+      }
+    },
+
+    /**
+     * Delete entity
+     * @param {number} entityId - Entity ID to delete
+     * @returns {Promise} Delete response
+     */
+    deleteEntity: async (entityId) => {
+      try {
+        const url = formatUrl(`${API_BASE_URL}${ENDPOINTS.ACCOUNTS_ENTITIES.ENTITY_DELETE}`, {
+          id: entityId,
+        })
+        const response = await axios.delete(url, { headers: getAuthHeaders() })
+        return response.data
+      } catch (error) {
+        console.error('Error deleting entity:', error)
+        throw error
+      }
+    },
+
+    /**
      * Get all accounts
      * @returns {Promise} Accounts data
      */
@@ -389,6 +538,80 @@ export default {
         return response.data
       } catch (error) {
         console.error('Error fetching accounts:', error)
+        throw error
+      }
+    },
+
+    /**
+     * Create a new account
+     * @param {Object} accountData - Account data
+     * @returns {Promise} Create response
+     */
+    createAccount: async (accountData) => {
+      try {
+        const response = await axios.post(
+          `${API_BASE_URL}${ENDPOINTS.ACCOUNTS_ENTITIES.ACCOUNT_CREATE}`,
+          accountData,
+          { headers: getAuthHeaders() },
+        )
+        return response.data
+      } catch (error) {
+        console.error('Error creating account:', error)
+        throw error
+      }
+    },
+
+    /**
+     * Get account details by ID
+     * @param {number} accountId - Account ID
+     * @returns {Promise} Account details
+     */
+    getAccountDetails: async (accountId) => {
+      try {
+        const url = formatUrl(`${API_BASE_URL}${ENDPOINTS.ACCOUNTS_ENTITIES.ACCOUNT_DETAIL}`, {
+          id: accountId,
+        })
+        const response = await axios.get(url, { headers: getAuthHeaders() })
+        return response.data
+      } catch (error) {
+        console.error('Error fetching account details:', error)
+        throw error
+      }
+    },
+
+    /**
+     * Update account
+     * @param {number} accountId - Account ID
+     * @param {Object} accountData - Updated account data
+     * @returns {Promise} Update response
+     */
+    updateAccount: async (accountId, accountData) => {
+      try {
+        const url = formatUrl(`${API_BASE_URL}${ENDPOINTS.ACCOUNTS_ENTITIES.ACCOUNT_UPDATE}`, {
+          id: accountId,
+        })
+        const response = await axios.put(url, accountData, { headers: getAuthHeaders() })
+        return response.data
+      } catch (error) {
+        console.error('Error updating account:', error)
+        throw error
+      }
+    },
+
+    /**
+     * Delete account
+     * @param {number} accountId - Account ID to delete
+     * @returns {Promise} Delete response
+     */
+    deleteAccount: async (accountId) => {
+      try {
+        const url = formatUrl(`${API_BASE_URL}${ENDPOINTS.ACCOUNTS_ENTITIES.ACCOUNT_DELETE}`, {
+          id: accountId,
+        })
+        const response = await axios.delete(url, { headers: getAuthHeaders() })
+        return response.data
+      } catch (error) {
+        console.error('Error deleting account:', error)
         throw error
       }
     },

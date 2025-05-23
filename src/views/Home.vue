@@ -159,7 +159,9 @@
             </td>
             <td>{{ formatDate(row.request_date) }}</td>
             <td>{{ row.transaction_date }}</td>
-            <td>Track</td>
+            <td>
+              <span class="track-link" @click="openOracleTrackingModal(row)">Track</span>
+            </td>
             <td>
               <span
                 class="status-badge"
@@ -184,7 +186,6 @@
                   :class="{
                     'has-attachments': row.attachment_count && row.attachment_count > 0,
                     'no-attachments': !row.attachment_count,
-                    disabled: row.status.toLowerCase() !== 'pending',
                   }"
                   @click="openFileModal(row)"
                   :title="getAttachmentTooltip(row)"
@@ -393,6 +394,9 @@
       :transaction-id="currentTransactionId"
       @close="showRejectionReportModal = false"
     />
+
+    <!-- Oracle Approval Pipeline Modal Component -->
+    <OracleApprovalPipelineModal v-model="showOracleTrackingModal" />
   </div>
 </template>
 
@@ -408,6 +412,7 @@ import AttachmentModal from '@/components/AttachmentModal.vue'
 import ApprovalPipelineModal from '@/components/ApprovalPipelineModal.vue'
 import RejectionReportModal from '@/components/RejectionReportModal.vue'
 import FuturisticPopup from '@/components/FuturisticPopup.vue'
+import OracleApprovalPipelineModal from '@/components/OracleApprovalPipelineModal.vue'
 import transferService, { PAGE_SIZE } from '@/services/TransferService'
 
 // Import CSS
@@ -505,6 +510,9 @@ const currentTransactionStatus = ref('pending')
 
 // New state for rejection report modal
 const showRejectionReportModal = ref(false)
+
+// Add new state for Oracle tracking modal
+const showOracleTrackingModal = ref(false)
 
 // ───────────────────────────────────────────────────────────── Helper Functions
 function formatDate(dateString: string): string {
@@ -614,6 +622,11 @@ function openRejectionModal(row: TransferData) {
     currentRejectionId.value = row.transaction_id
     showRejectionModal.value = true
   }
+}
+
+// Function to open the Oracle tracking modal
+function openOracleTrackingModal(row: TransferData) {
+  showOracleTrackingModal.value = true
 }
 
 // Handle files updated event from attachment modal
@@ -1921,6 +1934,13 @@ function handleEditSubmit(updatedData: Record<string, unknown>) {
   background: #ff453a;
 }
 
+/* Attachment cell layout */
+.attachment-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Rejection indicator styles */
 .rejection-indicator {
   display: flex;
@@ -1972,7 +1992,6 @@ function handleEditSubmit(updatedData: Record<string, unknown>) {
 .rejection-indicator.disabled {
   opacity: 0.5;
   cursor: default;
-  pointer-events: none;
 }
 
 .rejection-indicator.disabled:hover {
@@ -1988,10 +2007,51 @@ function handleEditSubmit(updatedData: Record<string, unknown>) {
   opacity: 0.4;
 }
 
-/* Attachment cell layout */
-.attachment-cell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+/* Track link styling */
+.track-link {
+  color: #2563eb;
+  cursor: pointer;
+  font-weight: 500;
+  position: relative;
+  transition: all 0.2s ease;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+/* Track link hover effects */
+.track-link:hover {
+  background-color: rgba(37, 99, 235, 0.1);
+  color: #1d4ed8;
+}
+
+.track-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 2px;
+  background-color: #2563eb;
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+  transform-origin: right;
+}
+
+.track-link:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.dark-mode .track-link {
+  color: #3b82f6;
+}
+
+.dark-mode .track-link:hover {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.dark-mode .track-link::after {
+  background-color: #3b82f6;
 }
 </style>

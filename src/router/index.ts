@@ -71,18 +71,24 @@ const routes = [
     component: () => import('@/views/NotificationsPage.vue'),
     meta: { requiresAuth: true },
   },
-  // routes
+  // Admin routes
   {
     path: '/admin/user-management',
     name: 'UserManagement',
     component: () => import('@/views/UserManagement.vue'),
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiresAdmin: true },
   },
   {
     path: '/admin/account-entity-management',
     name: 'AccountEntityManagement',
     component: () => import('@/views/AccountEntityManagement.vue'),
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiresAdmin: true },
+  },
+  {
+    path: '/admin/accounts-entity-view',
+    name: 'AccountsEntityView',
+    component: () => import('@/views/Accounts_Entity_view.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true },
   },
   // Catch-all route for 404
   {
@@ -98,28 +104,43 @@ const router = createRouter({
 })
 
 // Navigation guard
-router.beforeEach((to, from, next) => {
-  const authStore = useAuthStore()
-  const requiresAuth = to.meta.requiresAuth !== false
-  const requiresAdmin = to.meta.requiresAdmin === true
+router.beforeEach(async (to, from, next) => {
+  try {
+    const authStore = useAuthStore()
+    const requiresAuth = to.meta.requiresAuth !== false
+    const requiresAdmin = to.meta.requiresAdmin === true
 
-  // Check if route requires authentication and user is not authenticated
-  if (requiresAuth && !authStore.isAuthenticated) {
-    next({ name: 'Login' })
+    // Check if route requires authentication and user is not authenticated
+    if (requiresAuth && !authStore.isAuthenticated) {
+      next({ name: 'Login' })
+    }
+    // Check if route requires admin role and user is not an admin
+    else if (requiresAdmin && authStore.user?.role !== 'admin') {
+      // Redirect to dashboard if trying to access admin route without admin privileges
+      next({ name: 'Dashboard' })
+    }
+    // If user is authenticated and trying to access login page, redirect to dashboard
+    else if (authStore.isAuthenticated && to.name === 'Login') {
+      next({ name: 'Dashboard' })
+    }
+    // Otherwise, allow navigation
+    else {
+      next()
+    }
+  } catch (error) {
+    console.error('Navigation guard error:', error)
+    // Fallback navigation to prevent infinite loops
+    if (to.name !== 'Login') {
+      next({ name: 'Login' })
+    } else {
+      next()
+    }
   }
-  // Check if route requires admin role and user is not an admin
-  else if (requiresAdmin && authStore.user?.role !== 'admin') {
-    // Redirect to dashboard if trying to access admin route without admin privileges
-    next({ name: 'Dashboard' })
-  }
-  // If user is authenticated and trying to access login page, redirect to dashboard
-  else if (authStore.isAuthenticated && to.name === 'Login') {
-    next({ name: 'Dashboard' })
-  }
-  // Otherwise, allow navigation
-  else {
-    next()
-  }
+})
+
+// Add error handler for router errors
+router.onError((error) => {
+  console.error('Router error:', error)
 })
 
 export default router

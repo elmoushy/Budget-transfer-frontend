@@ -17,6 +17,10 @@ export const ENDPOINTS = {
     USER_UPDATE: '/api/auth/users/update/',
     USER_DELETE: '/api/auth/users/delete/',
     NOTIFICATIONS: '/api/auth/Notifications',
+    // User levels endpoints
+    LEVELS: '/api/auth/levels/',
+    LEVEL_UPDATE: '/api/auth/levels/update/',
+    USER_LEVEL_ASSIGN: '/api/auth/levels/update/',
   },
 
   // Budget endpoints
@@ -25,12 +29,21 @@ export const ENDPOINTS = {
     TRANSFER_DELETE: '/api/budget/transfers/:id/delete/',
     TRANSFERS_PENDING_APPROVAL: '/api/budget/transfers/list_underapprovel/',
     TRANSFER_APPROVE_REJECT: '/api/budget/transfers/adjd-approve-reject/',
+    DASHBOARD: '/api/budget/dashboard/',
   },
 
   // Accounts and entities
   ACCOUNTS_ENTITIES: {
     ENTITIES: '/api/accounts-entities/entities/',
+    ENTITIES_CREATE: '/api/accounts-entities/entities/create/',
+    ENTITY_DETAIL: '/api/accounts-entities/entities/:id/',
+    ENTITY_UPDATE: '/api/accounts-entities/entities/:id/update/',
+    ENTITY_DELETE: '/api/accounts-entities/entities/:id/delete/',
     ACCOUNTS: '/api/accounts-entities/accounts/',
+    ACCOUNT_CREATE: '/api/accounts-entities/accounts/create/',
+    ACCOUNT_DETAIL: '/api/accounts-entities/accounts/:id/',
+    ACCOUNT_UPDATE: '/api/accounts-entities/accounts/:id/update/',
+    ACCOUNT_DELETE: '/api/accounts-entities/accounts/:id/delete/',
     ACCOUNT_ENTITY_LIMIT_LIST: '/api/accounts-entities/account-entity-limit/list',
     ACCOUNT_ENTITY_LIMIT_UPDATE: '/api/accounts-entities/account-entity-limit/update/',
   },

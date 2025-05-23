@@ -15,16 +15,17 @@
         </li>
 
         <!-- Admin links shown directly if user is admin -->
-        <li 
-          v-for="adminItem in adminMenuItems" 
-          :key="adminItem.route"
-          :class="{ active: currentRoute === adminItem.route }"
-          v-if="isAdminUser"
-        >
-          <router-link :to="{ name: adminItem.route }">
-            {{ adminItem.label }}
-          </router-link>
-        </li>
+        <template v-if="isAdminUser">
+          <li
+            v-for="adminItem in adminMenuItems"
+            :key="adminItem.route"
+            :class="{ active: currentRoute === adminItem.route }"
+          >
+            <router-link :to="{ name: adminItem.route }">
+              {{ adminItem.label }}
+            </router-link>
+          </li>
+        </template>
 
         <!-- example dropdown (optional) -->
         <li class="dropdown" v-if="dropdownItem">
@@ -84,10 +85,12 @@ const adminMenuItemsData = {
   ar: [
     { label: 'إدارة المستخدمين', route: 'UserManagement' },
     { label: 'إدارة الحسابات والكيانات', route: 'AccountEntityManagement' },
+    { label: 'الحسابات والكيانات', route: 'AccountsEntityView' },
   ],
   en: [
     { label: 'User Management', route: 'UserManagement' },
     { label: 'Account-Entity Management', route: 'AccountEntityManagement' },
+    { label: 'Accounts & Entities', route: 'AccountsEntityView' },
   ],
 }
 
@@ -115,7 +118,9 @@ const menuItemsData = {
 
 // Create computed properties for menu items
 const menuItems = computed(() => (isArabic.value ? menuItemsData.ar : menuItemsData.en))
-const adminMenuItems = computed(() => (isArabic.value ? adminMenuItemsData.ar : adminMenuItemsData.en))
+const adminMenuItems = computed(() =>
+  isArabic.value ? adminMenuItemsData.ar : adminMenuItemsData.en,
+)
 </script>
 
 <style scoped>
@@ -324,7 +329,9 @@ const adminMenuItems = computed(() => (isArabic.value ? adminMenuItemsData.ar : 
   min-width: 200px;
   opacity: 0;
   transform: translateY(10px);
-  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dropdown-menu.open {

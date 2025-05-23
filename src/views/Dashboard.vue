@@ -1,29 +1,181 @@
 <!-- DashboardView.vue -->
 <template>
-  <div class="dashboard" :class="{ 'dark-theme': isDarkMode, rtl: isRTL }">
-    <div class="dashboard-header" v-motion="{ type: 'fade', delay: 200 }">
-      <h1 class="dashboard-title">{{ translations.dashboard }}</h1>
-      <p class="dashboard-subtitle">{{ translations.welcomeMessage }}</p>
+  <div class="dashboard" :class="{ 'dark-mode': isDarkMode, rtl: isRTL }">
+    <div class="page-background">
+      <div class="gradient-orb orb-1"></div>
+      <div class="gradient-orb orb-2"></div>
+      <div class="gradient-orb orb-3"></div>
+    </div>
+    <div class="dashboard-header">
+      <div>
+        <h1 class="dashboard-title">{{ translations.dashboard }}</h1>
+        <p class="dashboard-subtitle">{{ translations.welcomeMessage }}</p>
+      </div>
+      <div class="dashboard-actions">
+        <button @click="refreshDashboard" class="refresh-button" :disabled="isLoading">
+          <i class="fas fa-sync-alt" :class="{ 'fa-spin': isLoading }"></i>
+          {{ translations.refresh }}
+        </button>
+        <!-- <div class="time-filter">
+          <select v-model="timeFilter" @change="handleTimeFilterChange">
+            <option value="week">{{ translations.thisWeek }}</option>
+            <option value="month">{{ translations.thisMonth }}</option>
+            <option value="quarter">{{ translations.thisQuarter }}</option>
+            <option value="year">{{ translations.thisYear }}</option>
+          </select>
+        </div> -->
+      </div>
     </div>
 
     <!-- ────── METRICS CARDS ────── -->
     <div class="metrics-grid">
       <div
-        v-for="(metric, index) in localizedMetrics"
-        :key="index"
-        class="metric-card glass-card"
-        :class="[metric.trend, `delay-${index}`]"
-        v-motion="{ type: 'slide', delay: 200 + index * 100 }"
+        class="metric-card"
+        :class="getTrendClass(dashboardData?.approved_transfers, dashboardData?.total_transfers)"
       >
-        <div class="metric-icon" :class="metric.color">
-          <i :class="metric.icon"></i>
+        <div class="metric-icon">
+          <i class="fas fa-check-circle"></i>
         </div>
         <div class="metric-content">
-          <h3>{{ metric.title }}</h3>
-          <div class="metric-value">{{ metric.value }}</div>
+          <h3>{{ translations.approvedTransfers }}</h3>
+          <div class="metric-value">{{ dashboardData?.approved_transfers || 0 }}</div>
           <div class="metric-trend">
-            <i :class="metric.trend === 'up' ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
-            <span class="percentage">{{ metric.percentage }}%</span> {{ translations.sinceLast }}
+            <i
+              :class="
+                getTrendClass(dashboardData?.approved_transfers, dashboardData?.total_transfers) ===
+                'up'
+                  ? 'fas fa-arrow-up'
+                  : 'fas fa-arrow-down'
+              "
+            ></i>
+            {{ getPercentage(dashboardData?.approved_transfers, dashboardData?.total_transfers) }}%
+            {{ translations.ofTotal }}
+          </div>
+        </div>
+        <div class="metric-glow"></div>
+      </div>
+
+      <div
+        class="metric-card"
+        :class="
+          getTrendClass(dashboardData?.rejected_transfers, dashboardData?.total_transfers, true)
+        "
+      >
+        <div class="metric-icon">
+          <i class="fas fa-times-circle"></i>
+        </div>
+        <div class="metric-content">
+          <h3>{{ translations.rejectedTransfers }}</h3>
+          <div class="metric-value">{{ dashboardData?.rejected_transfers || 0 }}</div>
+          <div class="metric-trend">
+            <i
+              :class="
+                getTrendClass(
+                  dashboardData?.rejected_transfers,
+                  dashboardData?.total_transfers,
+                  true,
+                ) === 'up'
+                  ? 'fas fa-arrow-up'
+                  : 'fas fa-arrow-down'
+              "
+            ></i>
+            {{ getPercentage(dashboardData?.rejected_transfers, dashboardData?.total_transfers) }}%
+            {{ translations.ofTotal }}
+          </div>
+        </div>
+        <div class="metric-glow"></div>
+      </div>
+
+      <div class="metric-card" :class="getTotalPendingClass()">
+        <div class="metric-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="metric-content">
+          <h3>{{ translations.pendingTransfers }}</h3>
+          <div class="metric-value">{{ getTotalPending() }}</div>
+          <div class="metric-trend">
+            <i
+              :class="getTotalPendingClass() === 'up' ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"
+            ></i>
+            {{ getPercentage(getTotalPending(), dashboardData?.total_transfers) }}%
+            {{ translations.ofTotal }}
+          </div>
+        </div>
+        <div class="metric-glow"></div>
+      </div>
+
+      <div
+        class="metric-card"
+        :class="getTrendClass(dashboardData?.total_transfers, previousTotalTransfers)"
+      >
+        <div class="metric-icon">
+          <i class="fas fa-exchange-alt"></i>
+        </div>
+        <div class="metric-content">
+          <h3>{{ translations.totalTransfers }}</h3>
+          <div class="metric-value">{{ dashboardData?.total_transfers || 0 }}</div>
+          <div class="metric-trend">
+            <i
+              :class="
+                getTrendClass(dashboardData?.total_transfers, previousTotalTransfers) === 'up'
+                  ? 'fas fa-arrow-up'
+                  : 'fas fa-arrow-down'
+              "
+            ></i>
+            {{ getChangedPercentage(dashboardData?.total_transfers, previousTotalTransfers) }}%
+            {{ translations.sinceLast }}
+          </div>
+        </div>
+        <div class="metric-glow"></div>
+      </div>
+    </div>
+
+    <!-- ────── TRANSFER TYPE BREAKDOWN ────── -->
+    <div class="transfer-breakdown">
+      <h3 class="section-title">{{ translations.transferTypeBreakdown }}</h3>
+      <div class="transfer-types-grid">
+        <div class="transfer-type-card">
+          <div class="transfer-type-icon far">
+            <i class="fas fa-file-invoice-dollar"></i>
+          </div>
+          <div class="transfer-type-content">
+            <h4>{{ translations.farTransfers }}</h4>
+            <div class="transfer-type-value">{{ dashboardData?.total_transfers_far || 0 }}</div>
+            <div class="transfer-type-percent">
+              {{
+                getPercentage(dashboardData?.total_transfers_far, dashboardData?.total_transfers)
+              }}%
+            </div>
+          </div>
+        </div>
+
+        <div class="transfer-type-card">
+          <div class="transfer-type-icon afr">
+            <i class="fas fa-file-contract"></i>
+          </div>
+          <div class="transfer-type-content">
+            <h4>{{ translations.afrTransfers }}</h4>
+            <div class="transfer-type-value">{{ dashboardData?.total_transfers_afr || 0 }}</div>
+            <div class="transfer-type-percent">
+              {{
+                getPercentage(dashboardData?.total_transfers_afr, dashboardData?.total_transfers)
+              }}%
+            </div>
+          </div>
+        </div>
+
+        <div class="transfer-type-card">
+          <div class="transfer-type-icon fad">
+            <i class="fas fa-file-signature"></i>
+          </div>
+          <div class="transfer-type-content">
+            <h4>{{ translations.fadTransfers }}</h4>
+            <div class="transfer-type-value">{{ dashboardData?.total_transfers_fad || 0 }}</div>
+            <div class="transfer-type-percent">
+              {{
+                getPercentage(dashboardData?.total_transfers_fad, dashboardData?.total_transfers)
+              }}%
+            </div>
           </div>
         </div>
       </div>
@@ -31,37 +183,281 @@
 
     <!-- ────── CHARTS ────── -->
     <div class="charts-grid">
-      <div class="chart-card glass-card main-chart" v-motion="{ type: 'fade', delay: 600 }">
-        <h3>{{ translations.revenueOverview }}</h3>
-        <canvas v-if="chartsReady" ref="lineChart"></canvas>
+      <div class="chart-card main-chart">
+        <h3>{{ translations.transferFlow }}</h3>
+        <div v-if="isLoading" class="loading-chart">{{ translations.loadingChart }}</div>
+        <canvas
+          v-else-if="chartsReady"
+          id="transferFlowChart"
+          ref="transferFlowChart"
+          class="animated-chart"
+        ></canvas>
         <div v-else class="loading-chart">{{ translations.loadingChart }}</div>
       </div>
 
-      <div class="chart-card">
-        <h3>{{ translations.budgetDistribution }}</h3>
-        <canvas v-if="chartsReady" ref="doughnutChart"></canvas>
+      <!-- Futuristic Approval Levels Visualization -->
+      <div class="chart-card approval-levels-card">
+        <h3>{{ translations.approvalLevels }}</h3>
+        <div v-if="isLoading" class="loading-chart">{{ translations.loadingChart }}</div>
+        <div v-else-if="dashboardData" class="approval-levels-container">
+          <div class="approval-levels-grid">
+            <div
+              v-for="(level, index) in getApprovalLevelsData()"
+              :key="index"
+              class="approval-level-item"
+              :class="`level-${index + 1}`"
+            >
+              <div class="level-circle">
+                <div
+                  class="level-progress"
+                  :style="getLevelProgressStyle(level.value, level.total)"
+                >
+                  <div class="level-inner">
+                    <div class="level-number">{{ level.value }}</div>
+
+                    <div class="level-label">{{ level.label }}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="level-percentage">
+                {{ getLevelPercentage(level.value, level.total) }}%
+              </div>
+            </div>
+          </div>
+          <div class="approval-summary">
+            <div class="summary-item">
+              <span class="summary-label">{{ translations.pendingTransfers }}</span>
+              <span class="summary-value">{{ getTotalPending() }}</span>
+            </div>
+          </div>
+        </div>
         <div v-else class="loading-chart">{{ translations.loadingChart }}</div>
       </div>
 
-      <div class="chart-card">
-        <h3>{{ translations.departmentPerformance }}</h3>
-        <canvas v-if="chartsReady" ref="barChart"></canvas>
+      <!-- Futuristic Cost Center Distribution -->
+      <div class="chart-card cost-center-card">
+        <h3>{{ translations.costCenterDistribution }}</h3>
+        <div v-if="isLoading" class="loading-chart">{{ translations.loadingChart }}</div>
+        <div v-else-if="dashboardData" class="cost-center-container">
+          <div class="cost-center-network">
+            <div
+              v-for="(center, index) in getCostCenterNetworkData()"
+              :key="index"
+              class="cost-center-node"
+              :class="center.type"
+              :style="getCenterNodeStyle(index, getCostCenterNetworkData().length)"
+            >
+              <div class="node-core">
+                <div class="node-pulse"></div>
+                <div class="node-content">
+                  <div class="node-code" style="font-size: 0.85rem; margin-bottom: 0.25rem">
+                    {{ center.code }}
+                  </div>
+                  <div class="node-amount" style="font-size: 0.75rem; font-weight: 600">
+                    {{ formatCurrency(center.amount) }}
+                  </div>
+                </div>
+              </div>
+              <div class="node-connections" v-if="center.connections">
+                <div
+                  v-for="(connection, connIndex) in center.connections"
+                  :key="connIndex"
+                  class="connection-line"
+                  :style="getConnectionStyle(connection)"
+                ></div>
+              </div>
+            </div>
+          </div>
+          <div class="cost-center-legend">
+            <div class="legend-item outgoing">
+              <div class="legend-dot"></div>
+              <span>{{ translations.outgoing }}</span>
+            </div>
+            <div class="legend-item incoming">
+              <div class="legend-dot"></div>
+              <span>{{ translations.incoming }}</span>
+            </div>
+          </div>
+        </div>
         <div v-else class="loading-chart">{{ translations.loadingChart }}</div>
       </div>
     </div>
 
-    <!-- ────── RECENT ACTIVITIES ────── -->
-    <div class="recent-activities">
-      <h3>{{ translations.recentActivities }}</h3>
-      <div class="activity-list">
-        <div v-for="(activity, index) in localizedActivities" :key="index" class="activity-item">
-          <div class="activity-icon" :class="activity.type">
-            <i :class="activity.icon"></i>
+    <!-- ────── TRANSFER FLOWS & ANALYSIS ────── -->
+    <div class="data-analysis-section">
+      <h3 class="section-title">{{ translations.transferAnalysis }}</h3>
+      <div class="tabs">
+        <button
+          v-for="(tab, index) in analysisTabs"
+          :key="index"
+          @click="activeTab = tab.id"
+          :class="{ active: activeTab === tab.id }"
+          class="tab-button"
+        >
+          <i :class="tab.icon"></i> {{ tab.label }}
+        </button>
+      </div>
+
+      <div class="tab-content">
+        <!-- Filtered Combinations -->
+        <div v-if="activeTab === 'filtered'" class="filtered-combinations">
+          <div v-if="!dashboardData?.filtered_combinations.length" class="no-data">
+            {{ translations.noFilteredData }}
           </div>
-          <div class="activity-content">
-            <div class="activity-title">{{ activity.title }}</div>
-            <div class="activity-description">{{ activity.description }}</div>
-            <div class="activity-time">{{ activity.time }}</div>
+          <div v-else class="data-table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>{{ translations.costCenter }}</th>
+                  <th>{{ translations.accountCode }}</th>
+                  <th>{{ translations.outgoing }}</th>
+                  <th>{{ translations.incoming }}</th>
+                  <th>{{ translations.netFlow }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, index) in dashboardData?.filtered_combinations" :key="index">
+                  <td>
+                    <span class="code-badge">{{ item.cost_center_code_str }}</span>
+                  </td>
+                  <td>
+                    <span class="code-badge">{{ item.account_code_str }}</span>
+                  </td>
+                  <td :class="{ negative: item.total_from_center > 0 }">
+                    {{ formatCurrency(item.total_from_center) }}
+                  </td>
+                  <td :class="{ positive: item.total_to_center > 0 }">
+                    {{ formatCurrency(item.total_to_center) }}
+                  </td>
+                  <td :class="getNetFlowClass(item.total_to_center - item.total_from_center)">
+                    {{ formatCurrency(item.total_to_center - item.total_from_center) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Cost Center Totals -->
+        <div v-if="activeTab === 'costcenters'" class="cost-center-totals">
+          <div v-if="!dashboardData?.cost_center_totals.length" class="no-data">
+            {{ translations.noCostCenterData }}
+          </div>
+          <div v-else class="cost-center-flows">
+            <div
+              v-for="(transferGroup, groupIndex) in dashboardData?.cost_center_totals"
+              :key="'cg-' + groupIndex"
+              class="transfer-group"
+            >
+              <h4>{{ translations.transferGroup }} {{ groupIndex + 1 }}</h4>
+              <div class="flow-card">
+                <div class="flow-visualization">
+                  <div class="flow-node from">
+                    <span class="node-label">{{
+                      getFromCenterInGroup(transferGroup)?.cost_center_code_str || ''
+                    }}</span>
+                    <span class="node-amount">{{
+                      formatCurrency(getFromCenterInGroup(transferGroup)?.total_from_center || 0)
+                    }}</span>
+                  </div>
+                  <div class="flow-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                  </div>
+                  <div class="flow-node to">
+                    <span class="node-label">{{
+                      getToCenterInGroup(transferGroup)?.cost_center_code_str || ''
+                    }}</span>
+                    <span class="node-amount">{{
+                      formatCurrency(getToCenterInGroup(transferGroup)?.total_to_center || 0)
+                    }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Account Code Totals -->
+        <div v-if="activeTab === 'accounts'" class="account-code-totals">
+          <div v-if="!dashboardData?.account_code_totals.length" class="no-data">
+            {{ translations.noAccountData }}
+          </div>
+          <div v-else class="account-flows">
+            <div
+              v-for="(accountGroup, groupIndex) in dashboardData?.account_code_totals"
+              :key="'ag-' + groupIndex"
+              class="transfer-group"
+            >
+              <h4>{{ translations.accountGroup }} {{ groupIndex + 1 }}</h4>
+              <div class="flow-card">
+                <div class="flow-visualization">
+                  <div class="flow-node from">
+                    <span class="node-label">{{
+                      getFromAccountInGroup(accountGroup)?.account_code_str || ''
+                    }}</span>
+                    <span class="node-amount">{{
+                      formatCurrency(getFromAccountInGroup(accountGroup)?.total_from_center || 0)
+                    }}</span>
+                  </div>
+                  <div class="flow-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                  </div>
+                  <div class="flow-node to">
+                    <span class="node-label">{{
+                      getToAccountInGroup(accountGroup)?.account_code_str || ''
+                    }}</span>
+                    <span class="node-amount">{{
+                      formatCurrency(getToAccountInGroup(accountGroup)?.total_to_center || 0)
+                    }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- All Combinations -->
+        <div v-if="activeTab === 'all'" class="all-combinations">
+          <div v-if="!dashboardData?.all_combinations.length" class="no-data">
+            {{ translations.noAllCombinationsData }}
+          </div>
+          <div v-else class="all-flows">
+            <div
+              v-for="(comboGroup, groupIndex) in dashboardData?.all_combinations"
+              :key="'comb-' + groupIndex"
+              class="combo-group"
+            >
+              <h4>{{ translations.transferGroup }} {{ groupIndex + 1 }}</h4>
+              <div class="combo-card">
+                <div class="combo-visualization">
+                  <div class="combo-node from">
+                    <span class="combo-center">{{
+                      getFromCenterAccountCombo(comboGroup)?.cost_center_code_str || ''
+                    }}</span>
+                    <span class="combo-account">{{
+                      getFromCenterAccountCombo(comboGroup)?.account_code_str || ''
+                    }}</span>
+                    <span class="combo-amount">{{
+                      formatCurrency(getFromCenterAccountCombo(comboGroup)?.total_from_center || 0)
+                    }}</span>
+                  </div>
+                  <div class="combo-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                  </div>
+                  <div class="combo-node to">
+                    <span class="combo-center">{{
+                      getToCenterAccountCombo(comboGroup)?.cost_center_code_str || ''
+                    }}</span>
+                    <span class="combo-account">{{
+                      getToCenterAccountCombo(comboGroup)?.account_code_str || ''
+                    }}</span>
+                    <span class="combo-amount">{{
+                      formatCurrency(getToCenterAccountCombo(comboGroup)?.total_to_center || 0)
+                    }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -73,10 +469,22 @@
 import { ref, computed, watch, onMounted, nextTick, onUnmounted } from 'vue'
 import Chart from 'chart.js/auto'
 import { useThemeStore } from '@/stores/themeStore'
+import { useDashboardService } from '@/services/dashboardService'
+import type {
+  DashboardData,
+  CostCenterTotal,
+  AccountCodeTotal,
+  CostCenterAccountCombo,
+} from '@/services/dashboardService'
 
 export default {
   name: 'DashboardView',
   setup() {
+    /* ────── API DATA FETCHING ────── */
+    const { dashboardData, isLoading, error, fetchDashboardData } = useDashboardService()
+    const previousTotalTransfers = ref(0)
+    const timeFilter = ref('month')
+
     /* ────── THEME ────── */
     const themeStore = useThemeStore()
     const isDarkMode = ref<boolean>(themeStore.darkMode)
@@ -134,18 +542,53 @@ export default {
       if (isRTL.value) {
         return {
           dashboard: 'لوحة القيادة',
-          welcomeMessage: 'مرحبًا بعودتك! إليك نظرة عامة على بياناتك.',
+          welcomeMessage: 'مرحبًا بعودتك! إليك نظرة عامة على الميزانية.',
           totalBudget: 'الميزانية الإجمالية',
           allocatedFunds: 'الأموال المخصصة',
           pendingApprovals: 'الموافقات المعلقة',
           completedTransfers: 'التحويلات المكتملة',
-          revenueOverview: 'نظرة عامة على الإيرادات',
-          budgetDistribution: 'توزيع الميزانية',
-          departmentPerformance: 'أداء الأقسام',
-          recentActivities: 'الأنشطة الأخيرة',
           loadingChart: 'جاري تحميل بيانات الرسم البياني...',
-          sinceLast: 'منذ الشهر الماضي',
-          // Month translations
+          sinceLast: 'منذ الفترة السابقة',
+          ofTotal: 'من الإجمالي',
+          // New dashboard translations
+          approvedTransfers: 'التحويلات المعتمدة',
+          rejectedTransfers: 'التحويلات المرفوضة',
+          pendingTransfers: 'التحويلات المعلقة',
+          totalTransfers: 'إجمالي التحويلات',
+          transferTypeBreakdown: 'تفصيل أنواع التحويلات',
+          farTransfers: 'تحويلات FAR',
+          afrTransfers: 'تحويلات AFR',
+          fadTransfers: 'تحويلات FAD',
+          transferFlow: 'تدفق التحويلات',
+          approvalLevels: 'مستويات الموافقة',
+          costCenterDistribution: 'توزيع مراكز التكلفة',
+          transferAnalysis: 'تحليل التحويلات',
+          filteredCombinations: 'التركيبات المصفاة',
+          costCenterTotals: 'إجماليات مركز التكلفة',
+          accountCodeTotals: 'إجماليات رموز الحساب',
+          allCombinations: 'جميع التركيبات',
+          costCenter: 'مركز التكلفة',
+          accountCode: 'رمز الحساب',
+          outgoing: 'صادر',
+          incoming: 'وارد',
+          netFlow: 'التدفق الصافي',
+          noFilteredData: 'لا توجد بيانات مصفاة متاحة',
+          noCostCenterData: 'لا توجد بيانات لمركز التكلفة متاحة',
+          noAccountData: 'لا توجد بيانات رمز الحساب متاحة',
+          noAllCombinationsData: 'لا توجد بيانات للتركيبات متاحة',
+          transferGroup: 'مجموعة التحويل',
+          accountGroup: 'مجموعة الحساب',
+          refresh: 'تحديث',
+          thisWeek: 'هذا الأسبوع',
+          thisMonth: 'هذا الشهر',
+          thisQuarter: 'هذا الربع',
+          thisYear: 'هذا العام',
+          level1: 'المستوى 1',
+          level2: 'المستوى 2',
+          level3: 'المستوى 3',
+          level4: 'المستوى 4',
+          from: 'من',
+          to: 'إلى',
           months: [
             'يناير',
             'فبراير',
@@ -160,42 +603,57 @@ export default {
             'نوفمبر',
             'ديسمبر',
           ],
-          // Department translations
-          departments: ['العمليات', 'التسويق', 'تكنولوجيا المعلومات', 'الموارد البشرية', 'البحث'],
-          // Quarter translations
-          quarters: ['الربع الأول', 'الربع الثاني', 'الربع الثالث', 'الربع الرابع'],
-          // Activity translations
-          budgetTransferApproved: 'تم الموافقة على تحويل الميزانية',
-          transferApproved: 'تم الموافقة على تحويل مبلغ 25,000$ إلى قسم التسويق',
-          newBudgetRequest: 'طلب ميزانية جديد',
-          itRequestSubmitted: 'قدم قسم تكنولوجيا المعلومات طلبًا لمبلغ إضافي قدره 15,000$',
-          settlementPending: 'تسوية معلقة',
-          endOfQuarterSettlement: 'تسوية نهاية الربع في انتظار الموافقة',
-          enhancementCompleted: 'اكتمل التعزيز',
-          operationsBudgetEnhanced: 'تم تعزيز ميزانية العمليات بمبلغ 50,000$',
-          // Time translations
-          hoursAgo: (hours: number) => `منذ ${hours} ${hours === 1 ? 'ساعة' : 'ساعات'}`,
-          daysAgo: (days: number) => `منذ ${days} ${days === 1 ? 'يوم' : 'أيام'}`,
-          target: 'الهدف',
-          actual: 'الفعلي',
-          budgetAllocation: 'تخصيص الميزانية',
-          actualSpending: 'الإنفاق الفعلي',
         }
       } else {
         return {
           dashboard: 'Dashboard',
-          welcomeMessage: "Welcome back! Here's an overview of your data.",
+          welcomeMessage: "Welcome back! Here's an overview of your budget.",
           totalBudget: 'Total Budget',
           allocatedFunds: 'Allocated Funds',
           pendingApprovals: 'Pending Approvals',
           completedTransfers: 'Completed Transfers',
-          revenueOverview: 'Revenue Overview',
-          budgetDistribution: 'Budget Distribution',
-          departmentPerformance: 'Department Performance',
-          recentActivities: 'Recent Activities',
           loadingChart: 'Loading chart data...',
-          sinceLast: 'since last month',
-          // Month translations
+          sinceLast: 'since last period',
+          ofTotal: 'of total',
+          // New dashboard translations
+          approvedTransfers: 'Approved Transfers',
+          rejectedTransfers: 'Rejected Transfers',
+          pendingTransfers: 'Pending Transfers',
+          totalTransfers: 'Total Transfers',
+          transferTypeBreakdown: 'Transfer Type Breakdown',
+          farTransfers: 'FAR Transfers',
+          afrTransfers: 'AFR Transfers',
+          fadTransfers: 'FAD Transfers',
+          transferFlow: 'Transfer Flow',
+          approvalLevels: 'Approval Levels',
+          costCenterDistribution: 'Cost Center Distribution',
+          transferAnalysis: 'Transfer Analysis',
+          filteredCombinations: 'Filtered Combinations',
+          costCenterTotals: 'Cost Center Totals',
+          accountCodeTotals: 'Account Code Totals',
+          allCombinations: 'All Combinations',
+          costCenter: 'Cost Center',
+          accountCode: 'Account Code',
+          outgoing: 'Outgoing',
+          incoming: 'Incoming',
+          netFlow: 'Net Flow',
+          noFilteredData: 'No filtered data available',
+          noCostCenterData: 'No cost center data available',
+          noAccountData: 'No account code data available',
+          noAllCombinationsData: 'No combinations data available',
+          transferGroup: 'Transfer Group',
+          accountGroup: 'Account Group',
+          refresh: 'Refresh',
+          thisWeek: 'This Week',
+          thisMonth: 'This Month',
+          thisQuarter: 'This Quarter',
+          thisYear: 'This Year',
+          level1: 'Level 1',
+          level2: 'Level 2',
+          level3: 'Level 3',
+          level4: 'Level 4',
+          from: 'From',
+          to: 'To',
           months: [
             'Jan',
             'Feb',
@@ -210,136 +668,36 @@ export default {
             'Nov',
             'Dec',
           ],
-          // Department translations
-          departments: ['Operations', 'Marketing', 'IT', 'HR', 'Research'],
-          // Quarter translations
-          quarters: ['Q1', 'Q2', 'Q3', 'Q4'],
-          // Activity translations
-          budgetTransferApproved: 'Budget Transfer Approved',
-          transferApproved: 'Transfer of $25,000 to Marketing department approved',
-          newBudgetRequest: 'New Budget Request',
-          itRequestSubmitted: 'IT department submitted a request for additional $15,000',
-          settlementPending: 'Settlement Pending',
-          endOfQuarterSettlement: 'End of quarter settlement awaiting approval',
-          enhancementCompleted: 'Enhancement Completed',
-          operationsBudgetEnhanced: 'Operations budget enhanced by $50,000',
-          // Time translations
-          hoursAgo: (hours: number) => `${hours} hour${hours !== 1 ? 's' : ''} ago`,
-          daysAgo: (days: number) => `${days} day${days !== 1 ? 's' : ''} ago`,
-          target: 'Target',
-          actual: 'Actual',
-          budgetAllocation: 'Budget Allocation',
-          actualSpending: 'Actual Spending',
         }
       }
     })
 
-    /* ────── METRICS DATA ────── */
-    const metrics = ref([
-      {
-        title: 'Total Budget',
-        value: '$1,234,567',
-        trend: 'up',
-        percentage: '12.5',
-        icon: 'fas fa-dollar-sign',
-        color: 'cyan',
-      },
-      {
-        title: 'Allocated Funds',
-        value: '$987,432',
-        trend: 'up',
-        percentage: '8.2',
-        icon: 'fas fa-chart-pie',
-        color: 'magenta',
-      },
-      {
-        title: 'Pending Approvals',
-        value: '23',
-        trend: 'down',
-        percentage: '3.1',
-        icon: 'fas fa-clock',
-        color: 'amber',
-      },
-      {
-        title: 'Completed Transfers',
-        value: '156',
-        trend: 'up',
-        percentage: '15.3',
-        icon: 'fas fa-exchange-alt',
-        color: 'green',
-      },
-    ])
+    /* ────── CHART INSTANCES ────── */
+    let transferFlowInstance: Chart | null = null
+    let pendingLevelsInstance: Chart | null = null
+    let costCenterInstance: Chart | null = null
 
-    const localizedMetrics = computed(() => {
-      return metrics.value.map((metric) => {
-        let title = metric.title
-        // Map English titles to Arabic when in RTL mode
-        if (isRTL.value) {
-          if (metric.title === 'Total Budget') title = translations.value.totalBudget
-          else if (metric.title === 'Allocated Funds') title = translations.value.allocatedFunds
-          else if (metric.title === 'Pending Approvals') title = translations.value.pendingApprovals
-          else if (metric.title === 'Completed Transfers')
-            title = translations.value.completedTransfers
-        }
-        return {
-          ...metric,
-          title,
-        }
-      })
-    })
+    const chartsReady = ref<boolean>(false)
 
-    /* ────── CHART DATA ────── */
-    const lineChartData = computed(() => ({
-      labels: isRTL.value
-        ? translations.value.months
-        : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-      datasets: [
-        {
-          label: isRTL.value ? translations.value.budgetAllocation : 'Budget Allocation',
-          data: [65, 59, 80, 81, 56, 55, 40, 62, 69, 75, 82, 91],
-          borderColor: '#8a2a44',
-          backgroundColor: 'rgba(138,42,68,.1)',
-          fill: true,
-          tension: 0.4,
-        },
-        {
-          label: isRTL.value ? translations.value.actualSpending : 'Actual Spending',
-          data: [28, 48, 40, 19, 86, 27, 90, 45, 52, 65, 59, 80],
-          borderColor: '#4a90e2',
-          backgroundColor: 'rgba(74,144,226,.1)',
-          fill: true,
-          tension: 0.4,
-        },
-      ],
-    }))
+    // Fix chart canvas references
+    const transferFlowChart = ref<HTMLCanvasElement | null>(null)
+    const pendingLevelsChart = ref<HTMLCanvasElement | null>(null)
+    const costCenterChart = ref<HTMLCanvasElement | null>(null)
 
-    const doughnutChartData = computed(() => ({
-      labels: isRTL.value
-        ? translations.value.departments
-        : ['Operations', 'Marketing', 'IT', 'HR', 'Research'],
-      datasets: [
-        {
-          data: [30, 25, 20, 15, 10],
-          backgroundColor: ['#8a2a44', '#4a90e2', '#50e3c2', '#f5a623', '#b8e986'],
-        },
-      ],
-    }))
-
-    const barChartData = computed(() => ({
-      labels: isRTL.value ? translations.value.quarters : ['Q1', 'Q2', 'Q3', 'Q4'],
-      datasets: [
-        {
-          label: isRTL.value ? translations.value.target : 'Target',
-          data: [100, 120, 140, 160],
-          backgroundColor: 'rgba(138,42,68,.6)',
-        },
-        {
-          label: isRTL.value ? translations.value.actual : 'Actual',
-          data: [90, 115, 135, 170],
-          backgroundColor: 'rgba(74,144,226,.6)',
-        },
-      ],
-    }))
+    const destroyCharts = () => {
+      if (transferFlowInstance) {
+        transferFlowInstance.destroy()
+        transferFlowInstance = null
+      }
+      if (pendingLevelsInstance) {
+        pendingLevelsInstance.destroy()
+        pendingLevelsInstance = null
+      }
+      if (costCenterInstance) {
+        costCenterInstance.destroy()
+        costCenterInstance = null
+      }
+    }
 
     /* ────── CHART OPTIONS ────── */
     const getChartOptions = (isDark: boolean) => {
@@ -358,12 +716,27 @@ export default {
           x: { grid: { color: gridColor }, ticks: { color: textColor } },
           y: { grid: { color: gridColor }, ticks: { color: textColor } },
         },
+        animation: {
+          duration: 2000,
+        },
       }
     }
 
     const baseOptions = computed(() => getChartOptions(isDarkMode.value))
-    const lineOpts = computed(() => baseOptions.value)
-    const doughnutOpts = computed(() => ({
+
+    const transferFlowOpts = computed(() => baseOptions.value)
+
+    const pendingLevelsOpts = computed(() => ({
+      ...baseOptions.value,
+      plugins: {
+        legend: {
+          display: false,
+        },
+      },
+      indexAxis: 'y' as const,
+    }))
+
+    const costCenterOpts = computed(() => ({
       ...baseOptions.value,
       plugins: {
         legend: {
@@ -372,145 +745,222 @@ export default {
         },
       },
     }))
-    const barOpts = computed(() => baseOptions.value)
 
-    /* ────── CANVAS REFS ────── */
-    const lineChart = ref<HTMLCanvasElement | null>(null)
-    const doughnutChart = ref<HTMLCanvasElement | null>(null)
-    const barChart = ref<HTMLCanvasElement | null>(null)
-
-    /* ────── CHART INSTANCES ────── */
-    let lineInstance: Chart | null = null
-    let doughnutInstance: Chart | null = null
-    let barInstance: Chart | null = null
-
-    const chartsReady = ref<boolean>(false)
-
-    const destroyCharts = () => {
-      if (lineInstance) lineInstance.destroy()
-      if (doughnutInstance) doughnutInstance.destroy()
-      if (barInstance) barInstance.destroy()
-      lineInstance = null
-      doughnutInstance = null
-      barInstance = null
-    }
-
-    const createCharts = () => {
-      destroyCharts()
-      if (lineChart.value) {
-        const ctx = lineChart.value.getContext('2d')
-        if (ctx) {
-          lineInstance = new Chart(ctx, {
-            type: 'line',
-            data: lineChartData.value,
-            options: lineOpts.value,
-          }) as Chart
-        }
-      }
-      if (doughnutChart.value) {
-        const ctx = doughnutChart.value.getContext('2d')
-        if (ctx) {
-          doughnutInstance = new Chart(ctx, {
-            type: 'doughnut',
-            data: doughnutChartData.value,
-            options: doughnutOpts.value,
-          }) as Chart
-        }
-      }
-      if (barChart.value) {
-        const ctx = barChart.value.getContext('2d')
-        if (ctx) {
-          barInstance = new Chart(ctx, {
-            type: 'bar',
-            data: barChartData.value,
-            options: barOpts.value,
-          }) as Chart
-        }
-      }
-    }
-
-    /* ────── RECENT ACTIVITIES ────── */
-    const recentActivities = ref([
-      {
-        title: 'Budget Transfer Approved',
-        description: 'Transfer of $25,000 to Marketing department approved',
-        time: '2 hours ago',
-        type: 'success',
-        icon: 'fas fa-check-circle',
-      },
-      {
-        title: 'New Budget Request',
-        description: 'IT department submitted a request for additional $15,000',
-        time: '5 hours ago',
-        type: 'info',
-        icon: 'fas fa-info-circle',
-      },
-      {
-        title: 'Settlement Pending',
-        description: 'End of quarter settlement awaiting approval',
-        time: '1 day ago',
-        type: 'warning',
-        icon: 'fas fa-exclamation-circle',
-      },
-      {
-        title: 'Enhancement Completed',
-        description: 'Operations budget enhanced by $50,000',
-        time: '2 days ago',
-        type: 'success',
-        icon: 'fas fa-check-circle',
-      },
-    ])
-
-    const localizedActivities = computed(() => {
-      return recentActivities.value.map((activity) => {
-        // Default to English values
-        let title = activity.title
-        let description = activity.description
-        let time = activity.time
-
-        // Apply Arabic translations when in RTL mode
-        if (isRTL.value) {
-          if (activity.title === 'Budget Transfer Approved') {
-            title = translations.value.budgetTransferApproved
-            description = translations.value.transferApproved
-          } else if (activity.title === 'New Budget Request') {
-            title = translations.value.newBudgetRequest
-            description = translations.value.itRequestSubmitted
-          } else if (activity.title === 'Settlement Pending') {
-            title = translations.value.settlementPending
-            description = translations.value.endOfQuarterSettlement
-          } else if (activity.title === 'Enhancement Completed') {
-            title = translations.value.enhancementCompleted
-            description = translations.value.operationsBudgetEnhanced
-          }
-
-          // Translate time strings
-          if (activity.time === '2 hours ago') {
-            time = translations.value.hoursAgo(2)
-          } else if (activity.time === '5 hours ago') {
-            time = translations.value.hoursAgo(5)
-          } else if (activity.time === '1 day ago') {
-            time = translations.value.daysAgo(1)
-          } else if (activity.time === '2 days ago') {
-            time = translations.value.daysAgo(2)
-          }
-        }
-
+    const generateTransferFlowData = () => {
+      // This would ideally be generated from the actual data
+      // For now, we'll simulate it based on API data if available
+      if (!dashboardData.value) {
         return {
-          ...activity,
-          title,
-          description,
-          time,
+          labels: translations.value.months,
+          datasets: [],
         }
+      }
+
+      // Generate some mock flow data based on the totals we have
+      const totalTransfers = dashboardData.value.total_transfers || 0
+      const approvedTransfers = dashboardData.value.approved_transfers || 0
+      const rejectedTransfers = dashboardData.value.rejected_transfers || 0
+
+      const mockApprovedData = Array(12)
+        .fill(0)
+        .map(() => Math.floor(Math.random() * (approvedTransfers / 2)))
+      const mockRejectedData = Array(12)
+        .fill(0)
+        .map(() => Math.floor(Math.random() * (rejectedTransfers / 2)))
+      const mockPendingData = Array(12)
+        .fill(0)
+        .map(() =>
+          Math.floor(
+            Math.random() * ((totalTransfers - approvedTransfers - rejectedTransfers) / 2),
+          ),
+        )
+
+      return {
+        labels: translations.value.months,
+        datasets: [
+          {
+            label: translations.value.approvedTransfers,
+            data: mockApprovedData,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16,185,129,0.2)',
+            fill: true,
+            tension: 0.4,
+          },
+          {
+            label: translations.value.rejectedTransfers,
+            data: mockRejectedData,
+            borderColor: '#ef4444',
+            backgroundColor: 'rgba(239,68,68,0.2)',
+            fill: true,
+            tension: 0.4,
+          },
+          {
+            label: translations.value.pendingTransfers,
+            data: mockPendingData,
+            borderColor: '#f59e0b',
+            backgroundColor: 'rgba(245,158,11,0.2)',
+            fill: true,
+            tension: 0.4,
+          },
+        ],
+      }
+    }
+
+    const generatePendingLevelsData = () => {
+      if (!dashboardData.value?.pending_transfers) {
+        return {
+          labels: [],
+          datasets: [],
+        }
+      }
+
+      const { Level1, Level2, Level3, Level4 } = dashboardData.value.pending_transfers
+
+      return {
+        labels: [
+          translations.value.level1,
+          translations.value.level2,
+          translations.value.level3,
+          translations.value.level4,
+        ],
+        datasets: [
+          {
+            label: translations.value.pendingTransfers,
+            data: [Level1, Level2, Level3, Level4],
+            backgroundColor: [
+              'rgba(245,158,11,0.8)', // orange
+              'rgba(59,130,246,0.8)', // blue
+              'rgba(232,121,249,0.8)', // pink
+              'rgba(16,185,129,0.8)', // green
+            ],
+            borderColor: isDarkMode.value ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.8)',
+            borderWidth: 1,
+          },
+        ],
+      }
+    }
+
+    const generateCostCenterData = () => {
+      if (!dashboardData.value?.filtered_combinations) {
+        return {
+          labels: [],
+          datasets: [],
+        }
+      }
+
+      // Get unique cost centers
+      const costCenters = Array.from(
+        new Set(dashboardData.value.filtered_combinations.map((item) => item.cost_center_code_str)),
+      )
+
+      // Calculate totals for each cost center
+      const costCenterOutgoing = costCenters.map((center) => {
+        const items =
+          dashboardData.value?.filtered_combinations.filter(
+            (item) => item.cost_center_code_str === center,
+          ) || []
+        return items.reduce((sum, item) => sum + item.total_from_center, 0)
       })
-    })
+
+      const costCenterIncoming = costCenters.map((center) => {
+        const items =
+          dashboardData.value?.filtered_combinations.filter(
+            (item) => item.cost_center_code_str === center,
+          ) || []
+        return items.reduce((sum, item) => sum + item.total_to_center, 0)
+      })
+
+      return {
+        labels: costCenters,
+        datasets: [
+          {
+            label: translations.value.outgoing,
+            data: costCenterOutgoing,
+            backgroundColor: '#ef4444', // red
+          },
+          {
+            label: translations.value.incoming,
+            data: costCenterIncoming,
+            backgroundColor: '#10b981', // green
+          },
+        ],
+      }
+    }
+
+    const createCharts = async () => {
+      // Wait for next tick to ensure DOM is updated
+      await nextTick()
+
+      // Destroy existing charts first
+      destroyCharts()
+
+      console.log('Creating charts...')
+      console.log('transferFlowChart.value:', transferFlowChart.value)
+      console.log('pendingLevelsChart.value:', pendingLevelsChart.value)
+      console.log('costCenterChart.value:', costCenterChart.value)
+      console.log('dashboardData.value:', dashboardData.value)
+
+      // Transfer Flow Chart
+      if (transferFlowChart.value) {
+        const ctx = transferFlowChart.value.getContext('2d')
+        if (ctx) {
+          console.log('Creating transfer flow chart...')
+          transferFlowInstance = new Chart(ctx, {
+            type: 'line',
+            data: generateTransferFlowData(),
+            options: transferFlowOpts.value,
+          })
+          console.log('Transfer flow chart created successfully')
+        } else {
+          console.error('Could not get 2D context for transfer flow chart')
+        }
+      } else {
+        console.error('Transfer flow chart canvas element not found')
+      }
+
+      // Pending Levels Chart
+      if (pendingLevelsChart.value && dashboardData.value) {
+        const ctx = pendingLevelsChart.value.getContext('2d')
+        if (ctx) {
+          console.log('Creating pending levels chart...')
+          pendingLevelsInstance = new Chart(ctx, {
+            type: 'bar',
+            data: generatePendingLevelsData(),
+            options: pendingLevelsOpts.value,
+          })
+          console.log('Pending levels chart created successfully')
+        } else {
+          console.error('Could not get 2D context for pending levels chart')
+        }
+      } else {
+        console.error('Pending levels chart canvas element not found or no dashboard data')
+      }
+
+      // Cost Center Chart
+      if (costCenterChart.value && dashboardData.value) {
+        const ctx = costCenterChart.value.getContext('2d')
+        if (ctx) {
+          console.log('Creating cost center chart...')
+          costCenterInstance = new Chart(ctx, {
+            type: 'bar',
+            data: generateCostCenterData(),
+            options: costCenterOpts.value,
+          })
+          console.log('Cost center chart created successfully')
+        } else {
+          console.error('Could not get 2D context for cost center chart')
+        }
+      } else {
+        console.error('Cost center chart canvas element not found or no dashboard data')
+      }
+    }
 
     /* ────── HANDLE THEME TOGGLE ────── */
     watch(
       () => isDarkMode.value,
       () => {
-        if (chartsReady.value) {
-          nextTick(() => createCharts())
+        if (chartsReady.value && dashboardData.value) {
+          createCharts()
         }
       },
     )
@@ -519,40 +969,304 @@ export default {
     watch(
       () => currentLang.value,
       () => {
-        if (chartsReady.value) {
-          nextTick(() => createCharts())
+        if (chartsReady.value && dashboardData.value) {
+          createCharts()
+        }
+      },
+    )
+
+    // Watch for dashboard data changes
+    watch(
+      () => dashboardData.value,
+      (newData) => {
+        if (newData && chartsReady.value) {
+          setTimeout(() => {
+            createCharts()
+          }, 100)
         }
       },
     )
 
     /* ────── LIFECYCLE ────── */
     onMounted(async () => {
+      console.log('Dashboard component mounted')
+
+      // Fetch dashboard data first
+      await fetchDashboardData()
+
+      // Wait for next tick to ensure DOM is rendered
       await nextTick()
+
+      // Mark charts as ready
       chartsReady.value = true
-      setTimeout(() => {
-        if (lineChart.value && doughnutChart.value && barChart.value) {
-          createCharts()
+
+      // Wait a bit more for canvas elements to be in DOM
+      setTimeout(async () => {
+        console.log('Attempting to create charts after timeout...')
+        console.log('Canvas elements:', {
+          transferFlow: transferFlowChart.value,
+          pendingLevels: pendingLevelsChart.value,
+          costCenter: costCenterChart.value,
+        })
+
+        if (
+          dashboardData.value &&
+          transferFlowChart.value &&
+          pendingLevelsChart.value &&
+          costCenterChart.value
+        ) {
+          await createCharts()
         } else {
-          console.error('Chart canvas elements not found')
+          console.error('Chart creation failed - missing elements or data:', {
+            dashboardData: !!dashboardData.value,
+            transferFlowChart: !!transferFlowChart.value,
+            pendingLevelsChart: !!pendingLevelsChart.value,
+            costCenterChart: !!costCenterChart.value,
+          })
         }
-      }, 300)
+      }, 500)
     })
 
     onUnmounted(() => {
       destroyCharts()
     })
 
+    /* ────── DATA ANALYSIS TABS ────── */
+    const activeTab = ref('filtered')
+
+    const analysisTabs = computed(() => [
+      { id: 'filtered', label: translations.value.filteredCombinations, icon: 'fas fa-filter' },
+      { id: 'costcenters', label: translations.value.costCenterTotals, icon: 'fas fa-building' },
+      { id: 'accounts', label: translations.value.accountCodeTotals, icon: 'fas fa-file-invoice' },
+      { id: 'all', label: translations.value.allCombinations, icon: 'fas fa-project-diagram' },
+    ])
+
+    /* ────── HELPER METHODS ────── */
+    const refreshDashboard = () => {
+      // Store previous values for trend calculation
+      if (dashboardData.value) {
+        previousTotalTransfers.value = dashboardData.value.total_transfers
+      }
+      fetchDashboardData()
+    }
+
+    const handleTimeFilterChange = () => {
+      // In a real implementation, this would pass the filter to the API
+      refreshDashboard()
+    }
+
+    const getTrendClass = (
+      current: number | undefined,
+      previous: number | undefined,
+      inversed = false,
+    ) => {
+      if (!current || !previous) return 'neutral'
+      const trend = current > previous ? 'up' : current < previous ? 'down' : 'neutral'
+      return inversed ? (trend === 'up' ? 'down' : trend === 'down' ? 'up' : 'neutral') : trend
+    }
+
+    const getPercentage = (part: number | undefined, total: number | undefined) => {
+      if (!part || !total) return '0'
+      return ((part / total) * 100).toFixed(1)
+    }
+
+    const getChangedPercentage = (current: number | undefined, previous: number | undefined) => {
+      if (!current || !previous) return '0'
+      if (previous === 0) return '100'
+      return (((current - previous) / previous) * 100).toFixed(1)
+    }
+
+    const getTotalPending = () => {
+      if (!dashboardData.value?.pending_transfers) return 0
+      const { Level1, Level2, Level3, Level4 } = dashboardData.value.pending_transfers
+      return Level1 + Level2 + Level3 + Level4
+    }
+
+    const getTotalPendingClass = () => {
+      const totalPending = getTotalPending()
+      const totalTransfers = dashboardData.value?.total_transfers || 0
+      // If more than 30% are pending, consider it "high" (down trend)
+      return totalPending / totalTransfers > 0.3 ? 'down' : 'up'
+    }
+
+    const formatCurrency = (amount: number) => {
+      return new Intl.NumberFormat(isRTL.value ? 'ar-SA' : 'en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(amount)
+    }
+
+    const getNetFlowClass = (amount: number) => {
+      if (amount > 0) return 'positive'
+      if (amount < 0) return 'negative'
+      return ''
+    }
+
+    const getFromCenterInGroup = (group: CostCenterTotal[]) => {
+      return group.find((item) => item.total_from_center > 0)
+    }
+
+    const getToCenterInGroup = (group: CostCenterTotal[]) => {
+      return group.find((item) => item.total_to_center > 0)
+    }
+
+    const getFromAccountInGroup = (group: AccountCodeTotal[]) => {
+      return group.find((item) => item.total_from_center > 0)
+    }
+
+    const getToAccountInGroup = (group: AccountCodeTotal[]) => {
+      return group.find((item) => item.total_to_center > 0)
+    }
+
+    const getFromCenterAccountCombo = (group: CostCenterAccountCombo[]) => {
+      return group.find((item) => item.total_from_center > 0)
+    }
+
+    const getToCenterAccountCombo = (group: CostCenterAccountCombo[]) => {
+      return group.find((item) => item.total_to_center > 0)
+    }
+
+    /* ────── FETCH DATA ON MOUNT ────── */
+    onMounted(async () => {
+      await fetchDashboardData()
+      await nextTick()
+      chartsReady.value = true
+
+      setTimeout(() => {
+        if (dashboardData.value) {
+          createCharts()
+        }
+      }, 300)
+    })
+
+    // New futuristic visualization methods
+    const getApprovalLevelsData = () => {
+      if (!dashboardData.value?.pending_transfers) return []
+
+      const { Level1, Level2, Level3, Level4 } = dashboardData.value.pending_transfers
+      const total = Level1 + Level2 + Level3 + Level4
+
+      return [
+        { label: translations.value.level1, value: Level1, total },
+        { label: translations.value.level2, value: Level2, total },
+        { label: translations.value.level3, value: Level3, total },
+        { label: translations.value.level4, value: Level4, total },
+      ]
+    }
+
+    const getLevelProgressStyle = (value: number, total: number) => {
+      const percentage = total > 0 ? (value / total) * 100 : 0
+      const rotation = (percentage / 100) * 360
+
+      return {
+        background: `conic-gradient(
+          from 0deg,
+          var(--level-color) 0deg,
+          var(--level-color) ${rotation}deg,
+          rgba(255, 255, 255, 0.1) ${rotation}deg,
+          rgba(255, 255, 255, 0.1) 360deg
+        )`,
+      }
+    }
+
+    const getLevelPercentage = (value: number, total: number) => {
+      return total > 0 ? ((value / total) * 100).toFixed(1) : '0'
+    }
+
+    const getCostCenterNetworkData = () => {
+      if (!dashboardData.value?.filtered_combinations) return []
+
+      const centers = new Map()
+
+      dashboardData.value.filtered_combinations.forEach((item) => {
+        if (item.total_from_center > 0) {
+          centers.set(item.cost_center_code_str, {
+            code: item.cost_center_code_str,
+            amount: item.total_from_center,
+            type: 'outgoing',
+          })
+        }
+        if (item.total_to_center > 0) {
+          centers.set(item.cost_center_code_str, {
+            code: item.cost_center_code_str,
+            amount: item.total_to_center,
+            type: 'incoming',
+          })
+        }
+      })
+
+      return Array.from(centers.values()).slice(0, 6) // Limit to 6 for better visualization
+    }
+
+    const getCenterNodeStyle = (index: number, total: number) => {
+      const angle = (index / total) * 360
+      const radius = 80
+      const x = Math.cos(((angle - 90) * Math.PI) / 180) * radius
+      const y = Math.sin(((angle - 90) * Math.PI) / 180) * radius
+
+      return {
+        transform: `translate(${x}px, ${y}px)`,
+        '--node-delay': `${index * 0.2}s`,
+      }
+    }
+
+    const getConnectionStyle = (connection: any) => {
+      return {
+        transform: `rotate(${connection.angle}deg)`,
+        width: `${connection.strength * 2}px`,
+        opacity: connection.strength / 100,
+      }
+    }
+
     return {
+      // Theme and UI
       isDarkMode,
       isRTL,
       translations,
-      localizedMetrics,
-      localizedActivities,
-      recentActivities,
       chartsReady,
-      lineChart,
-      doughnutChart,
-      barChart,
+
+      // Dashboard API data
+      dashboardData,
+      isLoading,
+      error,
+      previousTotalTransfers,
+      timeFilter,
+
+      // Analysis and tabs
+      analysisTabs,
+      activeTab,
+
+      // Chart refs - Fixed references
+      transferFlowChart,
+      pendingLevelsChart,
+      costCenterChart,
+
+      // Helper methods
+      refreshDashboard,
+      handleTimeFilterChange,
+      getTrendClass,
+      getPercentage,
+      getChangedPercentage,
+      getTotalPending,
+      getTotalPendingClass,
+      formatCurrency,
+      getNetFlowClass,
+      getFromCenterInGroup,
+      getToCenterInGroup,
+      getFromAccountInGroup,
+      getToAccountInGroup,
+      getFromCenterAccountCombo,
+      getToCenterAccountCombo,
+
+      // New futuristic visualization methods
+      getApprovalLevelsData,
+      getLevelProgressStyle,
+      getLevelPercentage,
+      getCostCenterNetworkData,
+      getCenterNodeStyle,
+      getConnectionStyle,
     }
   },
 }
@@ -560,61 +1274,203 @@ export default {
 
 <style scoped>
 .dashboard {
-  background: #f8f9fa;
-  padding: 1.5rem;
-  border-radius: 12px;
+  background: #f8fafc;
+  padding: 2rem;
+  border-radius: 24px;
   max-width: 100%;
   overflow-x: hidden;
+  position: relative;
+  font-family: 'Inter', sans-serif;
+  transition: all var(--transition-normal);
+}
+
+.dashboard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  background: linear-gradient(135deg, #8a2bc2, #4c6ef5);
+  opacity: 0.07;
+  z-index: 0;
+  border-radius: 24px 24px 0 0;
+  transition: opacity var(--transition-normal);
+}
+
+.dashboard.dark-mode::before {
+  opacity: 0.15;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.refresh-button {
+  background: linear-gradient(135deg, #8a2bc2, #4c6ef5);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(138, 43, 194, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.refresh-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(138, 43, 194, 0.25);
+}
+
+.refresh-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.dark-mode .refresh-button {
+  background: linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-secondary));
+  box-shadow: var(--shadow-glow-magenta);
+}
+
+.dark-mode .refresh-button:hover {
+  box-shadow: 0 0 15px rgba(240, 171, 252, 0.4);
+}
+
+.time-filter select {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(138, 43, 194, 0.2);
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  color: #4b5563;
+  font-weight: 500;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%238a2bc2' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 2.5rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.time-filter select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(138, 43, 194, 0.2);
 }
 
 .dashboard-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #2d3748;
+  font-size: 2.25rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #8a2bc2, #4c6ef5);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
   margin-bottom: 0.5rem;
   position: relative;
-  display: inline-block;
+  letter-spacing: -0.5px;
+  transition: all 0.3s ease;
 }
 
-.dashboard-title::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: -8px;
-  width: 80px;
-  height: 4px;
-  background: linear-gradient(90deg, #8a2a44, #e63946);
-  border-radius: 4px;
+.dark-mode .dashboard-title {
+  background: linear-gradient(135deg, var(--color-accent-magenta), var(--color-accent-cyan));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 15px rgba(240, 171, 252, 0.3);
 }
 
 .dashboard-subtitle {
   color: #64748b;
-  margin-bottom: 2rem;
+  margin-bottom: 0.5rem;
   font-size: 1.1rem;
+  font-weight: 400;
+  transition: color 0.3s ease;
 }
 
-/* Metrics Grid */
+.dark-mode .dashboard-subtitle {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ───── SECTION TITLES ───── */
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 1.5rem;
+  position: relative;
+  display: inline-block;
+  padding-bottom: 0.75rem;
+  transition: color 0.3s ease;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 40%;
+  height: 3px;
+  background: linear-gradient(90deg, #8a2bc2, #4c6ef5);
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+.dark-mode .section-title {
+  color: var(--color-text-light);
+}
+
+.dark-mode .section-title::after {
+  background: linear-gradient(90deg, var(--color-accent-magenta), var(--color-accent-cyan));
+  box-shadow: 0 0 10px rgba(240, 171, 252, 0.3);
+}
+
+/* ───── METRICS GRID ───── */
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
+  position: relative;
+  z-index: 1;
 }
 
 .metric-card {
   background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
+  border-radius: 16px;
+  padding: 1.75rem;
   display: flex;
   align-items: flex-start;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   border-left: 4px solid transparent;
+  position: relative;
+  overflow: hidden;
 }
 
 .metric-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  transform: translateY(-7px);
+  box-shadow:
+    0 15px 35px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.03);
 }
 
 .metric-card.up {
@@ -625,21 +1481,60 @@ export default {
   border-left-color: #ef4444;
 }
 
+.metric-glow {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(138, 43, 194, 0.12) 0%, rgba(138, 43, 194, 0) 70%);
+  opacity: 0.5;
+  transition: all 0.4s ease;
+}
+
+.metric-card.up .metric-glow {
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0) 70%);
+}
+
+.metric-card.down .metric-glow {
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.12) 0%, rgba(239, 68, 68, 0) 70%);
+}
+
 .metric-icon {
-  background: #f3f4f6;
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  background: linear-gradient(135deg, #f9fafb, #f3f4f6);
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 1rem;
-  color: #8a2a44;
-  font-size: 1.25rem;
+  margin-right: 1.25rem;
+  color: #8a2bc2;
+  font-size: 1.4rem;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+}
+
+.dark-mode .metric-icon {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8));
+  color: var(--color-accent-magenta);
+  box-shadow: 0 4px 15px rgba(240, 171, 252, 0.15);
+}
+
+.metric-card.up .metric-icon {
+  color: #10b981;
+}
+
+.metric-card.down .metric-icon {
+  color: #ef4444;
 }
 
 .metric-content {
   flex: 1;
+  position: relative;
+  z-index: 1;
 }
 
 .metric-content h3 {
@@ -647,20 +1542,23 @@ export default {
   color: #64748b;
   margin-bottom: 0.5rem;
   font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .metric-value {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: #1e293b;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .metric-trend {
-  font-size: 0.813rem;
+  font-size: 0.875rem;
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.35rem;
+  font-weight: 500;
 }
 
 .metric-card.up .metric-trend {
@@ -671,24 +1569,114 @@ export default {
   color: #ef4444;
 }
 
-/* Charts Grid */
+.metric-card.neutral .metric-trend {
+  color: #6b7280;
+}
+
+/* ───── TRANSFER TYPE BREAKDOWN ───── */
+.transfer-breakdown {
+  margin-bottom: 2.5rem;
+}
+
+.transfer-types-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.transfer-type-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.03),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s ease;
+}
+
+.transfer-type-card:hover {
+  transform: translateY(-5px);
+  box-shadow:
+    0 15px 35px rgba(0, 0, 0, 0.07),
+    0 0 0 1px rgba(0, 0, 0, 0.03);
+}
+
+.transfer-type-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1rem;
+  color: white;
+  font-size: 1.25rem;
+}
+
+.transfer-type-icon.far {
+  background: linear-gradient(135deg, #8a2bc2, #4c6ef5);
+}
+
+.transfer-type-icon.afr {
+  background: linear-gradient(135deg, #f472b6, #db2777);
+}
+
+.transfer-type-icon.fad {
+  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+}
+
+.transfer-type-content {
+  flex: 1;
+}
+
+.transfer-type-content h4 {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+}
+
+.transfer-type-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.transfer-type-percent {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* ───── CHARTS GRID ───── */
 .charts-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
 }
 
 .chart-card {
   background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+  padding: 1.75rem;
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
   transition: all 0.3s ease;
   height: 350px;
   position: relative;
   display: flex;
   flex-direction: column;
+}
+
+.dark-mode .chart-card {
+  background: rgba(17, 17, 34, var(--glass-opacity-dark));
+  border: 1px solid var(--glass-border-dark);
+  box-shadow: var(--shadow-dark);
 }
 
 .chart-card canvas {
@@ -699,242 +1687,42 @@ export default {
 }
 
 .chart-card:hover {
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 15px 35px rgba(0, 0, 0, 0.07),
+    0 0 0 1px rgba(0, 0, 0, 0.03);
 }
 
 .chart-card h3 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #2d3748;
-  margin-bottom: 1rem;
-}
-
-.main-chart {
-  grid-column: span 2;
-  height: 380px;
-}
-
-/* Recent Activities */
-.recent-activities {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-}
-
-.recent-activities h3 {
   font-size: 1.125rem;
   font-weight: 600;
   color: #2d3748;
   margin-bottom: 1.25rem;
-  position: relative;
-  display: inline-block;
 }
 
-.recent-activities h3::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: -8px;
-  width: 60px;
-  height: 3px;
-  background: linear-gradient(90deg, #8a2a44, #e63946);
-  border-radius: 3px;
+.dark-mode .chart-card h3 {
+  color: var(--color-text-light);
 }
 
-.activity-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+.main-chart {
+  grid-column: span 2;
+  height: 400px;
 }
 
-.activity-item {
-  display: flex;
-  align-items: flex-start;
-  padding: 1rem;
-  border-radius: 8px;
-  background: #f8f9fa;
-  transition: all 0.3s ease;
+.animated-chart {
+  animation: fadeIn 1s ease-out;
 }
 
-.activity-item:hover {
-  background: #f1f5f9;
-  transform: translateX(5px);
-}
-
-.activity-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 1rem;
-  color: white;
-  flex-shrink: 0;
-}
-
-.activity-icon.success {
-  background: #10b981;
-}
-
-.activity-icon.warning {
-  background: #f59e0b;
-}
-
-.activity-icon.info {
-  background: #3b82f6;
-}
-
-.activity-icon.error {
-  background: #ef4444;
-}
-
-.activity-content {
-  flex: 1;
-}
-
-.activity-title {
-  font-weight: 600;
-  color: #2d3748;
-  margin-bottom: 0.25rem;
-}
-
-.activity-description {
-  color: #64748b;
-  font-size: 0.875rem;
-  margin-bottom: 0.5rem;
-}
-
-.activity-time {
-  color: #94a3b8;
-  font-size: 0.75rem;
-}
-
-/* Responsive Adjustments */
-@media (max-width: 1200px) {
-  .charts-grid {
-    grid-template-columns: 1fr;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-
-  .main-chart {
-    grid-column: span 1;
-  }
-
-  .chart-card {
-    height: 320px;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@media (max-width: 900px) {
-  .chart-card {
-    height: 300px;
-  }
-}
-
-@media (max-width: 768px) {
-  .metrics-grid {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  }
-
-  .chart-card {
-    height: 280px;
-  }
-}
-
-@media (max-width: 640px) {
-  .chart-card {
-    height: 260px;
-  }
-}
-
-@media (max-width: 480px) {
-  .dashboard {
-    padding: 1rem;
-  }
-
-  .metrics-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .chart-card {
-    height: 240px;
-    padding: 1rem;
-  }
-
-  .metric-card {
-    padding: 1rem;
-  }
-
-  .recent-activities {
-    padding: 1rem;
-  }
-}
-
-/* Dark mode support */
-.dashboard.dark-mode {
-  background: #2d3748;
-  color: #e2e2e2;
-}
-
-.dark-mode .dashboard-title {
-  color: #e2e2e2;
-}
-
-.dark-mode .dashboard-subtitle {
-  color: #a0a0b8;
-}
-
-.dark-mode .metric-card {
-  background: #1e1e2d;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.dark-mode .metric-value {
-  color: #e2e2e2;
-}
-
-.dark-mode .metric-content h3 {
-  color: #a0a0b8;
-}
-
-.dark-mode .metric-icon {
-  background: #2a2a3c;
-  color: #e2e2e2;
-}
-
-.dark-mode .chart-card,
-.dark-mode .recent-activities {
-  background: #1e1e2d;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.dark-mode .chart-card h3,
-.dark-mode .recent-activities h3 {
-  color: #e2e2e2;
-}
-
-.dark-mode .activity-item {
-  background: #2a2a3c;
-}
-
-.dark-mode .activity-item:hover {
-  background: #323248;
-}
-
-.dark-mode .activity-title {
-  color: #e2e2e2;
-}
-
-.dark-mode .activity-description {
-  color: #a0a0b8;
-}
-
-.dark-mode .activity-time {
-  color: #8f8fa8;
-}
-
-/* Add loading state for charts */
 .loading-chart {
   height: 100%;
   display: flex;
@@ -942,60 +1730,824 @@ export default {
   justify-content: center;
   color: #64748b;
   font-style: italic;
-  background: rgba(0, 0, 0, 0.03);
-  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 12px;
   margin-top: 5px;
+  transition: all 0.3s ease;
 }
 
 .dark-mode .loading-chart {
-  background: rgba(255, 255, 255, 0.05);
-  color: #a0a0b8;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.03);
 }
 
-/* RTL Support */
-.dashboard.rtl {
-  direction: rtl;
-  text-align: right;
+/* ───── DATA ANALYSIS SECTION ───── */
+.data-analysis-section {
+  background: white;
+  border-radius: 16px;
+  padding: 1.75rem;
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
+  margin-bottom: 2rem;
+  transition: all 0.3s ease;
 }
 
-.rtl .dashboard-title::after {
+.dark-mode .data-analysis-section {
+  background: rgba(17, 17, 34, var(--glass-opacity-dark));
+  border: 1px solid var(--glass-border-dark);
+  box-shadow: var(--shadow-dark);
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding-bottom: 1rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  transition: all 0.3s ease;
+}
+
+.dark-mode .tabs {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.tab-button {
+  background: transparent;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #64748b;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tab-button.active {
+  background: linear-gradient(135deg, rgba(138, 43, 194, 0.1), rgba(76, 110, 245, 0.1));
+  color: #8a2bc2;
+}
+
+.tab-button:hover:not(.active) {
+  background: rgba(0, 0, 0, 0.03);
+  color: #4b5563;
+}
+
+.tab-content {
+  min-height: 300px;
+}
+
+.no-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #64748b;
+  font-style: italic;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.dark-mode .no-data {
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ───── DATA TABLE ───── */
+.data-table-wrapper {
+  overflow-x: auto;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.data-table th {
+  background: rgba(138, 43, 194, 0.05);
+  color: #4b5563;
+  font-weight: 600;
+  text-align: left;
+  padding: 1rem;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+}
+
+.data-table td {
+  padding: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  color: #1e293b;
+}
+
+.data-table tr:hover td {
+  background-color: rgba(138, 43, 194, 0.02);
+}
+
+.code-badge {
+  background: rgba(138, 43, 194, 0.08);
+  color: #8a2bc2;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.dark-mode .code-badge {
+  background: rgba(240, 171, 252, 0.15);
+  color: var(--color-accent-magenta);
+}
+
+td.positive {
+  color: #10b981;
+  font-weight: 600;
+}
+
+td.negative {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+/* ───── FLOW VISUALIZATION ───── */
+.cost-center-flows,
+.account-flows,
+.all-flows {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.transfer-group,
+.combo-group {
+  margin-bottom: 1rem;
+}
+
+.transfer-group h4,
+.combo-group h4 {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+}
+
+.flow-card,
+.combo-card {
+  background: rgba(249, 250, 251, 0.7);
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s ease;
+}
+
+.dark-mode .flow-card,
+.dark-mode .combo-card {
+  background: rgba(17, 17, 34, 0.7);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--glass-border-dark);
+}
+
+.flow-visualization,
+.combo-visualization {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.flow-node,
+.combo-node {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  width: 45%;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.dark-mode .flow-node,
+.dark-mode .combo-node {
+  background: rgba(17, 17, 34, 0.8);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.flow-node.from,
+.combo-node.from {
+  border-left: 3px solid #ef4444;
+}
+
+.flow-node.to,
+.combo-node.to {
+  border-left: 3px solid #10b981;
+}
+
+.node-label,
+.combo-center {
+  font-weight: 600;
+  color: #4b5563;
+  transition: color 0.3s ease;
+}
+
+.dark-mode .node-label,
+.dark-mode .combo-center {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.combo-account {
+  font-size: 0.75rem;
+  color: #6b7280;
+  background: rgba(0, 0, 0, 0.03);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+.dark-mode .combo-account {
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.node-amount,
+.combo-amount {
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: #1e293b;
+  transition: color 0.3s ease;
+}
+
+.dark-mode .node-amount,
+.dark-mode .combo-amount {
+  color: var(--color-text-light);
+}
+
+.flow-arrow,
+.combo-arrow {
+  color: #94a3b8;
+  font-size: 1.25rem;
+}
+
+/* ───── FUTURISTIC APPROVAL LEVELS ───── */
+.approval-levels-card {
+  background: linear-gradient(135deg, rgba(138, 43, 194, 0.05), rgba(76, 110, 245, 0.05));
+  border: 1px solid rgba(138, 43, 194, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.approval-levels-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
   right: 0;
-  left: auto;
+  bottom: 0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(138, 43, 194, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(76, 110, 245, 0.1) 0%, transparent 50%);
+  pointer-events: none;
 }
 
-.rtl .metric-card {
-  border-left: none;
-  border-right: 4px solid transparent;
+.approval-levels-container {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
-.rtl .metric-card.up {
-  border-right-color: #10b981;
+.approval-levels-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
-.rtl .metric-card.down {
-  border-right-color: #ef4444;
+.approval-level-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
 }
 
-.rtl .metric-icon {
-  margin-right: 0;
-  margin-left: 1rem;
+.level-circle {
+  width: 80px;
+  height: 80px;
+  position: relative;
+  margin-bottom: 0.5rem;
 }
 
-.rtl .metric-trend {
-  flex-direction: row-reverse;
+.level-progress {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  position: relative;
+  animation: levelPulse 2s ease-in-out infinite;
+  --level-color: #8a2bc2;
 }
 
-.rtl .activity-item:hover {
-  transform: translateX(-5px);
+.approval-level-item.level-1 .level-progress {
+  --level-color: #f59e0b;
 }
 
-.rtl .activity-icon {
-  margin-right: 0;
-  margin-left: 1rem;
+.approval-level-item.level-2 .level-progress {
+  --level-color: #3b82f6;
 }
 
-.rtl .recent-activities h3::after {
+.approval-level-item.level-3 .level-progress {
+  --level-color: #e879f9;
+}
+
+.approval-level-item.level-4 .level-progress {
+  --level-color: #10b981;
+}
+
+.level-inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.level-number {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--level-color);
+  line-height: 1;
+}
+
+.level-label {
+  font-size: 0.6rem;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: color 0.3s ease;
+}
+
+.dark-mode .level-label {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.level-percentage {
+  font-size: 0.75rem;
+  color: var(--level-color);
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  backdrop-filter: blur(5px);
+}
+
+.approval-summary {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  padding: 1rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.summary-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.summary-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+@keyframes levelPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(138, 43, 194, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(138, 43, 194, 0);
+  }
+}
+
+/* ───── FUTURISTIC COST CENTER NETWORK ───── */
+.cost-center-card {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(239, 68, 68, 0.05));
+  border: 1px solid rgba(16, 185, 129, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.cost-center-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
   right: 0;
-  left: auto;
+  bottom: 0;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 70% 70%, rgba(239, 68, 68, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.cost-center-container {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.cost-center-network {
+  position: relative;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cost-center-node {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  animation: nodeFloat 3s ease-in-out infinite;
+  animation-delay: var(--node-delay, 0s);
+}
+
+.cost-center-node.outgoing .node-core {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+.cost-center-node.incoming .node-core {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+.node-core {
+  width: 250%;
+  height: 250%;
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transform: translate(-50px, -60px);
+}
+
+.node-pulse {
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  animation: nodePulse 2s ease-in-out infinite;
+  opacity: 0.6;
+}
+
+.node-content {
+  text-align: center;
+  color: white;
+}
+
+.node-code {
+  font-size: 0.6rem;
+  font-weight: 600;
+  line-height: 1;
+  margin-bottom: 0.1rem;
+}
+
+.node-amount {
+  font-size: 0.5rem;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.connection-line {
+  position: absolute;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(138, 43, 194, 0.5), transparent);
+  top: 50%;
+  left: 50%;
+  transform-origin: left center;
+  animation: connectionFlow 2s ease-in-out infinite;
+}
+
+.cost-center-legend {
+  display: flex;
+  justify-content: space-around;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  padding: 0.75rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.legend-item.outgoing .legend-dot {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+}
+
+.legend-item.incoming .legend-dot {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+}
+
+@keyframes nodeFloat {
+  0%,
+  100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.05);
+  }
+}
+
+@keyframes nodePulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.2;
+  }
+}
+
+@keyframes connectionFlow {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: translateX(0);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateX(20px);
+  }
+}
+
+/* ───── DARK MODE UPDATES ───── */
+.dashboard.dark-mode {
+  background: linear-gradient(135deg, var(--color-bg-dark) 0%, #111122 100%);
+  color: var(--color-text-light);
+}
+
+.dark-mode .gradient-orb {
+  opacity: 0.5;
+  filter: blur(100px);
+}
+
+.dark-mode .dashboard-header {
+  color: var(--color-text-light);
+}
+
+.dark-mode .dashboard-title,
+.dark-mode .dashboard-subtitle {
+  color: var(--color-text-light);
+}
+
+.dark-mode .metric-card {
+  background: rgba(17, 17, 34, var(--glass-opacity-dark));
+  border: 1px solid var(--glass-border-dark);
+  box-shadow: var(--shadow-dark);
+}
+
+.dark-mode .metric-card:hover {
+  background: rgba(30, 41, 59, var(--glass-opacity-dark));
+  transform: translateY(-7px);
+  box-shadow: 0 15px 35px rgba(240, 171, 252, 0.12);
+}
+
+.dark-mode .transfer-type-card {
+  background: rgba(17, 17, 34, var(--glass-opacity-dark));
+  border: 1px solid var(--glass-border-dark);
+  backdrop-filter: blur(var(--glass-blur));
+}
+
+.dark-mode .chart-card {
+  background: rgba(17, 17, 34, var(--glass-opacity-dark));
+  border: 1px solid var(--glass-border-dark);
+  box-shadow: var(--shadow-dark);
+}
+
+.dark-mode .dashboard-title,
+.dark-mode .dashboard-subtitle,
+.dark-mode .section-title,
+.dark-mode .tab-button {
+  color: var(--color-text-light);
+}
+
+.dark-mode .tab-button.active {
+  background: rgba(240, 171, 252, 0.2);
+  box-shadow: var(--shadow-glow-magenta);
+}
+
+.dark-mode .metric-content h3,
+.dark-mode .metric-value,
+.dark-mode .transfer-type-content h4,
+.dark-mode .transfer-type-value,
+.dark-mode .transfer-type-percent {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.dark-mode .metric-trend {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.dark-mode .metric-card .metric-glow {
+  box-shadow: 0 0 15px rgba(240, 171, 252, 0.2);
+}
+
+.dark-mode .metric-card.up .metric-glow {
+  box-shadow: 0 0 15px rgba(94, 234, 212, 0.2);
+}
+
+.dark-mode .metric-card.down .metric-glow {
+  box-shadow: 0 0 15px rgba(255, 100, 100, 0.2);
+}
+
+.dark-mode .data-table {
+  color: var(--color-text-light);
+}
+
+.dark-mode .data-table th {
+  background: rgba(17, 17, 34, 0.8);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.dark-mode .data-table td {
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.dark-mode .data-table tbody tr:hover {
+  background: rgba(240, 171, 252, 0.1);
+}
+
+.dark-mode .pagination-controls button {
+  background: rgba(17, 17, 34, 0.6);
+  color: var(--color-text-light);
+  border-color: var(--glass-border-dark);
+}
+
+.dark-mode .pagination-controls button:hover:not(:disabled) {
+  background: rgba(240, 171, 252, 0.2);
+  box-shadow: var(--shadow-glow-magenta);
+}
+
+/* ───── RESPONSIVE UPDATES ───── */
+@media (max-width: 768px) {
+  .approval-levels-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .level-circle {
+    width: 60px;
+    height: 60px;
+  }
+
+  .level-inner {
+    width: 45px;
+    height: 45px;
+  }
+
+  .level-number {
+    font-size: 1rem;
+  }
+
+  .cost-center-network {
+    height: 150px;
+  }
+
+  .cost-center-node {
+    width: 45px;
+    height: 45px;
+  }
+
+  .node-code {
+    font-size: 0.5rem;
+  }
+
+  .node-amount {
+    font-size: 0.4rem;
+  }
+}
+
+/* Background animation elements */
+.page-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.gradient-orb {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.4;
+  filter: blur(80px);
+  transition: transform 8s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.orb-1 {
+  top: 10%;
+  left: 10%;
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, var(--color-accent-magenta) 0%, rgba(240, 171, 252, 0) 70%);
+  animation: pulse 15s ease-in-out infinite alternate;
+}
+
+.orb-2 {
+  bottom: 20%;
+  right: 10%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, var(--color-accent-cyan) 0%, rgba(94, 234, 212, 0) 70%);
+  animation: pulse 18s ease-in-out infinite alternate-reverse;
+}
+
+.orb-3 {
+  top: 40%;
+  right: 30%;
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, var(--color-accent-primary) 0%, rgba(109, 26, 54, 0) 70%);
+  animation: pulse 20s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0.3;
+  }
 }
 </style>

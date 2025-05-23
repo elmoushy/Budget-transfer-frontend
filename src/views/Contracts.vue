@@ -173,7 +173,6 @@
                   :class="{
                     'has-attachments': row.attachment_count && row.attachment_count > 0,
                     'no-attachments': !row.attachment_count,
-                    disabled: row.status.toLowerCase() !== 'pending',
                   }"
                   @click="openFileModal(row)"
                   :title="getAttachmentTooltip(row)"
