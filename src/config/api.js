@@ -3,8 +3,9 @@
  * All API URL related constants should be defined here
  */
 
-// Base API URL - use environment variable if available or fallback to localhost
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+
+// Base API URL - use environment variable if available or fallback to production URL
 
 // API endpoints
 export const ENDPOINTS = {
