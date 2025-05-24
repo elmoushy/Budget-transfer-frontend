@@ -746,10 +746,14 @@ async function fetchData() {
 
     // Handle the correct response structure
     apiData.value = response
-    displayedRows.value = response.data?.results || []
-    totalCount.value = response.data?.count || 0
+    displayedRows.value = response?.results || []
+    totalCount.value = response?.count || 0
     hasNextPage.value = !!response.next
     hasPrevPage.value = !!response.previous
+
+    // Debug the response to see what we're getting
+    console.log('API Response:', response)
+    console.log('Displayed Rows:', displayedRows.value)
   } catch (error) {
     console.error('Error in component while fetching data:', error)
     displayedRows.value = []
