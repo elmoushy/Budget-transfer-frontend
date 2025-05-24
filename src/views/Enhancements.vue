@@ -167,7 +167,9 @@
             </td>
             <td>{{ formatDate(row.request_date) }}</td>
             <td>{{ row.transaction_date }}</td>
-            <td>Track</td>
+            <td>
+              <span class="track-link" @click="openOracleTrackingModal()">Track</span>
+            </td>
             <td>
               <span
                 class="status-badge"
@@ -393,6 +395,9 @@
       :message="popupMessage"
       :duration="3000"
     />
+
+    <!-- Oracle Approval Pipeline Modal Component -->
+    <OracleApprovalPipelineModal v-model="showOracleTrackingModal" />
   </div>
 </template>
 
@@ -408,6 +413,7 @@ import AttachmentModal from '@/components/AttachmentModal.vue'
 import ApprovalPipelineModal from '@/components/ApprovalPipelineModal.vue'
 import RejectionReportModal from '@/components/RejectionReportModal.vue'
 import FuturisticPopup from '@/components/FuturisticPopup.vue'
+import OracleApprovalPipelineModal from '@/components/OracleApprovalPipelineModal.vue'
 import enhancementsService from '@/services/Enhancements'
 import { useNavigationStore } from '@/stores/navigationStore'
 
@@ -501,6 +507,8 @@ const currentTransactionStatus = ref('pending')
 // Add state for rejection reports modal
 const showRejectionModal = ref(false)
 const currentRejectionId = ref(0)
+// Add state for Oracle tracking modal
+const showOracleTrackingModal = ref(false)
 
 // ───────────────────────────────────────────────────────────── Helper Functions
 function formatDate(dateString: string): string {
@@ -641,6 +649,11 @@ function openRejectionModal(row: TransferData) {
     currentRejectionId.value = row.transaction_id
     showRejectionModal.value = true
   }
+}
+
+// Function to open the Oracle tracking modal
+function openOracleTrackingModal() {
+  showOracleTrackingModal.value = true
 }
 
 // Replace SweetAlert2 showFuturisticNotification with our custom function
@@ -2157,5 +2170,53 @@ function animateBackgroundOrbs() {
     width: 100%;
     justify-content: center;
   }
+}
+
+/* Track link styling */
+.track-link {
+  color: #2563eb;
+  cursor: pointer;
+  font-weight: 500;
+  position: relative;
+  transition: all 0.2s ease;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+/* Track link hover effects */
+.track-link:hover {
+  background-color: rgba(37, 99, 235, 0.1);
+  color: #1d4ed8;
+}
+
+.track-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 2px;
+  background-color: #2563eb;
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+  transform-origin: right;
+}
+
+.track-link:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.dark-mode .track-link {
+  color: #3b82f6;
+}
+
+.dark-mode .track-link:hover {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.dark-mode .track-link::after {
+  background-color: #3b82f6;
 }
 </style>
