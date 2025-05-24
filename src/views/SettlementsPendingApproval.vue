@@ -379,8 +379,16 @@ async function loadTransfers() {
       searchQuery.value,
       'AFR',
     )
-    rows.value = response.results
-    totalItems.value = response.count
+    // Map FlowData to RowData format
+    rows.value = (response.results || []).map((item: any) => ({
+      transaction_id: item.id || item.transaction_id,
+      status: item.status,
+      code: item.transfer_id || item.code || '',
+      request_date: item.created_at || item.request_date || '',
+      requested_by: item.user_name || item.requested_by || '',
+      transaction_date: item.updated_at || item.transaction_date || '',
+    }))
+    totalItems.value = response.count || 0
     // Clear selection when data changes
     selectedRows.value = []
   } catch (error) {

@@ -1,5 +1,10 @@
 import type { App, DirectiveBinding } from 'vue'
 
+// Define interface to extend HTMLElement with the _motionObserver property
+interface CustomHTMLElement extends HTMLElement {
+  _motionObserver?: IntersectionObserver
+}
+
 interface MotionOptions {
   type?: 'fade' | 'slide' | 'scale' | 'rotate' | 'blur' | 'glide'
   duration?: number
@@ -35,9 +40,9 @@ export default {
     const supportsIntersectionObserver = 'IntersectionObserver' in window
 
     app.directive('motion', {
-      mounted(el: HTMLElement, binding: DirectiveBinding<MotionOptions>) {
+      mounted(el: CustomHTMLElement, binding: DirectiveBinding<MotionOptions>) {
         // Get options from directive binding or use defaults
-        const options = { ...defaultOptions, ...(binding.value || {}) }
+        const options = { ...defaultOptions, ...binding.value }
 
         // Apply initial state
         el.style.opacity = '0'
@@ -129,7 +134,7 @@ export default {
         el._motionObserver = observer
       },
 
-      beforeUnmount(el: HTMLElement & { _motionObserver?: IntersectionObserver }) {
+      beforeUnmount(el: CustomHTMLElement) {
         // Clean up observer
         if (el._motionObserver) {
           el._motionObserver.disconnect()

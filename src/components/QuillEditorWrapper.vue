@@ -34,11 +34,11 @@ const props = defineProps({
     default: () => [],
   },
   contentType: {
-    type: String,
+    type: String as () => 'html' | 'text' | 'delta',
     default: 'html',
   },
   theme: {
-    type: String,
+    type: String as () => '' | 'snow' | 'bubble',
     default: 'snow',
   },
   options: {
@@ -78,7 +78,8 @@ watch(
 )
 
 // When the editor is ready, apply our patch
-const onEditorReady = (quill) => {
+// Using unknown type for quill parameter since we don't need its specific type
+const onEditorReady = (quill: unknown) => {
   // Apply the patch to prevent DOMNodeInserted warnings
   // Small timeout to ensure the DOM is fully rendered
   setTimeout(() => {

@@ -294,7 +294,7 @@ export default {
       }
     };
     
-    const safeName = n => (n.length > 31 ? n.slice(0,30) : n).replace(/[/\\?*\[\]:]/g,'');
+    const safeName = n => (n.length > 31 ? n.slice(0,30) : n).replace(/[/\\?*[\]:]/g,'');
     
     const exportToPDF = async () => {
       if (loading.value || error.value || !reportData.value.transfers || reportData.value.transfers.length === 0) {

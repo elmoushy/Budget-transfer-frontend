@@ -178,7 +178,7 @@
                   class="attachment-text"
                   :class="{ 'with-attachments': row.attachment_count && row.attachment_count > 0 }"
                 >
-                  {{ row.attachment }}
+                  {{ row.attachment_count || 0 }}
                 </span>
                 <!-- File attachment indicator -->
                 <div
@@ -413,7 +413,7 @@ import ApprovalPipelineModal from '@/components/ApprovalPipelineModal.vue'
 import RejectionReportModal from '@/components/RejectionReportModal.vue'
 import FuturisticPopup from '@/components/FuturisticPopup.vue'
 import OracleApprovalPipelineModal from '@/components/OracleApprovalPipelineModal.vue'
-import transferService, { PAGE_SIZE } from '@/services/TransferService'
+import transferService, { PAGE_SIZE, type ApiResponse, type TransferData } from '@/services/transferService'
 
 // Import CSS
 import '@/assets/css/shared-page-styles.css'
@@ -428,50 +428,10 @@ defineOptions({
 // This ensures consistency between the service and component pagination
 
 // ───────────────────────────────────────────────────────────── Type Declarations
-interface ApiResponse {
-  count: number
-  next: string | null
-  previous: string | null
-  results: TransferData[]
-}
-
-interface TransferData {
-  transaction_id: number
-  transaction_date: string
-  amount: number
-  status: string
-  requested_by: string
-  user_id: number
-  request_date: string
-  notes: string
-  description_x: string
-  code: string
-  gl_posting_status: string
-  approvel_1: string
-  approvel_2: string
-  approvel_3: string
-  approvel_4: string
-  approvel_1_date: null | string
-  approvel_2_date: null | string
-  approvel_3_date: null | string
-  approvel_4_date: null | string
-  attachment_count?: number
-  status_level: number
-  attachment: string
-  fy: string
-  group_id: null | number
-  interface_id: null | number
-  reject_group_id: null | number
-  reject_interface_id: null | number
-  approve_group_id: null | number
-  approve_interface_id: null | number
-  report: string
-  type: string
-}
 
 // ───────────────────────────────────────────────────────────── State
 const loading = ref(false)
-const apiData = ref<ApiResponse | null>(null)
+const apiData = ref<ApiResponse<TransferData> | null>(null)
 const displayedRows = ref<TransferData[]>([])
 const totalCount = ref(0)
 const hasNextPage = ref(false)
@@ -819,8 +779,8 @@ async function fetchData() {
     const data = await transferService.fetchTransfers(searchQuery.value, currentPage.value)
 
     apiData.value = data
-    displayedRows.value = data.results
-    totalCount.value = data.count
+    displayedRows.value = (data.results || []) as TransferData[]
+    totalCount.value = data.count || 0
     hasNextPage.value = !!data.next
     hasPrevPage.value = !!data.previous
   } catch (error) {

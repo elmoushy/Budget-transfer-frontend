@@ -330,21 +330,29 @@ const router = useRouter()
 const themeStore = useThemeStore()
 const authStore = useAuthStore()
 
+// Import types
+import type {
+  TransferItem,
+  ApiSummary,
+  CostCenterEntity,
+  AccountEntity,
+} from '@/types/CostCenterTransferRequest'
+
 // State variables
-const transactionId = ref(null)
-const transferData = ref([])
+const transactionId = ref<number | null>(null)
+const transferData = ref<TransferItem[]>([])
 const loading = ref(true)
 const error = ref(false)
-const fileInput = ref(null)
-const activeTooltipIndex = ref(null) // To track which tooltip is active
+const fileInput = ref<HTMLInputElement | null>(null)
+const activeTooltipIndex = ref<number | null>(null) // To track which tooltip is active
 
-// Add new state for cost center entities
-const costCenterEntities = ref([])
+// Types are now imported
+const costCenterEntities = ref<CostCenterEntity[]>([])
 const costCenterEntitiesLoading = ref(false)
 const costCenterEntitiesError = ref(false)
 
 // Add new state for account entities
-const accountEntities = ref([])
+const accountEntities = ref<AccountEntity[]>([])
 const accountEntitiesLoading = ref(false)
 const accountEntitiesError = ref(false)
 
@@ -355,7 +363,7 @@ const originalData = ref([])
 const changesMade = ref(false)
 
 // Add a new ref for the summary data from the API
-const apiSummary = ref(null)
+const apiSummary = ref<ApiSummary | null>(null)
 
 // Add new ref for current status
 const currentStatus = ref('not yet sent for approval') // Default value
@@ -463,15 +471,21 @@ const isRTL = computed(() => themeStore.language === 'ar')
 const summaryData = computed(() => {
   const data = transferData.value
   return {
-    toSum: data.reduce((sum, item) => sum + (parseFloat(item.to_center) || 0), 0),
-    fromSum: data.reduce((sum, item) => sum + (parseFloat(item.from_center) || 0), 0),
-    encumbranceSum: data.reduce((sum, item) => sum + (parseFloat(item.encumbrance) || 0), 0),
-    availableBudgetSum: data.reduce(
-      (sum, item) => sum + (parseFloat(item.available_budget) || 0),
+    toSum: data.reduce((sum, item) => sum + (parseFloat(String(item.to_center || 0)) || 0), 0),
+    fromSum: data.reduce((sum, item) => sum + (parseFloat(String(item.from_center || 0)) || 0), 0),
+    encumbranceSum: data.reduce(
+      (sum, item) => sum + (parseFloat(String(item.encumbrance || 0)) || 0),
       0,
     ),
-    actualSum: data.reduce((sum, item) => sum + (parseFloat(item.actual) || 0), 0),
-    approvedBudgetSum: data.reduce((sum, item) => sum + (parseFloat(item.approved_budget) || 0), 0),
+    availableBudgetSum: data.reduce(
+      (sum, item) => sum + (parseFloat(String(item.available_budget || 0)) || 0),
+      0,
+    ),
+    actualSum: data.reduce((sum, item) => sum + (parseFloat(String(item.actual || 0)) || 0), 0),
+    approvedBudgetSum: data.reduce(
+      (sum, item) => sum + (parseFloat(String(item.approved_budget || 0)) || 0),
+      0,
+    ),
   }
 })
 
@@ -523,15 +537,15 @@ const fetchAccountEntities = async () => {
   }
 }
 
-const getCostCenterName = (code) => {
+const getCostCenterName = (code: string | undefined) => {
   if (!code) return ''
   const entity = costCenterEntities.value.find((e) => e.entity === code)
   return entity ? entity.alias_default : ''
 }
 
-const updateCostCenterName = (item, event) => {
+const updateCostCenterName = (item: TransferItem, event: unknown) => {
   // Handle both direct value from SearchableDropdown and event from select
-  const code = event.target ? event.target.value : event
+  const code = (event as any).target ? (event as any).target.value : event
   item.cost_center_code = code
   item.cost_center_name = getCostCenterName(code)
 
@@ -544,15 +558,15 @@ const updateCostCenterName = (item, event) => {
   checkForChanges()
 }
 
-const getAccountName = (code) => {
+const getAccountName = (code: string | undefined) => {
   if (!code) return ''
   const account = accountEntities.value.find((a) => a.account === code)
   return account ? account.alias_default : ''
 }
 
-const updateAccountName = (item, event) => {
+const updateAccountName = (item: TransferItem, event: unknown) => {
   // Handle both direct value from SearchableDropdown and event from select
-  const code = event.target ? event.target.value : event
+  const code = (event as any).target ? (event as any).target.value : event
   item.account_code = code
   item.account_name = getAccountName(code)
 
@@ -566,7 +580,7 @@ const updateAccountName = (item, event) => {
 }
 
 // Method to validate number input and handle conversion
-const validateNumberInput = (item, field) => {
+const validateNumberInput = (item: TransferItem, field: string) => {
   // Get the input field value
   const inputField = `${field}_input`
   const value = item[inputField]
@@ -584,7 +598,8 @@ const validateNumberInput = (item, field) => {
   }
 
   // Only allow digits, dot, and single minus at start
-  const sanitizedValue = value
+  const sanitizedValue = (value || '')
+    .toString()
     .replace(/[^\d.-]/g, '')
     .replace(/--/g, '-')
     .replace(/\.+/g, '.')
@@ -608,29 +623,39 @@ const validateNumberInput = (item, field) => {
 const initializeInputFields = () => {
   transferData.value.forEach((item) => {
     // Set up input fields with string values for the UI
-    item.to_center_input = item.to_center !== null ? item.to_center.toString() : ''
+    item.to_center_input =
+      item.to_center !== null && item.to_center !== undefined ? item.to_center.toString() : ''
 
     // Handle from_center differently based on source page
     if (isFromEnhancementsPage.value) {
       item.from_center = null
       item.from_center_input = ''
     } else {
-      item.from_center_input = item.from_center !== null ? item.from_center.toString() : ''
+      item.from_center_input =
+        item.from_center !== null && item.from_center !== undefined
+          ? item.from_center.toString()
+          : ''
     }
 
-    item.encumbrance_input = item.encumbrance !== null ? item.encumbrance.toString() : ''
+    item.encumbrance_input =
+      item.encumbrance !== null && item.encumbrance !== undefined ? item.encumbrance.toString() : ''
     item.available_budget_input =
-      item.available_budget !== null ? item.available_budget.toString() : ''
-    item.actual_input = item.actual !== null ? item.actual.toString() : ''
+      item.available_budget !== null && item.available_budget !== undefined
+        ? item.available_budget.toString()
+        : ''
+    item.actual_input =
+      item.actual !== null && item.actual !== undefined ? item.actual.toString() : ''
     item.approved_budget_input =
-      item.approved_budget !== null ? item.approved_budget.toString() : ''
+      item.approved_budget !== null && item.approved_budget !== undefined
+        ? item.approved_budget.toString()
+        : ''
   })
 }
 
 // Add new row function
 const addNewRow = () => {
   const newRow = {
-    transaction: transactionId.value,
+    transaction: transactionId.value || undefined,
     cost_center_code: '',
     cost_center_name: '',
     account_code: '',
@@ -654,6 +679,14 @@ const addNewRow = () => {
   changesMade.value = true
 }
 
+// Helper function for safe number conversion
+const toSafeNumber = (value: unknown): number => {
+  if (value === null || value === undefined) return 0
+  if (typeof value === 'number') return value
+  const parsed = parseFloat(String(value))
+  return isNaN(parsed) ? 0 : parsed
+}
+
 // Create transfer function
 const createTransfer = async () => {
   try {
@@ -668,31 +701,31 @@ const createTransfer = async () => {
 
     // Prepare data for API
     const dataToSend = validRows.map((item) => {
-      const rowData = {
+      const rowData: any = {
         transaction: transactionId.value,
         cost_center_code: item.cost_center_code,
         cost_center_name: item.cost_center_name,
         account_code: item.account_code,
         account_name: item.account_name,
-        approved_budget: parseFloat(item.approved_budget) || 0,
-        available_budget: parseFloat(item.available_budget) || 0,
-        to_center: parseFloat(item.to_center) || 0,
-        encumbrance: parseFloat(item.encumbrance) || 0,
-        actual: parseFloat(item.actual) || 0,
+        approved_budget: toSafeNumber(item.approved_budget),
+        available_budget: toSafeNumber(item.available_budget),
+        to_center: toSafeNumber(item.to_center),
+        encumbrance: toSafeNumber(item.encumbrance),
+        actual: toSafeNumber(item.actual),
         done: 1,
       }
 
       // Only add from_center if not from EnhancementsPage
       if (!isFromEnhancementsPage.value) {
         console.log('from_center:', item.from_center)
-        rowData.from_center = parseFloat(item.from_center) || 0
+        rowData.from_center = toSafeNumber(item.from_center)
       }
 
       return rowData
     })
 
     // Pass the auth token as second argument to the API call
-    await transferService.createTransfer(dataToSend, authStore.token)
+    await transferService.createTransfer(dataToSend)
 
     // Create styled alert message with emoji and formatting
     const successPrefix = '✅ '
@@ -706,19 +739,20 @@ const createTransfer = async () => {
 
     // Store a new snapshot of the current state
     originalData.value = JSON.parse(JSON.stringify(transferData.value))
-  } catch (err) {
+  } catch (err: unknown) {
     // Enhanced error alert with emoji
     const errorPrefix = '❌ '
+    const error = err as any
     const errorMessage = isArabic.value
-      ? 'فشل في إنشاء النقل: ' + (err.response?.data?.message || err.message || '')
-      : 'Failed to create transfer: ' + (err.response?.data?.message || err.message || '')
+      ? 'فشل في إنشاء النقل: ' + (error?.response?.data?.message || error?.message || '')
+      : 'Failed to create transfer: ' + (error?.response?.data?.message || error?.message || '')
     alert(errorPrefix + errorMessage)
     console.error('Error creating transfer:', err)
   }
 }
 
 // Delete row function
-const deleteRow = (index) => {
+const deleteRow = (index: number) => {
   if (transferData.value.length > 1) {
     // Just remove from local array without API call
     transferData.value.splice(index, 1)
@@ -753,8 +787,8 @@ const checkForChanges = () => {
       return
     }
 
-    // Find corresponding original row
-    const original = originalData.value.find((o) => o.transfer_id === current.transfer_id)
+    // Find corresponding original row with proper typing
+    const original = originalData.value.find((o: any) => o.transfer_id === current.transfer_id)
     if (!original) {
       changesMade.value = true
       return
@@ -770,7 +804,9 @@ const checkForChanges = () => {
       'actual',
     ]
     for (const field of numericFields) {
-      if (parseFloat(original[field] || 0) !== parseFloat(current[field] || 0)) {
+      const originalValue = parseFloat((original as any)[field] || 0)
+      const currentValue = parseFloat((current as any)[field] || 0)
+      if (originalValue !== currentValue) {
         changesMade.value = true
         return
       }
@@ -805,27 +841,26 @@ const loadData = async () => {
   error.value = false
 
   try {
-    const response = await transferService.getTransferDetails(transactionId.value)
+    const response = await transferService.getTransferDetails(transactionId.value!)
 
-    // Check if the response has the new structure with summary and transfers
-    if (response && response.summary) {
+    // Since ApiResponse extends T, we can access properties directly
+    if (response && (response as any).summary) {
       // Store the summary data separately
-      apiSummary.value = response.summary
+      apiSummary.value = (response as any).summary
 
-      // Extract status from summary or status object
-      if (response.summary.status) {
-        currentStatus.value = response.summary.status
-      } else if (response.status && response.status.status) {
-        currentStatus.value = response.status.status
+      // Extract status from summary
+      const summary = (response as any).summary
+      if (summary.status) {
+        currentStatus.value = summary.status
       } else {
         currentStatus.value = 'not yet sent for approval' // Default
       }
 
       // Set transferData to the transfers array
-      transferData.value = response.transfers
+      transferData.value = (response as any).transfers || []
     } else {
-      // Fallback to old structure for backward compatibility
-      transferData.value = response
+      // Fallback to treating response as transfers array
+      transferData.value = Array.isArray(response) ? response : []
       apiSummary.value = null
       currentStatus.value = 'not yet sent for approval' // Default
     }
@@ -845,7 +880,7 @@ const loadData = async () => {
 }
 
 // Method to show tooltip for a specific row
-const showTooltip = (index) => {
+const showTooltip = (index: number) => {
   activeTooltipIndex.value = index
 }
 
@@ -854,7 +889,7 @@ const hideTooltip = () => {
   activeTooltipIndex.value = null
 }
 
-const formatNumber = (value) => {
+const formatNumber = (value: any) => {
   if (value === null || value === undefined) return null
   return new Intl.NumberFormat(isArabic.value ? 'ar-SA' : 'en-US', {
     minimumFractionDigits: 2,
@@ -862,14 +897,19 @@ const formatNumber = (value) => {
   }).format(value)
 }
 
-const alertState = ref({
+const alertState = ref<{
+  show: boolean
+  message: string
+  type: string
+  timer: number | null
+}>({
   show: false,
   message: '',
   type: 'success', // 'success' or 'error'
   timer: null,
 })
 
-const showAlert = (message, type = 'success') => {
+const showAlert = (message: string, type = 'success') => {
   // Clear any existing timer
   if (alertState.value.timer) {
     clearTimeout(alertState.value.timer)
@@ -886,29 +926,25 @@ const showAlert = (message, type = 'success') => {
   }, 4000)
 }
 
-const closeAlert = () => {
-  alertState.value.show = false
-}
-
 const submitRequest = async () => {
   try {
-    await transferService.submitTransferRequest(transactionId.value)
+    await transferService.submitTransferRequest(transactionId.value!)
     showAlert(isArabic.value ? 'تم تقديم الطلب بنجاح' : 'Request submitted successfully')
     // Delay navigation to allow alert to be seen
     setTimeout(() => {
       router.push('/')
     }, 1500)
-  } catch (err) {
+  } catch (error) {
     showAlert(isArabic.value ? 'فشل في تقديم الطلب' : 'Failed to submit request', 'error')
   }
 }
 
 const reopenRequest = async () => {
   try {
-    await transferService.reopenTransferRequest(transactionId.value)
+    await transferService.reopenTransferRequest(transactionId.value!)
     showAlert(isArabic.value ? 'تم إعادة فتح الطلب بنجاح' : 'Request reopened successfully')
     await loadData()
-  } catch (err) {
+  } catch (error) {
     showAlert(isArabic.value ? 'فشل في إعادة فتح الطلب' : 'Failed to reopen request', 'error')
   }
 }
@@ -928,7 +964,8 @@ watch(
   () => route.params.id,
   (newId) => {
     if (newId) {
-      transactionId.value = parseInt(newId, 10)
+      const id = Array.isArray(newId) ? newId[0] : newId
+      transactionId.value = parseInt(id, 10)
       loadData()
     }
   },
@@ -937,7 +974,8 @@ watch(
 
 // Initial data load
 onMounted(() => {
-  transactionId.value = parseInt(route.params.id, 10)
+  const id = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
+  transactionId.value = parseInt(id, 10)
   if (transactionId.value) {
     loadData()
     fetchCostCenterEntities() // Fetch cost center entities on mount
@@ -958,10 +996,10 @@ onMounted(() => {
 
 // Replace tooltip state with modal state
 const showErrorModal = ref(false)
-const currentErrors = ref([])
+const currentErrors = ref<string[]>([])
 
 // Method to show error details in modal
-const showErrorDetails = (errors) => {
+const showErrorDetails = (errors: any[]) => {
   currentErrors.value = errors
   showErrorModal.value = true
 }
@@ -970,14 +1008,6 @@ const showErrorDetails = (errors) => {
 const hideErrorModal = () => {
   showErrorModal.value = false
 }
-
-// Remove the old tooltip methods
-// const showTooltip = (index) => {
-//   activeTooltipIndex.value = index
-// }
-// const hideTooltip = () => {
-//   activeTooltipIndex.value = null
-// }
 
 // File upload modal state
 const showFileModal = ref(false)
@@ -999,7 +1029,7 @@ const handleUploadSuccess = () => {
 }
 
 // Add these new methods after the existing methods in the script setup section
-const fetchPivotFundDetails = async (item) => {
+const fetchPivotFundDetails = async (item: any) => {
   // Only fetch if both cost center and account codes are set
   if (!item.cost_center_code || !item.account_code) {
     return
@@ -1013,24 +1043,24 @@ const fetchPivotFundDetails = async (item) => {
 
     if (response && response.data) {
       // Update financial fields with retrieved data
-      const data = response.data
+      const data = response.data as any
 
-      // Update numeric values
-      item.actual = parseFloat(data.actual) || 0
-      item.available_budget = parseFloat(data.fund) || 0
-      item.approved_budget = parseFloat(data.budget) || 0
-      item.encumbrance = parseFloat(data.encumbrance) || 0
+      // Update numeric values using safe conversion
+      item.actual = toSafeNumber(data.actual)
+      item.available_budget = toSafeNumber(data.available_budget)
+      item.approved_budget = toSafeNumber(data.approved_budget)
+      item.encumbrance = toSafeNumber(data.encumbrance)
 
-      // No longer need to update input fields as they've been removed
       // Set flag to indicate data came from API
       item.financialDataFromApi = true
 
       // Mark that changes have been made
       checkForChanges()
     }
-  } catch (error) {
+  } catch (error: unknown) {
     // Check if the error is a 404 (Not Found)
-    if (error.response && error.response.status === 404) {
+    const err = error as any
+    if (err.response && err.response.status === 404) {
       // Alert the user with the specific IDs that failed
       alert(
         isArabic.value

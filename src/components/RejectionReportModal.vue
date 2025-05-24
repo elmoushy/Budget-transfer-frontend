@@ -103,7 +103,8 @@ const props = defineProps({
 const emit = defineEmits(['update:show'])
 
 // Define data
-const reports = ref<any[]>([])
+import type { RejectionReport } from '@/services/transferService'
+const reports = ref<RejectionReport[]>([])
 const loading = ref(false)
 const error = ref('')
 const themeStore = useThemeStore()
@@ -133,7 +134,7 @@ watch(
 )
 
 // Format date method
-function formatDate(dateString) {
+function formatDate(dateString: string | null | undefined): string {
   if (!dateString) return ''
   const date = new Date(dateString)
   return date.toLocaleString()

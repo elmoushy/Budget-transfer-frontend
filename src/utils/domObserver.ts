@@ -64,7 +64,7 @@ export const patchQuillDOMEvents = (quillElement: HTMLElement | null) => {
 
   if (scrollContainer) {
     // Create observer with same behavior as original DOMNodeInserted listener
-    createObserver(scrollContainer, () => {
+    createObserver(scrollContainer as HTMLElement, () => {
       // This is intentionally empty as Quill just needs the event to happen
       // The original DOMNodeInserted handler was also empty
     })

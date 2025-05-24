@@ -379,8 +379,16 @@ async function loadTransfers() {
       searchQuery.value,
       'FAD',
     )
-    rows.value = response.results
-    totalItems.value = response.count
+    rows.value = (response.results || []).map((item: any) => ({
+      transaction_id: item.id || item.transaction_id,
+      status: item.status,
+      code: item.code,
+      request_date: item.request_date,
+      requested_by: item.requested_by,
+      transaction_date: item.transaction_date,
+      ...item, // Include any additional properties
+    }))
+    totalItems.value = response.count || 0
     // Clear selection when data changes
     selectedRows.value = []
   } catch (error) {

@@ -265,9 +265,10 @@ function previousPage() {
   }
 }
 
-function goToPage(page: number) {
-  if (page !== currentPage.value) {
-    fetchLimits(page)
+function goToPage(page: string | number) {
+  const pageNumber = typeof page === 'string' ? parseInt(page, 10) : page
+  if (pageNumber !== currentPage.value) {
+    fetchLimits(pageNumber)
   }
 }
 

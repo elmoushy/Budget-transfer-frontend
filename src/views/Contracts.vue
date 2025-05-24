@@ -168,7 +168,11 @@
                   class="attachment-text"
                   :class="{ 'with-attachments': row.attachment_count && row.attachment_count > 0 }"
                 >
-                  {{ row.attachment }}
+                  {{
+                    row.attachment_count && row.attachment_count > 0
+                      ? `${row.attachment_count} attachments`
+                      : 'No attachments'
+                  }}
                 </span>
                 <div
                   class="attachment-indicator"
@@ -247,6 +251,7 @@
 
     <!-- Edit Contract Modal Component -->
     <EditContractModal
+      v-if="currentEditContract"
       v-model="showEditModal"
       :contractData="currentEditContract"
       @submit="handleEditSubmit"
@@ -365,7 +370,11 @@
     />
 
     <!-- Approval Pipeline Modal Component -->
-    <ApprovalPipelineModal v-model="showApprovalModal" :approval-data="currentApproval" />
+    <ApprovalPipelineModal
+      v-if="currentApproval"
+      v-model="showApprovalModal"
+      :approval-data="currentApproval"
+    />
 
     <!-- Replace SweetAlert with our custom popup component -->
     <FuturisticPopup
@@ -396,6 +405,8 @@ import RejectionReportModal from '@/components/RejectionReportModal.vue'
 import FuturisticPopup from '@/components/FuturisticPopup.vue'
 import OracleApprovalPipelineModal from '@/components/OracleApprovalPipelineModal.vue'
 import contractService from '@/services/contractService'
+import type { ContractData } from '@/services/contractService'
+import type { ApiResponse } from '@/services/transferService'
 
 // Import CSS
 import '@/assets/css/shared-page-styles.css'
@@ -408,51 +419,9 @@ defineOptions({
 
 // Use the page size from the API response - don't hardcode it
 
-// ───────────────────────────────────────────────────────────── Type Declarations
-interface ApiResponse {
-  count: number
-  next: string | null
-  previous: string | null
-  results: ContractData[]
-}
-
-interface ContractData {
-  transaction_id: number
-  transaction_date: string
-  amount: number
-  status: string
-  requested_by: string
-  user_id: number
-  request_date: string
-  notes: string
-  description_x: string
-  code: string
-  gl_posting_status: string
-  approvel_1: string
-  approvel_2: string
-  approvel_3: string
-  approvel_4: string
-  approvel_1_date: null | string
-  approvel_2_date: null | string
-  approvel_3_date: null | string
-  approvel_4_date: null | string
-  status_level: number
-  attachment: string
-  fy: string
-  group_id: null | number
-  interface_id: null | number
-  reject_group_id: null | number
-  reject_interface_id: null | number
-  approve_group_id: null | number
-  approve_interface_id: null | number
-  report: string
-  type: string
-  attachment_count?: number
-}
-
 // ───────────────────────────────────────────────────────────── State
 const loading = ref(false)
-const apiData = ref<ApiResponse | null>(null)
+const apiData = ref<ApiResponse<{ results: ContractData[]; count: number }> | null>(null)
 const displayedRows = ref<ContractData[]>([])
 const totalCount = ref(0)
 const hasNextPage = ref(false)
@@ -585,7 +554,7 @@ function rowBg(status: string) {
 }
 
 // Function to open the file modal - updated to also pass status
-function openFileModal(row) {
+function openFileModal(row: ContractData) {
   currentTransactionId.value = row.transaction_id
   currentTransactionStatus.value = row.status
   showFileModal.value = true
@@ -773,13 +742,14 @@ async function fetchData() {
   loading.value = true
 
   try {
-    const data = await contractService.fetchContracts(searchQuery.value, currentPage.value)
+    const response = await contractService.fetchContracts(searchQuery.value, currentPage.value)
 
-    apiData.value = data
-    displayedRows.value = data.results
-    totalCount.value = data.count
-    hasNextPage.value = !!data.next
-    hasPrevPage.value = !!data.previous
+    // Handle the correct response structure
+    apiData.value = response
+    displayedRows.value = response.data?.results || []
+    totalCount.value = response.data?.count || 0
+    hasNextPage.value = !!response.next
+    hasPrevPage.value = !!response.previous
   } catch (error) {
     console.error('Error in component while fetching data:', error)
     displayedRows.value = []

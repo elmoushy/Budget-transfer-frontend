@@ -230,6 +230,7 @@ async function submitForm() {
 </script>
 
 <style scoped>
+@import 'animate.css';
 /* Modal Styles */
 .modal-overlay {
   position: fixed;
@@ -882,5 +883,4 @@ async function submitForm() {
 }
 
 /* Add fade animations */
-@import 'animate.css';
 </style>
