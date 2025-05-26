@@ -74,7 +74,7 @@
 
 <script setup lang="js">
 import { ref } from 'vue'
-import transferService from '@/services/transferService'
+import transferService from '@/services/TransferService'
 
 // Define props
 const props = defineProps({

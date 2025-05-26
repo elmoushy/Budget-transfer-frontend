@@ -109,7 +109,7 @@
 import { ref, watch, defineProps, defineEmits } from 'vue'
 import { FileIcon, DownloadIcon, UploadCloudIcon, InfoIcon } from 'lucide-vue-next'
 import { useThemeStore } from '@/stores/themeStore'
-import transferService from '@/services/transferService'
+import transferService from '@/services/TransferService'
 import '@/assets/css/AttachmentModal.css'
 import FuturisticPopup from '@/components/FuturisticPopup.vue'
 

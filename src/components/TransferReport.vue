@@ -134,7 +134,7 @@ import * as XLSX from 'xlsx'
 import { jsPDF } from 'jspdf'
 import 'jspdf-autotable' // Make sure this import is present
 import html2canvas from 'html2canvas'
-import transferService from '@/services/transferService'
+import transferService from '@/services/TransferService'
 import { useThemeStore } from '@/stores/themeStore'
 import logoImage from '@/assets/img/lightidea_logo.png' // Import the logo image
 
