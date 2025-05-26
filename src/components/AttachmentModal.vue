@@ -53,13 +53,16 @@
             </span>
           </button>
         </div>
-        
+
         <!-- Read-only notice when not pending -->
         <div v-else class="read-only-notice">
           <InfoIcon size="18" />
           <p>
-            {{ isArabic ? 'المرفقات للقراءة فقط. لا يمكن إضافة مرفقات جديدة لطلبات موافق عليها أو مرفوضة.' : 
-              'Attachments are read-only. You cannot add new attachments to approved or rejected requests.' }}
+            {{
+              isArabic
+                ? 'المرفقات للقراءة فقط. لا يمكن إضافة مرفقات جديدة لطلبات موافق عليها أو مرفوضة.'
+                : 'Attachments are read-only. You cannot add new attachments to approved or rejected requests.'
+            }}
           </p>
         </div>
 
@@ -229,8 +232,8 @@ function handleFileDrop(event) {
 
 // Validate and set the selected file
 function validateAndSetFile(file) {
-  // Validate file size (e.g., max 5MB)
-  const maxSize = 5 * 1024 * 1024 // 5MB in bytes
+  // Validate file size (e.g., max 20MB)
+  const maxSize = 20 * 1024 * 1024 // 20 MB
   if (file.size > maxSize) {
     fileError.value = isArabic.value
       ? 'حجم الملف كبير جدًا. الحد الأقصى هو 5 ميغابايت.'
@@ -319,19 +322,19 @@ function downloadAttachment(file) {
 .read-only-notice {
   display: flex;
   align-items: center;
-  background-color: rgba(59, 130, 246, 0.1);
+  background-color: rgba(34, 197, 94, 0.1);
   border-radius: 8px;
   padding: 12px 16px;
   margin-bottom: 20px;
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid #22c55e;
 }
 
 .dark-mode .read-only-notice {
-  background-color: rgba(59, 130, 246, 0.2);
+  background-color: rgba(34, 197, 94, 0.2);
 }
 
 .read-only-notice svg {
-  color: #3b82f6;
+  color: #22c55e;
   margin-right: 12px;
 }
 

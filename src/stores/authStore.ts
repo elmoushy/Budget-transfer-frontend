@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { API_BASE_URL, ENDPOINTS } from '@/config/api'
 
 interface User {
   id?: number
@@ -47,7 +48,7 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('user')
 
     // Could add API call to invalidate token on server if needed
-    // await fetch('http://localhost:8000/api/auth/logout/', {...})
+    // await fetch(`${API_BASE_URL}${ENDPOINTS.AUTH.LOGOUT}`, {...})
   }
 
   // New method to handle session expiry

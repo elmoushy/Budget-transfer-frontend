@@ -96,51 +96,14 @@ const isArabic = computed(() => themeStore.language === 'ar')
 const notifications = ref<Notification[]>([])
 const isLoading = ref(false)
 const hasNewNotifications = ref(false)
-let pollingInterval: number | null = null
 
 // Fetch notifications on mount
 onMounted(() => {
   fetchUnreadNotifications()
-  startPolling()
 })
 
 // Clean up on unmount
-onUnmounted(() => {
-  stopPolling()
-})
-
-// Start polling for new notifications
-function startPolling() {
-  pollingInterval = window.setInterval(() => {
-    checkForNewNotifications()
-  }, 30000) // Poll every 30 seconds
-}
-
-// Stop polling
-function stopPolling() {
-  if (pollingInterval) {
-    clearInterval(pollingInterval)
-    pollingInterval = null
-  }
-}
-
-// Check for new notifications
-async function checkForNewNotifications() {
-  try {
-    const response = await notificationService.checkSystemNotifications()
-    hasNewNotifications.value = response.Number_Of_Notifications > 0
-
-    // Emit event to update the parent component
-    emit('update:hasUnread', hasNewNotifications.value)
-
-    // If panel is active, refresh the notifications list
-    if (props.isActive) {
-      fetchUnreadNotifications()
-    }
-  } catch (error) {
-    console.error('Error checking for new notifications:', error)
-  }
-}
+onUnmounted(() => {})
 
 // Fetch unread notifications
 async function fetchUnreadNotifications() {
@@ -262,7 +225,12 @@ async function readNotification(notification: Notification) {
       notification.is_read = true
 
       // Update notification status
-      checkForNewNotifications()
+      // COMMENTED OUT: Stopping use of api/auth/Notifications/system endpoint
+      // checkForNewNotifications()
+
+      // Instead, manually update the hasNewNotifications value
+      hasNewNotifications.value = notifications.value.some((n) => !n.is_read)
+      emit('update:hasUnread', hasNewNotifications.value)
     } catch (error) {
       console.error(`Error marking notification ${notification.id} as read:`, error)
     }

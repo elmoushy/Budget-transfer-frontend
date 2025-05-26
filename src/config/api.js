@@ -21,7 +21,7 @@ export const ENDPOINTS = {
     // User levels endpoints
     LEVELS: '/api/auth/levels/',
     LEVEL_UPDATE: '/api/auth/levels/update/',
-    USER_LEVEL_ASSIGN: '/api/auth/levels/update/',
+    USER_LEVEL_ASSIGN: '/api/auth/users/level/update/',
   },
 
   // Budget endpoints

@@ -1,9 +1,10 @@
 // NotificationService.ts
 import axios from 'axios'
 import { useAuthStore } from '@/stores/authStore'
+import { API_BASE_URL, ENDPOINTS } from '@/config/api'
 
-// API base URL
-const API_BASE_URL = 'http://localhost:8000/api/auth/Notifications'
+// Define the notification endpoint URL
+const NOTIFICATION_ENDPOINT = `${API_BASE_URL}${ENDPOINTS.AUTH.NOTIFICATIONS}`
 
 // Interface for notification object
 export interface Notification {
@@ -31,7 +32,7 @@ class NotificationService {
     const token = authStore.token
 
     try {
-      const response = await axios.get(`${API_BASE_URL}/unread`, {
+      const response = await axios.get(`${NOTIFICATION_ENDPOINT}/unread`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -44,21 +45,24 @@ class NotificationService {
   }
 
   // Get system notifications (check if there are any new ones)
+  // COMMENTED OUT: Stopping use of api/auth/Notifications/system endpoint
   async checkSystemNotifications(): Promise<SystemNotificationResponse> {
-    const authStore = useAuthStore()
-    const token = authStore.token
+    // const authStore = useAuthStore()
+    // const token = authStore.token
 
-    try {
-      const response = await axios.get(`${API_BASE_URL}/system`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      return response.data
-    } catch (error) {
-      console.error('Error checking system notifications:', error)
-      return { Number_Of_Notifications: 0 }
-    }
+    // try {
+    //   const response = await axios.get(`${NOTIFICATION_ENDPOINT}/system`, {
+    //     headers: {
+    //       Authorization: `Bearer ${token}`,
+    //     },
+    //   })
+    //   return response.data
+    // } catch (error) {
+    //   console.error('Error checking system notifications:', error)
+    //   return { Number_Of_Notifications: 0 }
+    // }
+    console.log('System notifications endpoint disabled')
+    return { Number_Of_Notifications: 0 }
   }
 
   // Get all notifications (both read and unread)
@@ -67,7 +71,7 @@ class NotificationService {
     const token = authStore.token
 
     try {
-      const response = await axios.get(`${API_BASE_URL}/get_all`, {
+      const response = await axios.get(`${NOTIFICATION_ENDPOINT}/get_all`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -86,7 +90,7 @@ class NotificationService {
 
     try {
       await axios.put(
-        `${API_BASE_URL}/read_one?notification_id=${notificationId}`,
+        `${NOTIFICATION_ENDPOINT}/read_one?notification_id=${notificationId}`,
         { notification_id: notificationId },
         {
           headers: {
@@ -107,7 +111,7 @@ class NotificationService {
 
     try {
       await axios.put(
-        `${API_BASE_URL}/read_all`,
+        `${NOTIFICATION_ENDPOINT}/read_all`,
         {},
         {
           headers: {
@@ -127,7 +131,7 @@ class NotificationService {
 
     try {
       await axios.put(
-        `${API_BASE_URL}/delete?notification_id=${notificationId}`,
+        `${NOTIFICATION_ENDPOINT}/delete?notification_id=${notificationId}`,
         { notification_id: notificationId },
         {
           headers: {

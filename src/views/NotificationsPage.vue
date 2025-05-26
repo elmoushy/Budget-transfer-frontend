@@ -15,25 +15,6 @@
       </div>
     </div>
 
-    <!-- <div class="notification-filters">
-      <div class="filter-group">
-        <label>{{ isArabic ? 'تصفية حسب الحالة:' : 'Filter by status:' }}</label>
-        <select v-model="statusFilter">
-          <option value="all">{{ isArabic ? 'الكل' : 'All' }}</option>
-          <option value="read">{{ isArabic ? 'مقروءة' : 'Read' }}</option>
-          <option value="unread">{{ isArabic ? 'غير مقروءة' : 'Unread' }}</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <label>{{ isArabic ? 'البحث:' : 'Search:' }}</label>
-        <input
-          type="text"
-          v-model="searchQuery"
-          :placeholder="isArabic ? 'بحث في الإشعارات...' : 'Search notifications...'"
-        />
-      </div>
-    </div> -->
-
     <div class="notifications-container">
       <div v-if="isLoading" class="loading-state">
         <div class="loader"></div>
@@ -316,6 +297,37 @@ function getIconForType(type: string) {
   padding: 30px;
   max-width: 900px;
   margin: 0 auto;
+  background: linear-gradient(135deg, #f8fffe 0%, #e8f8f5 50%, #d1fae5 100%);
+  border-radius: 20px;
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.notifications-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(circle at 25% 25%, rgba(16, 185, 129, 0.05) 2px, transparent 2px),
+    radial-gradient(circle at 75% 75%, rgba(5, 150, 105, 0.05) 2px, transparent 2px);
+  background-size: 50px 50px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.notifications-page.dark-theme {
+  background: linear-gradient(135deg, #041510 0%, #0a2718 100%);
+  color: #e8f8f5;
+}
+
+.notifications-page.dark-theme::before {
+  background:
+    radial-gradient(circle at 25% 25%, rgba(0, 255, 140, 0.08) 2px, transparent 2px),
+    radial-gradient(circle at 75% 75%, rgba(16, 185, 129, 0.08) 2px, transparent 2px);
 }
 
 .page-header {
@@ -323,17 +335,27 @@ function getIconForType(type: string) {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
 }
 
 .page-header h1 {
   font-size: 1.8rem;
   font-weight: 700;
   margin: 0;
-  color: #333;
+  background: linear-gradient(135deg, #10b981, #059669);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  text-shadow: 0 2px 10px rgba(16, 185, 129, 0.2);
 }
 
 .dark-theme .page-header h1 {
-  color: #f0f0f0;
+  background: linear-gradient(135deg, #00ff8c, #10b981);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 15px rgba(0, 255, 140, 0.3);
 }
 
 .header-actions {
@@ -346,26 +368,49 @@ function getIconForType(type: string) {
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: rgba(80, 19, 39, 0.8);
+  background: linear-gradient(135deg, #10b981, #059669);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.action-button::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: rgba(255, 255, 255, 0.1);
+  transform: rotate(35deg);
+  transition: transform 0.5s ease;
+  opacity: 0;
+}
+
+.action-button:hover::before {
+  opacity: 1;
+  transform: rotate(35deg) translate(10%, 10%);
 }
 
 .dark-theme .action-button {
-  background: rgba(138, 42, 68, 0.8);
+  background: linear-gradient(135deg, #00ff8c, #10b981);
+  box-shadow: 0 0 20px rgba(0, 255, 140, 0.4);
+  color: #041510;
 }
 
 .action-button:hover {
-  background: rgba(99, 12, 41, 1);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
 }
 
 .dark-theme .action-button:hover {
-  background: rgba(138, 42, 68, 1);
+  box-shadow: 0 0 25px rgba(0, 255, 140, 0.6);
 }
 
 .notification-filters {
@@ -373,14 +418,18 @@ function getIconForType(type: string) {
   justify-content: space-between;
   margin-bottom: 20px;
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.1);
+  position: relative;
+  z-index: 1;
 }
 
 .dark-theme .notification-filters {
-  background: rgba(30, 30, 40, 0.5);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  background: rgba(4, 21, 16, 0.8);
+  box-shadow: 0 8px 25px rgba(0, 255, 140, 0.15);
+  border: 1px solid rgba(0, 255, 140, 0.2);
 }
 
 .filter-group {
@@ -391,27 +440,43 @@ function getIconForType(type: string) {
 
 .filter-group label {
   font-size: 0.9rem;
-  color: #555;
+  color: #047857;
+  font-weight: 500;
 }
 
 .dark-theme .filter-group label {
-  color: #aaa;
+  color: rgba(0, 255, 140, 0.8);
 }
 
 .filter-group select,
 .filter-group input {
   padding: 8px 12px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.8);
+  border: 2px solid rgba(16, 185, 129, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.9);
   font-size: 0.9rem;
+  color: #064e3b;
+  transition: all 0.3s ease;
+}
+
+.filter-group select:focus,
+.filter-group input:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
 }
 
 .dark-theme .filter-group select,
 .dark-theme .filter-group input {
-  background: rgba(40, 40, 50, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e0e0e0;
+  background: rgba(4, 21, 16, 0.9);
+  border: 2px solid rgba(0, 255, 140, 0.3);
+  color: #00ff8c;
+}
+
+.dark-theme .filter-group select:focus,
+.dark-theme .filter-group input:focus {
+  border-color: #00ff8c;
+  box-shadow: 0 0 0 3px rgba(0, 255, 140, 0.3);
 }
 
 .filter-group input {
@@ -422,6 +487,8 @@ function getIconForType(type: string) {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  position: relative;
+  z-index: 1;
 }
 
 .notification-item-container {
@@ -433,12 +500,18 @@ function getIconForType(type: string) {
 .notification-date {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #777;
+  color: #047857;
   margin-left: 4px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(52, 211, 153, 0.1));
+  padding: 6px 12px;
+  border-radius: 8px;
+  display: inline-block;
+  width: fit-content;
 }
 
 .dark-theme .notification-date {
-  color: #aaa;
+  color: rgba(0, 255, 140, 0.9);
+  background: linear-gradient(135deg, rgba(0, 255, 140, 0.15), rgba(52, 211, 153, 0.1));
 }
 
 .notification-item {
@@ -446,28 +519,53 @@ function getIconForType(type: string) {
   align-items: flex-start;
   gap: 16px;
   padding: 18px 20px;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.1);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(16, 185, 129, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.notification-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(135deg, #10b981, #34d399);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.notification-item:hover::before {
+  opacity: 1;
 }
 
 .dark-theme .notification-item {
-  background: rgba(40, 40, 50, 0.8);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  background: rgba(4, 21, 16, 0.8);
+  box-shadow: 0 8px 25px rgba(0, 255, 140, 0.15);
+  border: 1px solid rgba(0, 255, 140, 0.2);
+}
+
+.dark-theme .notification-item::before {
+  background: linear-gradient(135deg, #00ff8c, #34d399);
 }
 
 .notification-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(16, 185, 129, 0.2);
 }
 
 .dark-theme .notification-item:hover {
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 12px 30px rgba(0, 255, 140, 0.25);
 }
 
 .notification-item.is-read {
-  opacity: 0.8;
+  opacity: 0.7;
+  filter: grayscale(0.3);
 }
 
 .notification-icon {
@@ -478,51 +576,70 @@ function getIconForType(type: string) {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  position: relative;
+}
+
+.notification-icon::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, currentColor, transparent);
+  opacity: 0.2;
+  z-index: -1;
 }
 
 .notification-icon.success {
-  background: rgba(72, 187, 120, 0.1);
-  color: #48bb78;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(52, 211, 153, 0.1));
+  color: #10b981;
 }
 
 .notification-icon.warning {
-  background: rgba(237, 137, 54, 0.1);
-  color: #ed8936;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(251, 191, 36, 0.1));
+  color: #f59e0b;
 }
 
 .notification-icon.info {
-  background: rgba(66, 153, 225, 0.1);
-  color: #4299e1;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(34, 211, 238, 0.1));
+  color: #06b6d4;
 }
 
 .notification-icon.danger {
-  background: rgba(229, 62, 62, 0.1);
-  color: #e53e3e;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(248, 113, 113, 0.1));
+  color: #ef4444;
 }
 
 .notification-icon.user {
-  background: rgba(128, 90, 213, 0.1);
-  color: #805ad5;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(110, 231, 183, 0.1));
+  color: #10b981;
 }
 
 .dark-theme .notification-icon.success {
-  background: rgba(72, 187, 120, 0.15);
+  background: linear-gradient(135deg, rgba(0, 255, 140, 0.2), rgba(52, 211, 153, 0.15));
+  color: #00ff8c;
 }
 
 .dark-theme .notification-icon.warning {
-  background: rgba(237, 137, 54, 0.15);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(251, 191, 36, 0.15));
+  color: #fbbf24;
 }
 
 .dark-theme .notification-icon.info {
-  background: rgba(66, 153, 225, 0.15);
+  background: linear-gradient(135deg, rgba(0, 255, 140, 0.15), rgba(34, 211, 238, 0.1));
+  color: #22d3ee;
 }
 
 .dark-theme .notification-icon.danger {
-  background: rgba(229, 62, 62, 0.15);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(248, 113, 113, 0.15));
+  color: #f87171;
 }
 
 .dark-theme .notification-icon.user {
-  background: rgba(128, 90, 213, 0.15);
+  background: linear-gradient(135deg, rgba(0, 255, 140, 0.2), rgba(110, 231, 183, 0.15));
+  color: #00ff8c;
 }
 
 .notification-content {
@@ -533,22 +650,22 @@ function getIconForType(type: string) {
   font-size: 1rem;
   font-weight: 600;
   margin: 0 0 6px;
-  color: #333;
+  color: #064e3b;
 }
 
 .dark-theme .notification-content h3 {
-  color: #f0f0f0;
+  color: #00ff8c;
 }
 
 .notification-content p {
   margin: 0 0 10px;
   font-size: 0.9rem;
-  color: #666;
+  color: #047857;
   line-height: 1.4;
 }
 
 .dark-theme .notification-content p {
-  color: #bbb;
+  color: rgba(0, 255, 140, 0.8);
 }
 
 .notification-meta {
@@ -556,35 +673,38 @@ function getIconForType(type: string) {
   align-items: center;
   justify-content: space-between;
   font-size: 0.8rem;
-  color: #888;
+  color: #059669;
 }
 
 .dark-theme .notification-meta {
-  color: #999;
+  color: rgba(0, 255, 140, 0.7);
 }
 
 .status {
   display: inline-block;
-  padding: 3px 8px;
+  padding: 4px 10px;
   border-radius: 12px;
-  background: rgba(0, 0, 0, 0.05);
-  color: #888;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
   font-weight: 500;
+  font-size: 0.75rem;
 }
 
 .status.unread {
-  background: rgba(229, 62, 62, 0.1);
-  color: #e53e3e;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(248, 113, 113, 0.1));
+  color: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
 }
 
 .dark-theme .status {
-  background: rgba(255, 255, 255, 0.1);
-  color: #999;
+  background: rgba(0, 255, 140, 0.15);
+  color: #00ff8c;
 }
 
 .dark-theme .status.unread {
-  background: rgba(229, 62, 62, 0.15);
-  color: #ff5e5e;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(248, 113, 113, 0.15));
+  color: #f87171;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
 }
 
 .notification-actions {
@@ -596,28 +716,50 @@ function getIconForType(type: string) {
 .action-icon {
   background: transparent;
   border: none;
-  color: #888;
+  color: #10b981;
   cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
+  padding: 8px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.action-icon::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(52, 211, 153, 0.05));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 10px;
+}
+
+.action-icon:hover::before {
+  opacity: 1;
 }
 
 .action-icon:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: #333;
+  color: #059669;
+  transform: scale(1.1);
 }
 
 .dark-theme .action-icon {
-  color: #999;
+  color: rgba(0, 255, 140, 0.8);
+}
+
+.dark-theme .action-icon::before {
+  background: linear-gradient(135deg, rgba(0, 255, 140, 0.15), rgba(52, 211, 153, 0.1));
 }
 
 .dark-theme .action-icon:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #f0f0f0;
+  color: #00ff8c;
 }
 
 .loading-state,
@@ -627,38 +769,81 @@ function getIconForType(type: string) {
   align-items: center;
   justify-content: center;
   padding: 60px 0;
-  color: #888;
+  color: #047857;
+  background: rgba(16, 185, 129, 0.05);
+  border-radius: 16px;
+  border: 2px dashed rgba(16, 185, 129, 0.2);
 }
 
 .dark-theme .loading-state,
 .dark-theme .empty-state {
-  color: #999;
+  color: rgba(0, 255, 140, 0.8);
+  background: rgba(0, 255, 140, 0.05);
+  border-color: rgba(0, 255, 140, 0.3);
 }
 
 .loading-state p,
 .empty-state p {
   margin-top: 20px;
   font-size: 1rem;
+  font-weight: 500;
 }
 
 .loader {
   width: 32px;
   height: 32px;
-  border: 4px solid rgba(138, 42, 68, 0.2);
+  border: 4px solid rgba(16, 185, 129, 0.2);
   border-radius: 50%;
-  border-top-color: rgba(138, 42, 68, 0.8);
+  border-top-color: #10b981;
   animation: spin 1s ease-in-out infinite;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
 }
 
 .dark-theme .loader {
-  border: 4px solid rgba(138, 42, 68, 0.3);
-  border-top-color: rgba(138, 42, 68, 0.8);
+  border: 4px solid rgba(0, 255, 140, 0.3);
+  border-top-color: #00ff8c;
+  box-shadow: 0 0 20px rgba(0, 255, 140, 0.5);
 }
 
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Money transfer pattern animations */
+.notifications-page::after {
+  content: '💰';
+  position: absolute;
+  top: 15%;
+  right: 10%;
+  font-size: 2rem;
+  opacity: 0.1;
+  animation: float 6s ease-in-out infinite;
+  z-index: 0;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Financial glow effects */
+.notification-item:hover {
+  box-shadow:
+    0 12px 30px rgba(16, 185, 129, 0.2),
+    0 0 20px rgba(16, 185, 129, 0.1);
+}
+
+.dark-theme .notification-item:hover {
+  box-shadow:
+    0 12px 30px rgba(0, 255, 140, 0.25),
+    0 0 25px rgba(0, 255, 140, 0.15);
 }
 
 /* RTL Support */
@@ -671,15 +856,36 @@ function getIconForType(type: string) {
   margin-right: 4px;
 }
 
+[dir='rtl'] .notification-item::before {
+  left: auto;
+  right: 0;
+}
+
 @media (max-width: 768px) {
   .notifications-page {
     padding: 20px 15px;
+    margin: 1rem;
+    max-width: calc(100% - 2rem);
   }
 
   .page-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
+  }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .action-button {
+    flex: 1;
+    justify-content: center;
   }
 
   .notification-filters {
@@ -695,5 +901,39 @@ function getIconForType(type: string) {
     flex: 1;
     width: auto;
   }
+
+  .notification-item {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .notification-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .notification-content h3 {
+    font-size: 0.9rem;
+  }
+
+  .notification-content p {
+    font-size: 0.85rem;
+  }
+}
+
+/* Enhanced hover effects for better UX */
+.action-button,
+.action-icon,
+.notification-item {
+  will-change: transform;
+}
+
+/* Smooth transitions for theme switching */
+* {
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 </style>

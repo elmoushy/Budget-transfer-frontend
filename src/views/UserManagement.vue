@@ -60,7 +60,11 @@
             {{ isArabic ? 'تحديث' : 'Refresh' }}
             <span v-if="loading || loadingLevels" class="loading-spinner"></span>
           </button>
-          <button @click="showAddUserModal = true" class="add-user-btn">
+          <button
+            @click="showAddUserModal = true"
+            class="add-user-btn"
+            style="background-color: #4caf50 !important; color: white !important"
+          >
             {{ isArabic ? 'إضافة مستخدم جديد' : 'Add New User' }}
           </button>
         </div>
@@ -83,16 +87,16 @@
           <table class="user-table">
             <thead>
               <tr>
-                <th>ID</th>
+                <!-- <th>ID</th> -->
                 <th>{{ isArabic ? 'اسم المستخدم' : 'Username' }}</th>
                 <th>{{ isArabic ? 'الدور' : 'Role' }}</th>
                 <th>{{ isArabic ? 'المستوى' : 'User Level' }}</th>
-                <th>{{ isArabic ? 'الإجراءات' : 'Actions' }}</th>
+                <th style="text-align: center">{{ isArabic ? 'الإجراءات' : 'Actions' }}</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="user in filteredUsers" :key="user.id">
-                <td>{{ user.id }}</td>
+                <!-- <td>{{ user.id }}</td> -->
                 <td>{{ user.username }}</td>
                 <td>
                   <span :class="['role-badge', user.role]">
@@ -130,16 +134,16 @@
           <table class="user-table">
             <thead>
               <tr>
-                <th>ID</th>
+                <!-- <th>ID</th> -->
                 <th>{{ isArabic ? 'الاسم' : 'Name' }}</th>
                 <th>{{ isArabic ? 'الوصف' : 'Description' }}</th>
                 <th>{{ isArabic ? 'الترتيب' : 'Order' }}</th>
-                <th>{{ isArabic ? 'الإجراءات' : 'Actions' }}</th>
+                <th style="text-align: center">{{ isArabic ? 'الإجراءات' : 'Actions' }}</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="level in userLevels" :key="level.id">
-                <td>{{ level.id }}</td>
+                <!-- <td>{{ level.id }}</td> -->
                 <td>{{ level.name }}</td>
                 <td>{{ level.description }}</td>
                 <td>{{ level.level_order }}</td>
@@ -187,7 +191,11 @@
                 </option>
               </select>
             </div>
-            <button type="submit" class="submit-btn assign-btn">
+            <button
+              type="submit"
+              class="submit-btn assign-btn"
+              style="background-color: #4caf50 !important; color: white !important"
+            >
               {{ isArabic ? 'تعيين' : 'Assign' }}
             </button>
           </form>
@@ -240,7 +248,11 @@
             <button type="button" @click="showAddUserModal = false" class="cancel-btn">
               {{ isArabic ? 'إلغاء' : 'Cancel' }}
             </button>
-            <button type="submit" class="submit-btn">
+            <button
+              type="submit"
+              class="submit-btn"
+              style="background-color: #4caf50 !important; color: white !important"
+            >
               {{ isArabic ? 'إضافة' : 'Add' }}
             </button>
           </div>
@@ -268,7 +280,11 @@
             <button type="button" @click="showEditUserModal = false" class="cancel-btn">
               {{ isArabic ? 'إلغاء' : 'Cancel' }}
             </button>
-            <button type="submit" class="submit-btn">
+            <button
+              type="submit"
+              class="submit-btn"
+              style="background-color: #4caf50 !important; color: white !important"
+            >
               {{ isArabic ? 'حفظ' : 'Save' }}
             </button>
           </div>
@@ -295,20 +311,17 @@
           </div>
           <div class="form-group">
             <label for="edit-level-order">{{ isArabic ? 'الترتيب' : 'Order' }}</label>
-            <input
-              type="number"
-              id="edit-level-order"
-              v-model="editingLevel.level_order"
-              readonly
-              disabled
-            />
-            <small>{{ isArabic ? 'الترتيب لا يمكن تغييره' : 'Order cannot be changed' }}</small>
+            <input type="number" id="edit-level-order" v-model="editingLevel.level_order" />
           </div>
           <div class="modal-actions">
             <button type="button" @click="showEditLevelModal = false" class="cancel-btn">
               {{ isArabic ? 'إلغاء' : 'Cancel' }}
             </button>
-            <button type="submit" class="submit-btn">
+            <button
+              type="submit"
+              class="submit-btn"
+              style="background-color: #4caf50 !important; color: white !important"
+            >
               {{ isArabic ? 'حفظ' : 'Save' }}
             </button>
           </div>
@@ -570,6 +583,7 @@ async function updateLevel() {
     await apiService.auth.updateUserLevel(editingLevel.value.id as number, {
       name: editingLevel.value.name,
       description: editingLevel.value.description,
+      level_order: editingLevel.value.level_order,
     })
 
     // Close modal and refresh levels
@@ -640,12 +654,18 @@ const filteredUsers = computed(() => {
 }
 
 h1 {
-  color: var(--heading-color, #333);
+  color: var(--heading-color, #333333);
   margin-bottom: 2rem;
   font-size: 2.2rem;
-  font-weight: 600;
+  font-weight: 700;
   position: relative;
   display: inline-block;
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-dark));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 20px var(--glow-color);
+  font-family: 'Space Grotesk', sans-serif;
 }
 
 h1::after {
@@ -655,45 +675,54 @@ h1::after {
   bottom: -8px;
   height: 4px;
   width: 60%;
-  background: linear-gradient(90deg, var(--accent-color, #8a2a44) 0%, transparent 100%);
+  background: linear-gradient(90deg, var(--accent-color, #22c55e) 0%, transparent 100%);
   border-radius: 2px;
+  box-shadow: 0 0 10px var(--glow-color);
 }
 
 [dir='rtl'] h1::after {
   left: auto;
   right: 0;
-  background: linear-gradient(90deg, transparent 0%, var(--accent-color, #8a2a44) 100%);
+  background: linear-gradient(90deg, transparent 0%, var(--accent-color, #22c55e) 100%);
 }
 
-/* Theme Variables */
+/* Theme Variables - Luminous Green Gradient Scheme */
 :root {
-  --accent-color: #8a2a44;
-  --accent-color-dark: #5a1c2e;
+  --accent-color: #22c55e;
+  --accent-color-dark: #16a34a;
+  --accent-color-light: #34d399;
+  --accent-gradient: linear-gradient(135deg, #22c55e, #16a34a);
+  --accent-gradient-hover: linear-gradient(135deg, #34d399, #22c55e);
   --heading-color: #333;
   --text-color: #444;
   --bg-color: #fff;
   --card-bg: #fff;
   --border-color: rgba(0, 0, 0, 0.05);
-  --hover-bg: rgba(138, 42, 68, 0.03);
+  --hover-bg: rgba(34, 197, 94, 0.03);
   --shadow-color: rgba(0, 0, 0, 0.08);
   --btn-text: #fff;
-  --success-color: #4caf50;
-  --error-color: #f44336;
+  --success-color: #22c55e;
+  --error-color: #ef4444;
+  --glow-color: rgba(34, 197, 94, 0.2);
 }
 
 .dark-theme {
-  --accent-color: #a83353;
-  --accent-color-dark: #7a293d;
+  --accent-color: #34d399;
+  --accent-color-dark: #22c55e;
+  --accent-color-light: #6ee7b7;
+  --accent-gradient: linear-gradient(135deg, #34d399, #22c55e);
+  --accent-gradient-hover: linear-gradient(135deg, #6ee7b7, #34d399);
   --heading-color: #f0f0f0;
   --text-color: #ddd;
-  --bg-color: #1a1a1a;
-  --card-bg: #252525;
+  --bg-color: #0f172a;
+  --card-bg: #1e293b;
   --border-color: rgba(255, 255, 255, 0.07);
-  --hover-bg: rgba(168, 51, 83, 0.15);
+  --hover-bg: rgba(52, 211, 153, 0.15);
   --shadow-color: rgba(0, 0, 0, 0.3);
   --btn-text: #fff;
-  --success-color: #66bb6a;
-  --error-color: #e57373;
+  --success-color: #34d399;
+  --error-color: #f87171;
+  --glow-color: rgba(52, 211, 153, 0.3);
 }
 
 /* Feedback message */
@@ -736,6 +765,18 @@ h1::after {
   margin-bottom: 1.5rem;
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 1px;
+  position: relative;
+}
+
+.tabs-container::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  width: 80%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--accent-color), transparent);
+  opacity: 0.3;
 }
 
 .tab-btn {
@@ -747,18 +788,40 @@ h1::after {
   font-weight: 500;
   color: var(--text-color);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 8px 8px 0 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.tab-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--hover-bg);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .tab-btn:hover {
   color: var(--accent-color);
   background-color: var(--hover-bg);
+  transform: translateY(-2px);
+}
+
+.tab-btn:hover::before {
+  opacity: 1;
 }
 
 .tab-btn.active {
   color: var(--accent-color);
   border-bottom: 3px solid var(--accent-color);
-  font-weight: 600;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--hover-bg), transparent);
+  box-shadow: 0 0 15px var(--glow-color);
 }
 
 .tab-content {
@@ -805,7 +868,8 @@ h1::after {
 .search-input:focus {
   border-color: var(--accent-color);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(138, 42, 68, 0.1);
+  box-shadow: 0 0 0 3px var(--glow-color);
+  transform: translateY(-1px);
 }
 
 .search-icon {
@@ -829,17 +893,42 @@ h1::after {
 
 .filter-select {
   padding: 0.75rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
   background-color: var(--bg-color);
   color: var(--text-color);
-  min-width: 120px;
-  transition: all 0.2s ease;
+  min-width: 140px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 .filter-select:focus {
   border-color: var(--accent-color);
   outline: none;
+  box-shadow:
+    0 0 0 3px var(--glow-color),
+    0 4px 12px rgba(34, 197, 94, 0.15);
+  transform: translateY(-1px);
+  background: linear-gradient(135deg, var(--bg-color), rgba(34, 197, 94, 0.02));
+}
+
+.filter-select:hover {
+  border-color: rgba(34, 197, 94, 0.5);
+  background: linear-gradient(135deg, var(--bg-color), rgba(34, 197, 94, 0.02));
+  transform: translateY(-1px);
+}
+
+.dark-theme .filter-select:focus {
+  background: linear-gradient(135deg, var(--bg-color), rgba(52, 211, 153, 0.03));
+  box-shadow:
+    0 0 0 3px var(--glow-color),
+    0 4px 12px rgba(52, 211, 153, 0.2);
+}
+
+.dark-theme .filter-select:hover {
+  background: linear-gradient(135deg, var(--bg-color), rgba(52, 211, 153, 0.03));
 }
 
 .no-results {
@@ -851,43 +940,148 @@ h1::after {
 }
 
 .add-user-btn {
-  background: var(--accent-color);
+  background: var(--accent-gradient);
   color: var(--btn-text);
   border: none;
   padding: 0.75rem 1.5rem;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  transition: background-color 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow:
+    0 4px 12px rgba(34, 197, 94, 0.25),
+    0 0 0 1px rgba(34, 197, 94, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  min-width: 140px;
+  z-index: 1;
+}
+
+.add-user-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100%
+  );
+  transition: left 0.6s ease;
+  z-index: -1;
+}
+
+.add-user-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--accent-gradient-hover);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
 }
 
 .add-user-btn:hover {
-  background: var(--accent-color-dark);
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 20px rgba(34, 197, 94, 0.4),
+    0 0 0 1px rgba(34, 197, 94, 0.5),
+    0 0 25px rgba(34, 197, 94, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.add-user-btn:hover::before {
+  left: 100%;
+}
+
+.add-user-btn:hover::after {
+  opacity: 1;
+}
+
+.add-user-btn:active {
+  transform: translateY(-1px);
+  box-shadow:
+    0 3px 10px rgba(34, 197, 94, 0.3),
+    0 0 0 1px rgba(34, 197, 94, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .refresh-btn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--bg-color);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.1));
+  color: var(--accent-color);
+  border: 2px solid var(--accent-color);
   padding: 0.75rem 1.5rem;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.refresh-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(34, 197, 94, 0.1) 50%, transparent 100%);
+  transition: left 0.6s ease;
 }
 
 .refresh-btn:hover:not(:disabled) {
-  background: var(--hover-bg);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(22, 163, 74, 0.15));
+  border-color: var(--accent-color-dark);
+  color: var(--accent-color-dark);
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 12px rgba(34, 197, 94, 0.2),
+    0 0 0 1px rgba(34, 197, 94, 0.1);
+}
+
+.refresh-btn:hover:not(:disabled)::before {
+  left: 100%;
+}
+
+.refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.2);
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.dark-theme .refresh-btn {
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.1), rgba(34, 197, 94, 0.1));
   border-color: var(--accent-color);
   color: var(--accent-color);
 }
 
-.refresh-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.dark-theme .refresh-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.2), rgba(34, 197, 94, 0.2));
+  border-color: var(--accent-color-light);
+  color: var(--accent-color-light);
+}
+
+.dark-theme .refresh-btn:disabled {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.3);
 }
 
 .loading-spinner {
@@ -925,19 +1119,50 @@ h1::after {
 }
 
 .card {
-  background: var(--card-bg);
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 16px;
+  border: 1px solid rgba(34, 197, 94, 0.1);
   padding: 1.5rem;
-  box-shadow: 0 4px 6px var(--shadow-color);
+  box-shadow:
+    0 8px 25px var(--shadow-color),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--glow-color) 0%, transparent 70%);
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 12px 35px var(--shadow-color),
+    0 0 20px var(--glow-color);
 }
 
 .card h3 {
   margin-top: 0;
   margin-bottom: 1.5rem;
-  color: var(--heading-color);
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-dark));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 15px var(--glow-color);
   font-size: 1.3rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .assign-btn {
@@ -1036,10 +1261,22 @@ h1::after {
 .user-list-container {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 8px var(--shadow-color);
+  box-shadow:
+    0 8px 25px var(--shadow-color),
+    0 0 0 1px rgba(34, 197, 94, 0.1);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+}
+
+.user-list-container:hover {
+  box-shadow:
+    0 12px 35px var(--shadow-color),
+    0 0 20px var(--glow-color);
+  transform: translateY(-2px);
 }
 
 .user-table {
@@ -1070,93 +1307,238 @@ h1::after {
 }
 
 .user-table tbody tr:hover td {
-  background-color: rgba(0, 0, 0, 0.02);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.03), rgba(22, 163, 74, 0.03));
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.1);
+  transition: all 0.3s ease;
 }
 
 .dark-theme .user-table tbody tr:hover td {
-  background-color: rgba(255, 255, 255, 0.02);
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.05), rgba(34, 197, 94, 0.05));
+  box-shadow: inset 0 0 0 1px rgba(52, 211, 153, 0.15);
 }
 
 /* Role badge */
 .role-badge {
   display: inline-block;
-  padding: 4px 8px;
-  border-radius: 12px;
+  padding: 6px 12px;
+  border-radius: 20px;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.role-badge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.role-badge:hover::before {
+  transform: translateX(100%);
 }
 
 .role-badge.admin {
-  background-color: rgba(128, 90, 213, 0.1);
-  color: #805ad5;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  box-shadow:
+    0 2px 8px rgba(34, 197, 94, 0.3),
+    0 0 0 1px rgba(34, 197, 94, 0.2);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .role-badge.user {
-  background-color: rgba(49, 151, 149, 0.1);
-  color: #319795;
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  color: white;
+  box-shadow:
+    0 2px 8px rgba(6, 182, 212, 0.3),
+    0 0 0 1px rgba(6, 182, 212, 0.2);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.role-badge.admin:hover {
+  background: linear-gradient(135deg, #34d399, #22c55e);
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 12px rgba(34, 197, 94, 0.4),
+    0 0 0 1px rgba(34, 197, 94, 0.3);
+}
+
+.role-badge.user:hover {
+  background: linear-gradient(135deg, #22d3ee, #06b6d4);
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 12px rgba(6, 182, 212, 0.4),
+    0 0 0 1px rgba(6, 182, 212, 0.3);
 }
 
 .dark-theme .role-badge.admin {
-  background-color: rgba(128, 90, 213, 0.2);
-  color: #b794f4;
+  background: linear-gradient(135deg, #34d399, #22c55e);
+  box-shadow:
+    0 2px 8px rgba(52, 211, 153, 0.4),
+    0 0 0 1px rgba(52, 211, 153, 0.3);
 }
 
 .dark-theme .role-badge.user {
-  background-color: rgba(49, 151, 149, 0.2);
-  color: #4fd1c5;
+  background: linear-gradient(135deg, #22d3ee, #06b6d4);
+  box-shadow:
+    0 2px 8px rgba(34, 211, 238, 0.4),
+    0 0 0 1px rgba(34, 211, 238, 0.3);
+}
+
+.dark-theme .role-badge.admin:hover {
+  background: linear-gradient(135deg, #6ee7b7, #34d399);
+  box-shadow:
+    0 4px 12px rgba(52, 211, 153, 0.5),
+    0 0 0 1px rgba(52, 211, 153, 0.4);
+}
+
+.dark-theme .role-badge.user:hover {
+  background: linear-gradient(135deg, #67e8f9, #22d3ee);
+  box-shadow:
+    0 4px 12px rgba(34, 211, 238, 0.5),
+    0 0 0 1px rgba(34, 211, 238, 0.4);
 }
 
 .actions-cell {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem !important;
+  min-width: 180px;
 }
 
-/* Buttons */
+/* Action Buttons in Table */
 .edit-btn,
 .delete-btn {
-  padding: 0.4rem 0.8rem;
+  padding: 0.5rem 1rem;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s ease;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 70px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .edit-btn {
-  background-color: #e0f0ff;
-  color: #0078d4;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-.delete-btn {
-  background-color: #ffe0e0;
-  color: #d13438;
+.edit-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100%
+  );
+  transition: left 0.5s ease;
 }
 
 .edit-btn:hover {
-  background-color: #cce5ff;
+  background: linear-gradient(135deg, #34d399, #22c55e);
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 12px rgba(34, 197, 94, 0.3),
+    0 0 0 1px rgba(34, 197, 94, 0.2);
+}
+
+.edit-btn:hover::before {
+  left: 100%;
+}
+
+.delete-btn {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.delete-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100%
+  );
+  transition: left 0.5s ease;
 }
 
 .delete-btn:hover {
-  background-color: #ffc9c9;
+  background: linear-gradient(135deg, #f87171, #ef4444);
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 12px rgba(239, 68, 68, 0.3),
+    0 0 0 1px rgba(239, 68, 68, 0.2);
 }
 
+.delete-btn:hover::before {
+  left: 100%;
+}
+
+.delete-btn:active,
+.edit-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Dark mode action buttons */
 .dark-theme .edit-btn {
-  background-color: rgba(0, 120, 212, 0.2);
-  color: #4db5ff;
+  background: linear-gradient(135deg, #34d399, #22c55e);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .dark-theme .delete-btn {
-  background-color: rgba(209, 52, 56, 0.2);
-  color: #ff6a6e;
+  background: linear-gradient(135deg, #f87171, #ef4444);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .dark-theme .edit-btn:hover {
-  background-color: rgba(0, 120, 212, 0.3);
+  background: linear-gradient(135deg, #6ee7b7, #34d399);
+  box-shadow:
+    0 4px 12px rgba(52, 211, 153, 0.4),
+    0 0 0 1px rgba(52, 211, 153, 0.3);
 }
 
 .dark-theme .delete-btn:hover {
-  background-color: rgba(209, 52, 56, 0.3);
+  background: linear-gradient(135deg, #fca5a5, #f87171);
+  box-shadow:
+    0 4px 12px rgba(248, 113, 113, 0.4),
+    0 0 0 1px rgba(248, 113, 113, 0.3);
 }
 
 /* Form elements */
@@ -1197,6 +1579,8 @@ h1::after {
 .form-group textarea:focus {
   border-color: var(--accent-color);
   outline: none;
+  box-shadow: 0 0 0 3px var(--glow-color);
+  transform: translateY(-1px);
 }
 
 .form-group input:disabled,
@@ -1219,22 +1603,45 @@ h1::after {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  animation: fadeIn 0.2s ease;
+  animation: fadeIn 0.3s ease;
 }
 
 .modal-content {
-  background-color: var(--card-bg);
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 16px;
   padding: 2rem;
   width: 100%;
   max-width: 500px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  animation: scaleIn 0.2s ease;
+  box-shadow:
+    0 15px 40px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 0 20px var(--glow-color);
+  animation: scaleIn 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.modal-content::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--glow-color) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: -1;
 }
 
 @keyframes scaleIn {
@@ -1251,7 +1658,12 @@ h1::after {
 .modal-content h2 {
   margin-top: 0;
   margin-bottom: 1.5rem;
-  color: var(--heading-color);
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-dark));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 20px var(--glow-color);
+  font-weight: 700;
 }
 
 .modal-actions {
@@ -1279,8 +1691,105 @@ h1::after {
 }
 
 .submit-btn {
-  background-color: var(--accent-color);
+  background: var(--accent-gradient);
   color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow:
+    0 4px 12px rgba(34, 197, 94, 0.25),
+    0 0 0 1px rgba(34, 197, 94, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  min-width: 100px;
+  z-index: 1;
+}
+
+.submit-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100%
+  );
+  transition: left 0.6s ease;
+  z-index: -1;
+}
+
+.submit-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--accent-gradient-hover);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 20px rgba(34, 197, 94, 0.4),
+    0 0 0 1px rgba(34, 197, 94, 0.5),
+    0 0 25px rgba(34, 197, 94, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.submit-btn:hover::before {
+  left: 100%;
+}
+
+.submit-btn:hover::after {
+  opacity: 1;
+}
+
+.submit-btn:active {
+  transform: translateY(-1px);
+  box-shadow:
+    0 3px 10px rgba(34, 197, 94, 0.3),
+    0 0 0 1px rgba(34, 197, 94, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Special styling for the assign button */
+.assign-btn {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Dark mode submit buttons */
+.dark-mode .submit-btn {
+  background: var(--accent-gradient);
+  box-shadow:
+    0 4px 12px rgba(52, 211, 153, 0.3),
+    0 0 0 1px rgba(52, 211, 153, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.dark-mode .submit-btn:hover {
+  box-shadow:
+    0 6px 20px rgba(52, 211, 153, 0.5),
+    0 0 0 1px rgba(52, 211, 153, 0.6),
+    0 0 25px rgba(52, 211, 153, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .delete-confirm-btn {
@@ -1324,20 +1833,40 @@ h1::after {
   color: var(--text-color);
 }
 
+.dark-mode h1 {
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-light));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 25px var(--glow-color);
+}
+
+.dark-mode .modal-content {
+  background: rgba(30, 41, 59, 0.95);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.dark-mode .card {
+  background: rgba(30, 41, 59, 0.9);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+}
+
 .dark-mode .user-table th {
   background-color: rgba(255, 255, 255, 0.05);
 }
 
 .dark-mode .user-table tbody tr:hover td {
-  background-color: rgba(255, 255, 255, 0.02);
+  background-color: rgba(52, 211, 153, 0.05);
 }
 
 .dark-mode .add-user-btn {
-  background-color: var(--accent-color);
+  background: var(--accent-gradient);
+  box-shadow: 0 4px 12px rgba(52, 211, 153, 0.3);
 }
 
 .dark-mode .submit-btn {
-  background-color: var(--accent-color);
+  background: var(--accent-gradient);
+  box-shadow: 0 4px 12px rgba(52, 211, 153, 0.3);
 }
 
 .dark-mode .cancel-btn {
@@ -1346,6 +1875,12 @@ h1::after {
 }
 
 .dark-mode .delete-confirm-btn {
-  background-color: rgba(209, 52, 56, 0.8);
+  background-color: rgba(239, 68, 68, 0.8);
+}
+
+.dark-mode .user-list-container:hover {
+  box-shadow:
+    0 12px 35px rgba(0, 0, 0, 0.4),
+    0 0 25px var(--glow-color);
 }
 </style>

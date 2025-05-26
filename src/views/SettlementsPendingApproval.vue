@@ -57,12 +57,12 @@
                 <span class="checkmark"></span>
               </label>
             </th>
-            <th>{{ tableHeaders.stateLevel }}</th>
-            <th>{{ tableHeaders.code }}</th>
-            <th>{{ tableHeaders.requestDate }}</th>
-            <th>{{ tableHeaders.requestedBy }}</th>
-            <th>{{ tableHeaders.transactionDate }}</th>
-            <th>{{ isArabic ? 'إجراءات' : 'Actions' }}</th>
+            <th style="text-align: center">{{ tableHeaders.stateLevel }}</th>
+            <th style="text-align: center">{{ tableHeaders.code }}</th>
+            <th style="text-align: center">{{ tableHeaders.requestDate }}</th>
+            <th style="text-align: center">{{ tableHeaders.requestedBy }}</th>
+            <th style="text-align: center">{{ tableHeaders.transactionDate }}</th>
+            <th style="text-align: center">{{ isArabic ? 'إجراءات' : 'Actions' }}</th>
           </tr>
         </thead>
         <tbody key="body">

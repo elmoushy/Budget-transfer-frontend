@@ -306,11 +306,11 @@ async function submitForm() {
   font-size: 1.35rem;
   font-weight: 600;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #1a1a2e, #4a0d20);
+  background: linear-gradient(135deg, #22c55e, #16a34a);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+  text-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
 }
 
 .close-modal {
@@ -439,8 +439,8 @@ async function submitForm() {
 
 .select-wrapper:hover::after {
   box-shadow:
-    0 0 0 1px rgba(109, 26, 54, 0.4),
-    0 0 20px rgba(109, 26, 54, 0.1);
+    0 0 0 1px rgba(34, 197, 94, 0.4),
+    0 0 20px rgba(34, 197, 94, 0.1);
 }
 
 .select-wrapper select {
@@ -466,8 +466,8 @@ async function submitForm() {
 .select-wrapper select:focus {
   outline: none;
   box-shadow:
-    0 0 0 1px rgba(109, 26, 54, 0.6),
-    0 0 25px rgba(109, 26, 54, 0.15);
+    0 0 0 1px rgba(34, 197, 94, 0.6),
+    0 0 25px rgba(34, 197, 94, 0.15);
   transform: translateY(-2px);
 }
 
@@ -484,7 +484,7 @@ async function submitForm() {
 }
 
 .select-wrapper:hover .select-arrow {
-  color: #6d1a36;
+  color: #22c55e;
   opacity: 1;
   transform: translateY(-50%) translateY(-2px);
 }
@@ -533,7 +533,7 @@ async function submitForm() {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #6d1a36, #4a0d20);
+  background: linear-gradient(135deg, #22c55e, #16a34a);
   color: #fff;
   border: none;
   padding: 0.7rem 1.4rem;
@@ -545,8 +545,8 @@ async function submitForm() {
   gap: 8px;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow:
-    0 4px 12px rgba(109, 26, 54, 0.25),
-    0 0 0 1px rgba(109, 26, 54, 0.5);
+    0 4px 12px rgba(34, 197, 94, 0.25),
+    0 0 0 1px rgba(34, 197, 94, 0.5);
   position: relative;
   overflow: hidden;
   letter-spacing: 0.01em;
@@ -569,11 +569,11 @@ async function submitForm() {
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #7d2a46, #5a1d30);
+  background: linear-gradient(135deg, #34d399, #22c55e);
   transform: translateY(-3px);
   box-shadow:
-    0 6px 15px rgba(109, 26, 54, 0.3),
-    0 0 0 1px rgba(109, 26, 54, 0.6);
+    0 6px 15px rgba(34, 197, 94, 0.3),
+    0 0 0 1px rgba(34, 197, 94, 0.6);
 }
 
 .btn-primary:hover::before {
@@ -628,11 +628,11 @@ async function submitForm() {
 }
 
 .dark-mode .modal-header h2 {
-  background: linear-gradient(90deg, #5eead4, #c4b5fd);
+  background: linear-gradient(90deg, #34d399, #22c55e);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  text-shadow: 0 0 20px rgba(94, 234, 212, 0.3);
+  text-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
 }
 
 .dark-mode .close-modal {
@@ -661,8 +661,8 @@ async function submitForm() {
 
 .dark-mode .select-wrapper:hover::after {
   box-shadow:
-    0 0 0 1px rgba(94, 234, 212, 0.5),
-    0 0 20px rgba(94, 234, 212, 0.2);
+    0 0 0 1px rgba(34, 197, 94, 0.5),
+    0 0 20px rgba(34, 197, 94, 0.2);
 }
 
 .dark-mode .select-wrapper select {
@@ -673,8 +673,8 @@ async function submitForm() {
 
 .dark-mode .select-wrapper select:focus {
   box-shadow:
-    0 0 0 1px rgba(94, 234, 212, 0.6),
-    0 0 25px rgba(94, 234, 212, 0.2);
+    0 0 0 1px rgba(34, 197, 94, 0.6),
+    0 0 25px rgba(34, 197, 94, 0.2);
 }
 
 .dark-mode .select-arrow {
@@ -682,7 +682,7 @@ async function submitForm() {
 }
 
 .dark-mode .select-wrapper:hover .select-arrow {
-  color: #5eead4;
+  color: #34d399;
 }
 
 .dark-mode .btn-secondary {
@@ -699,10 +699,10 @@ async function submitForm() {
 }
 
 .dark-mode .btn-primary {
-  background: linear-gradient(135deg, #7d2a46, #5a1d30);
+  background: linear-gradient(135deg, #34d399, #22c55e);
   box-shadow:
     0 4px 8px rgba(0, 0, 0, 0.3),
-    0 0 20px rgba(125, 42, 70, 0.2);
+    0 0 20px rgba(34, 197, 94, 0.2);
   position: relative;
   overflow: hidden;
 }

@@ -16,10 +16,6 @@
 
       <div class="toolbar-right">
         <div class="search-container">
-          <SearchIcon
-            class="search-icon"
-            :style="{ transform: isArabic ? 'translateX(-200px)' : 'translateX(200px)' }"
-          />
           <input
             v-model="searchQuery"
             type="search"
@@ -89,7 +85,7 @@
             <th>
               <p
                 :style="{
-                  transform: isArabic ? 'translateX(95px)!important' : 'translateX(30px)',
+                  transform: isArabic ? 'translateX(145px)!important' : 'translateX(66px)',
                 }"
               >
                 {{ tableHeaders.attachment }}
@@ -160,7 +156,7 @@
             <td>{{ formatDate(row.request_date) }}</td>
             <td>{{ row.transaction_date }}</td>
             <td>
-              <span class="track-link" @click="openOracleTrackingModal(row)">Track</span>
+              <span class="track-link" @click="openOracleTrackingModal()">Track</span>
             </td>
             <td>
               <span
@@ -178,7 +174,11 @@
                   class="attachment-text"
                   :class="{ 'with-attachments': row.attachment_count && row.attachment_count > 0 }"
                 >
-                  {{ row.attachment_count || 0 }}
+                  {{
+                    row.attachment_count && row.attachment_count > 0
+                      ? `${row.attachment_count} attachments`
+                      : ' attachments'
+                  }}
                 </span>
                 <!-- File attachment indicator -->
                 <div
@@ -404,8 +404,6 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { EditIcon, FileTextIcon, SearchIcon, TrashIcon, PaperclipIcon } from 'lucide-vue-next'
 import { useThemeStore } from '@/stores/themeStore'
-// We need useAuthStore for API calls in transferService
-import { useAuthStore } from '@/stores/authStore'
 import NewRequestModal from '@/components/NewRequestModal.vue'
 import EditTransferModal from '@/components/EditTransferModal.vue'
 import AttachmentModal from '@/components/AttachmentModal.vue'
@@ -413,11 +411,7 @@ import ApprovalPipelineModal from '@/components/ApprovalPipelineModal.vue'
 import RejectionReportModal from '@/components/RejectionReportModal.vue'
 import FuturisticPopup from '@/components/FuturisticPopup.vue'
 import OracleApprovalPipelineModal from '@/components/OracleApprovalPipelineModal.vue'
-import transferService, {
-  PAGE_SIZE,
-  type ApiResponse,
-  type TransferData,
-} from '@/services/transferService'
+import transferService, { type ApiResponse, type TransferData } from '@/services/transferService'
 
 // Import CSS
 import '@/assets/css/shared-page-styles.css'
@@ -485,14 +479,6 @@ function formatDate(dateString: string): string {
   return date.toLocaleDateString()
 }
 
-function editGI(row: TransferData) {
-  console.log('Editing GI for row:', row.transaction_id)
-  // Set the current transfer data for editing
-  currentEditTransfer.value = row
-  // Open the edit modal
-  showEditModal.value = true
-}
-
 function formatHtmlContent(html: string): string {
   // Sanitize HTML content if needed
   return html || ''
@@ -538,7 +524,7 @@ function confirmDelete() {
   loading.value = true
   showDeleteModal.value = false
 
-  // Use the specific endpoint: http://localhost:8000/api/budget/transfers/{transaction_id}/delete/
+  // Use the specific endpoint: {BASE_URL}/api/budget/transfers/{transaction_id}/delete/
   transferService
     .deleteTransfer(rowToDelete.value.transaction_id)
     .then(() => {
@@ -589,7 +575,7 @@ function openRejectionModal(row: TransferData) {
 }
 
 // Function to open the Oracle tracking modal
-function openOracleTrackingModal(row: TransferData) {
+function openOracleTrackingModal() {
   showOracleTrackingModal.value = true
 }
 
@@ -865,7 +851,7 @@ function handleEditSubmit(updatedData: Record<string, unknown>) {
 <style scoped>
 /* Base page styles */
 .home-page {
-  min-height: 100vh;
+  min-height: auto;
   padding: 1.5rem;
   position: relative;
   overflow: hidden;
@@ -1211,56 +1197,6 @@ function handleEditSubmit(updatedData: Record<string, unknown>) {
   box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
 }
 
-/* Pagination styles */
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.page-btn {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-weight: 500;
-}
-
-.page-btn:hover:not(.disabled) {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-}
-
-.page-btn.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.page-info {
-  color: #64748b;
-  font-size: 0.875rem;
-}
-
-/* Dark mode pagination */
-.dark-mode .page-btn {
-  background: #252538;
-  border-color: #3f3f5f;
-  color: #e2e2e2;
-}
-
-.dark-mode .page-btn:hover:not(.disabled) {
-  background: #303048;
-  border-color: #4f4f6f;
-}
-
-.dark-mode .page-info {
-  color: #a0a0b8;
-}
-
 /* Animations */
 .table-fade-enter-active,
 .table-fade-leave-active {
@@ -1319,29 +1255,137 @@ function handleEditSubmit(updatedData: Record<string, unknown>) {
   animation-delay: 0.5s;
 }
 
-/* Modal Styles */
+/* Description Modal Styles */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
   display: flex;
-  justify-content: center;
   align-items: center;
-  z-index: 100;
-  animation: fadeIn 0.3s ease;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
 }
 
+.desc-modal-container {
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(34, 197, 94, 0.1),
+    0 0 30px rgba(34, 197, 94, 0.1);
+  overflow: hidden;
+  animation: modalAppear 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(20px);
+}
+
+.dark-mode .desc-modal-container {
+  background: rgba(25, 25, 35, 0.95);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(52, 211, 153, 0.2),
+    0 0 30px rgba(52, 211, 153, 0.15);
+}
+
+.desc-modal-container .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(52, 211, 153, 0.05));
+  border-bottom: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.dark-mode .desc-modal-container .modal-header {
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.15), rgba(74, 222, 128, 0.1));
+  border-bottom: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.desc-modal-container .modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #047857;
+  background: linear-gradient(135deg, #16a34a, #059669);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark-mode .desc-modal-container .modal-header h2 {
+  background: linear-gradient(135deg, #4ade80, #34d399);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.desc-modal-container .close-modal {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #047857;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+}
+
+.desc-modal-container .close-modal:hover {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #16a34a;
+  transform: rotate(90deg);
+}
+
+.dark-mode .desc-modal-container .close-modal {
+  background: rgba(52, 211, 153, 0.15);
+  border-color: rgba(52, 211, 153, 0.3);
+  color: #4ade80;
+}
+
+.dark-mode .desc-modal-container .close-modal:hover {
+  background: rgba(52, 211, 153, 0.25);
+  border-color: rgba(52, 211, 153, 0.4);
+  color: #34d399;
+  box-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
+}
+
+/* Legacy modal styles for compatibility */
 .modal-container {
-  background-color: white;
+  background: rgba(255, 255, 255, 0.95);
   width: 95%;
   max-width: 600px;
-  border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  border-radius: 16px;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(34, 197, 94, 0.1),
+    0 0 30px rgba(34, 197, 94, 0.1);
   overflow: hidden;
-  animation: slideIn 0.3s ease;
+  animation: modalAppear 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(20px);
+}
+
+.dark-mode.modal-container {
+  background: rgba(25, 25, 35, 0.95);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(52, 211, 153, 0.2),
+    0 0 30px rgba(52, 211, 153, 0.15);
 }
 
 .modal-header {
@@ -1349,17 +1393,36 @@ function handleEditSubmit(updatedData: Record<string, unknown>) {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(52, 211, 153, 0.05));
+  border-bottom: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.dark-mode .modal-header {
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.15), rgba(74, 222, 128, 0.1));
+  border-bottom: 1px solid rgba(52, 211, 153, 0.3);
 }
 
 .modal-header h2 {
   margin: 0;
   font-size: 1.25rem;
-  color: #1a202c;
+  color: #047857;
+  background: linear-gradient(135deg, #16a34a, #059669);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark-mode .modal-header h2 {
+  background: linear-gradient(135deg, #4ade80, #34d399);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .close-modal {
-  background: transparent;
-  border: none;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 50%;
   font-size: 1.5rem;
   cursor: pointer;
   width: 32px;
@@ -1367,12 +1430,28 @@ function handleEditSubmit(updatedData: Record<string, unknown>) {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s ease;
+  color: #047857;
+  transition: all 0.3s ease;
 }
 
 .close-modal:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #16a34a;
+  transform: rotate(90deg);
+}
+
+.dark-mode .close-modal {
+  background: rgba(52, 211, 153, 0.15);
+  border-color: rgba(52, 211, 153, 0.3);
+  color: #4ade80;
+}
+
+.dark-mode .close-modal:hover {
+  background: rgba(52, 211, 153, 0.25);
+  border-color: rgba(52, 211, 153, 0.4);
+  color: #34d399;
+  box-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
 }
 
 .modal-body {
@@ -1680,12 +1759,112 @@ function handleEditSubmit(updatedData: Record<string, unknown>) {
 @keyframes pulse {
   0% {
     opacity: 0.6;
+    transform: scale(0.95);
   }
   50% {
     opacity: 1;
+    transform: scale(1.05);
   }
   100% {
     opacity: 0.6;
+    transform: scale(0.95);
+  }
+}
+
+@keyframes modalAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  80% {
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cornerAppear {
+  0% {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  100% {
+    opacity: 1;
+    width: 12px;
+    height: 12px;
+  }
+}
+
+@keyframes warningAppear {
+  0% {
+    transform: scale(0);
+  }
+  60% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes glow-pulse {
+  0% {
+    transform: rotate(0deg);
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: rotate(360deg);
+    opacity: 0.3;
+  }
+}
+
+@keyframes close-pulse {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 0.5;
+  }
+  100% {
+    width: 100px;
+    height: 100px;
+    opacity: 0;
+  }
+}
+
+@keyframes decoratorAppear {
+  0% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleX(1);
   }
 }
 
@@ -1810,15 +1989,446 @@ function handleEditSubmit(updatedData: Record<string, unknown>) {
   background-color: rgba(239, 68, 68, 0.15);
 }
 
-/* Delete Confirmation Modal Styles */
+/* Delete Confirmation Modal Styles - Futuristic Design */
+.futuristic-overlay {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.futuristic-modal {
+  position: relative;
+  max-width: 450px;
+  width: 90%;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(34, 197, 94, 0.1),
+    0 0 30px rgba(34, 197, 94, 0.1);
+  overflow: hidden;
+  animation: modalAppear 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: center;
+  backdrop-filter: blur(20px);
+}
+
+.dark-mode .futuristic-modal {
+  background: rgba(25, 25, 35, 0.95);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(52, 211, 153, 0.2),
+    0 0 30px rgba(52, 211, 153, 0.15);
+}
+
+.modal-glow-effect {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0) 60%);
+  z-index: -1;
+  opacity: 0;
+  animation: glow-pulse 4s ease-in-out infinite alternate;
+}
+
+.dark-mode .modal-glow-effect {
+  background: radial-gradient(circle, rgba(52, 211, 153, 0.15) 0%, rgba(52, 211, 153, 0) 60%);
+  opacity: 1;
+}
+
+.futuristic-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 1.2rem 1.5rem;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0),
+    rgba(34, 197, 94, 0.1),
+    rgba(255, 255, 255, 0)
+  );
+  border-bottom: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.dark-mode .futuristic-header {
+  background: linear-gradient(
+    90deg,
+    rgba(25, 25, 35, 0),
+    rgba(52, 211, 153, 0.15),
+    rgba(25, 25, 35, 0)
+  );
+  border-bottom: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.modal-decorator {
+  height: 2px;
+  flex: 1;
+  background: linear-gradient(90deg, transparent, #16a34a, transparent);
+}
+
+.modal-decorator.left {
+  margin-right: 15px;
+  opacity: 0;
+  animation: decoratorAppear 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.3s;
+}
+
+.modal-decorator.right {
+  margin-left: 15px;
+  opacity: 0;
+  animation: decoratorAppear 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.5s;
+}
+
+.futuristic-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background: linear-gradient(90deg, #16a34a, #4ade80);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark-mode .futuristic-header h2 {
+  background: linear-gradient(90deg, #34d399, #6ee7b7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.futuristic-close {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  width: 30px;
+  height: 30px;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #047857;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.futuristic-close:hover {
+  background: rgba(34, 197, 94, 0.2);
+  color: #16a34a;
+  transform: rotate(90deg);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.dark-mode .futuristic-close {
+  background: rgba(52, 211, 153, 0.15);
+  border-color: rgba(52, 211, 153, 0.3);
+  color: #4ade80;
+}
+
+.dark-mode .futuristic-close:hover {
+  background: rgba(52, 211, 153, 0.25);
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.4);
+  box-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
+}
+
+.close-icon {
+  position: relative;
+  z-index: 2;
+}
+
+.close-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(34, 197, 94, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+
+.dark-mode .close-pulse {
+  background: rgba(52, 211, 153, 0.3);
+}
+
+.futuristic-close:hover .close-pulse {
+  animation: close-pulse 0.6s ease-out;
+}
+
+.futuristic-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.warning-icon-container {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin-bottom: 0.5rem;
+}
+
+.warning-icon {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #dc2626, #991b1b);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(220, 38, 38, 0.3);
+  animation: warningAppear 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 2;
+}
+
+.dark-mode .warning-icon {
+  box-shadow:
+    0 4px 20px rgba(220, 38, 38, 0.5),
+    0 0 0 1px rgba(220, 38, 38, 0.2);
+}
+
+.warning-circle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.6);
+  box-sizing: border-box;
+}
+
+.warning-icon span {
+  color: white;
+  font-size: 2.5rem;
+  font-weight: 700;
+  transform: translateY(-2px);
+}
+
+.warning-pulse {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(220, 38, 38, 0.3);
+  animation: pulse 2s ease-out infinite;
+  z-index: 1;
+}
+
+.futuristic-message {
+  font-size: 1.1rem;
+  font-weight: 500;
+  text-align: center;
+  max-width: 90%;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.delete-info {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dark-mode .delete-info {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+.info-label {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.dark-mode .info-label {
+  color: #94a3b8;
+}
+
+.info-value {
+  font-weight: 600;
+}
+
+.futuristic-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1.2rem 1.5rem;
+  gap: 1rem;
+  border-top: 1px solid rgba(34, 197, 94, 0.2);
+  position: relative;
+}
+
+.dark-mode .futuristic-footer {
+  border-top: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.futuristic-btn-secondary {
+  position: relative;
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  background: rgba(255, 255, 255, 0.5);
+  color: #047857;
+  font-weight: 500;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.futuristic-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(34, 197, 94, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
+}
+
+.dark-mode .futuristic-btn-secondary {
+  background: rgba(30, 30, 46, 0.5);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  color: #4ade80;
+}
+
+.dark-mode .futuristic-btn-secondary:hover {
+  background: rgba(40, 40, 56, 0.8);
+  border-color: rgba(52, 211, 153, 0.4);
+  box-shadow: 0 4px 12px rgba(52, 211, 153, 0.25);
+}
+
+.futuristic-btn-delete {
+  position: relative;
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #dc2626, #991b1b);
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.futuristic-btn-delete:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+}
+
+.dark-mode .futuristic-btn-delete:hover {
+  box-shadow:
+    0 4px 15px rgba(220, 38, 38, 0.6),
+    0 0 20px rgba(220, 38, 38, 0.3);
+}
+
+.btn-glow {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 80%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: rotate(45deg);
+  transition: all 0.6s ease;
+}
+
+.futuristic-btn-secondary:hover .btn-glow,
+.futuristic-btn-delete:hover .btn-glow {
+  left: 120%;
+  transition: all 0.6s ease;
+}
+
+.delete-glow {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+.modal-corner {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: #16a34a;
+  border-style: solid;
+  opacity: 0;
+  animation: cornerAppear 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.dark-mode .modal-corner {
+  border-color: #4ade80;
+}
+
+.top-left {
+  top: 0;
+  left: 0;
+  border-width: 2px 0 0 2px;
+  animation-delay: 0.2s;
+}
+
+.top-right {
+  top: 0;
+  right: 0;
+  border-width: 2px 2px 0 0;
+  animation-delay: 0.4s;
+}
+
+.bottom-left {
+  bottom: 0;
+  left: 0;
+  border-width: 0 0 2px 2px;
+  animation-delay: 0.6s;
+}
+
+.bottom-right {
+  bottom: 0;
+  right: 0;
+  border-width: 0 2px 2px 0;
+  animation-delay: 0.8s;
+}
+
+/* Legacy delete confirmation styles for compatibility */
 .delete-modal-container {
-  background-color: white;
+  background: rgba(255, 255, 255, 0.95);
   width: 95%;
   max-width: 450px;
-  border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  border-radius: 16px;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(34, 197, 94, 0.1),
+    0 0 30px rgba(34, 197, 94, 0.1);
   overflow: hidden;
-  animation: slideIn 0.3s ease;
+  animation: modalAppear 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(20px);
 }
 
 .delete-message {
@@ -1828,7 +2438,7 @@ function handleEditSubmit(updatedData: Record<string, unknown>) {
 }
 
 .delete-confirm-btn {
-  background: linear-gradient(135deg, #dc2626, #b91c1c1c);
+  background: linear-gradient(135deg, #dc2626, #991b1b);
 }
 
 .delete-confirm-btn:hover {
@@ -1836,7 +2446,12 @@ function handleEditSubmit(updatedData: Record<string, unknown>) {
 }
 
 .dark-mode .delete-modal-container {
-  background-color: #1a1a2e;
+  background: rgba(25, 25, 35, 0.95);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(52, 211, 153, 0.2),
+    0 0 30px rgba(52, 211, 153, 0.15);
 }
 
 .dark-mode .delete-message {
@@ -1973,7 +2588,7 @@ function handleEditSubmit(updatedData: Record<string, unknown>) {
 
 /* Track link styling */
 .track-link {
-  color: #2563eb;
+  color: #16a34a;
   cursor: pointer;
   font-weight: 500;
   position: relative;
@@ -1984,8 +2599,8 @@ function handleEditSubmit(updatedData: Record<string, unknown>) {
 
 /* Track link hover effects */
 .track-link:hover {
-  background-color: rgba(37, 99, 235, 0.1);
-  color: #1d4ed8;
+  background-color: rgba(34, 197, 94, 0.1);
+  color: #059669;
 }
 
 .track-link::after {
@@ -1995,7 +2610,7 @@ function handleEditSubmit(updatedData: Record<string, unknown>) {
   bottom: -2px;
   width: 100%;
   height: 2px;
-  background-color: #2563eb;
+  background-color: #16a34a;
   transform: scaleX(0);
   transition: transform 0.3s ease;
   transform-origin: right;
@@ -2007,15 +2622,15 @@ function handleEditSubmit(updatedData: Record<string, unknown>) {
 }
 
 .dark-mode .track-link {
-  color: #3b82f6;
+  color: #4ade80;
 }
 
 .dark-mode .track-link:hover {
-  background-color: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
+  background-color: rgba(52, 211, 153, 0.15);
+  color: #34d399;
 }
 
 .dark-mode .track-link::after {
-  background-color: #3b82f6;
+  background-color: #4ade80;
 }
 </style>

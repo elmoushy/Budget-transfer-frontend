@@ -4,10 +4,13 @@ function calculateTotalPages(totalCount, pageSize) {
   return Math.ceil(totalCount / pageSize)
 }
 
+// Import base URL (add this if you're using the file in the application)
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+
 // Test with the API response you provided
 const apiResponse = {
   count: 10,
-  next: 'http://localhost:8000/api/budget/transfers/list/?page=2&page_size=6',
+  next: `${BASE_URL}/api/budget/transfers/list/?page=2&page_size=6`,
   previous: null,
   results: [
     /* sample data */

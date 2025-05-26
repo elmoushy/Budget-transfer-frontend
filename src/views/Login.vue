@@ -8,7 +8,11 @@
 
     <div class="login-container glass-panel" v-motion-slide-bottom>
       <div class="logo-section" v-motion-slide-top :delay="200">
-        <img src="@/assets/img/lightidea_logo.png" alt="LightIdea Logo" class="logo-img" />
+        <img
+          src="@/assets/img/Public_Investment Fund_id.png"
+          alt="LightIdea Logo"
+          class="logo-img"
+        />
         <h1 class="app-name glow-text">{{ isArabic ? 'مناقلة' : 'Budget Transfer' }}</h1>
       </div>
 
@@ -243,14 +247,14 @@ function animateBackgroundSpheres() {
   justify-content: center;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, var(--color-bg-light) 0%, #e4e8f0 100%);
+  background: linear-gradient(135deg, #f8fffe 0%, #e8f8f5 50%, #d1fae5 100%);
   padding: 1rem;
   z-index: 0;
 }
 
 .login-page.dark-mode {
-  background: linear-gradient(135deg, var(--color-bg-dark) 0%, #111122 100%);
-  color: var(--color-text-light);
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 50%, #a7f3d0 100%);
+  color: #065f46;
 }
 
 /* Animated background */
@@ -267,88 +271,125 @@ function animateBackgroundSpheres() {
 .gradient-sphere {
   position: absolute;
   border-radius: 50%;
-  opacity: 0.5;
-  filter: blur(60px);
+  opacity: 0.4;
+  filter: blur(40px);
   transition: transform 5s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .sphere-1 {
   top: 20%;
   left: 15%;
-  width: 350px;
-  height: 350px;
-  background: radial-gradient(circle, var(--color-accent-magenta) 0%, rgba(240, 171, 252, 0) 70%);
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, #10b981 0%, rgba(16, 185, 129, 0) 70%);
   animation: pulse 12s ease-in-out infinite alternate;
 }
 
 .sphere-2 {
   top: 60%;
   left: 60%;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, var(--color-accent-cyan) 0%, rgba(94, 234, 212, 0) 70%);
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, #059669 0%, rgba(5, 150, 105, 0) 70%);
   animation: pulse 15s ease-in-out infinite alternate-reverse;
 }
 
 .sphere-3 {
   top: 30%;
   right: 20%;
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, var(--color-accent-primary) 0%, rgba(109, 26, 54, 0) 70%);
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, #34d399 0%, rgba(52, 211, 153, 0) 70%);
   animation: pulse 18s ease-in-out infinite alternate;
 }
 
 @keyframes pulse {
   0% {
     transform: scale(1);
-    opacity: 0.3;
+    opacity: 0.2;
   }
   50% {
-    transform: scale(1.2);
-    opacity: 0.6;
+    transform: scale(1.1);
+    opacity: 0.4;
   }
   100% {
     transform: scale(1);
-    opacity: 0.3;
+    opacity: 0.2;
   }
 }
 
 .login-container {
   width: 100%;
-  max-width: 420px;
+  max-width: 520px;
   position: relative;
   z-index: 2;
   transition: all var(--transition-normal);
+  border-radius: 20px;
+  border: 2px solid rgba(16, 185, 129, 0.2);
+  box-shadow:
+    0 20px 60px rgba(16, 185, 129, 0.15),
+    0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
 .glass-panel {
-  background: rgba(255, 255, 255, var(--glass-opacity-light));
-  backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border-light);
-  border-radius: 24px;
-  box-shadow: var(--shadow-light);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(16, 185, 129, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(16, 185, 129, 0.15);
   overflow: hidden;
 }
 
 .dark-mode .glass-panel {
-  background: rgba(17, 17, 34, var(--glass-opacity-dark));
-  border: 1px solid var(--glass-border-dark);
-  box-shadow: var(--shadow-dark);
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(16, 185, 129, 0.3);
 }
 
 .logo-section {
-  padding: 2rem 1rem;
-  background: linear-gradient(90deg, var(--color-accent-primary), var(--color-accent-secondary));
+  padding: 2.5rem 1rem;
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 50%, #ecfdf5 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
   overflow: hidden;
+  border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.logo-section::before {
+  content: '$';
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  font-size: 24px;
+  color: rgba(16, 185, 129, 0.3);
+  font-weight: bold;
+  animation: float 3s ease-in-out infinite;
+}
+
+.logo-section::after {
+  content: '€';
+  position: absolute;
+  bottom: 15px;
+  left: 25px;
+  font-size: 20px;
+  color: rgba(5, 150, 105, 0.3);
+  font-weight: bold;
+  animation: float 4s ease-in-out infinite reverse;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 .dark-mode .logo-section {
-  background: linear-gradient(90deg, var(--color-accent-primary), #2a0812);
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
 }
 
 .logo-img {
@@ -356,23 +397,40 @@ function animateBackgroundSpheres() {
   height: 80px;
   object-fit: contain;
   margin-bottom: 1rem;
+  filter: drop-shadow(0 4px 12px rgba(16, 185, 129, 0.3));
 }
 
 .app-name {
   font-family: var(--font-secondary);
   font-size: var(--font-size-fluid-title);
   font-weight: 700;
-  color: white;
+  color: #064e3b;
   margin: 0;
   text-align: center;
+  letter-spacing: 0.5px;
 }
 
 .glow-text {
-  text-shadow: var(--shadow-glow-magenta);
+  text-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
 }
 
 .form-container {
   padding: 2rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(240, 253, 244, 0.6));
+  position: relative;
+}
+
+.form-container::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="%2310b981" viewBox="0 0 24 24"><path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1L13.5 2.5L16.17 5.17L10.59 10.75C10.21 11.13 10.21 11.75 10.59 12.13L11.83 13.37L5.12 20.08C4.73 20.47 4.73 21.1 5.12 21.49C5.51 21.88 6.14 21.88 6.53 21.49L13.24 14.78L14.48 16.02C14.86 16.4 15.48 16.4 15.86 16.02L21.41 10.47L19 8.06L21 9Z"/></svg>')
+    no-repeat center;
+  background-size: contain;
+  opacity: 0.1;
 }
 
 .form-title {
@@ -381,6 +439,8 @@ function animateBackgroundSpheres() {
   font-weight: 600;
   margin-bottom: 1.5rem;
   text-align: center;
+  color: #065f46;
+  text-shadow: 0 1px 3px rgba(16, 185, 129, 0.2);
 }
 
 .login-form {
@@ -403,7 +463,7 @@ function animateBackgroundSpheres() {
 }
 
 .error {
-  color: #ef4444;
+  color: #dc2626;
 }
 
 .form-group {
@@ -414,41 +474,51 @@ function animateBackgroundSpheres() {
 
 .form-group label {
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 600;
   margin-bottom: 0.25rem;
+  color: #047857;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .input-wrapper {
   position: relative;
   border-radius: 12px;
   transition: all var(--transition-fast);
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.7);
+  border: 2px solid rgba(16, 185, 129, 0.2);
   overflow: hidden;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.1);
 }
 
 .dark-mode .input-wrapper {
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.8);
+  border: 2px solid rgba(16, 185, 129, 0.25);
 }
 
 .input-wrapper.focused {
-  border-color: var(--color-accent-primary);
-  box-shadow: 0 0 0 2px rgba(109, 26, 54, 0.2);
+  border-color: #10b981;
+  box-shadow:
+    0 0 0 3px rgba(16, 185, 129, 0.2),
+    0 4px 15px rgba(16, 185, 129, 0.2);
+  transform: translateY(-2px);
 }
 
 .dark-mode .input-wrapper.focused {
-  box-shadow: 0 0 0 2px rgba(240, 171, 252, 0.2);
+  box-shadow:
+    0 0 0 3px rgba(16, 185, 129, 0.3),
+    0 4px 15px rgba(16, 185, 129, 0.2);
 }
 
 .input-focus-indicator {
   position: absolute;
   bottom: 0;
   left: 0;
-  height: 2px;
+  height: 3px;
   width: 0;
-  background: linear-gradient(90deg, var(--color-accent-primary), var(--color-accent-magenta));
+  background: linear-gradient(90deg, #10b981, #34d399);
   transition: width var(--transition-normal);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
 }
 
 .input-wrapper.focused .input-focus-indicator {
@@ -457,12 +527,18 @@ function animateBackgroundSpheres() {
 
 .input-wrapper input {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
   background: transparent;
   border: none;
   font-size: 1rem;
-  color: inherit;
+  color: #064e3b;
   outline: none;
+  caret-color: #10b981;
+  font-weight: 500;
+}
+
+.input-wrapper input::placeholder {
+  color: rgba(6, 78, 59, 0.5);
 }
 
 .password-input-container {
@@ -475,28 +551,31 @@ function animateBackgroundSpheres() {
   border: none;
   padding: 0.5rem;
   margin-right: 0.5rem;
-  color: inherit;
-  opacity: 0.6;
+  color: #10b981;
+  opacity: 0.7;
   cursor: pointer;
-  transition: opacity var(--transition-fast);
+  transition: all var(--transition-fast);
 }
 
 .toggle-password:hover {
   opacity: 1;
+  color: #059669;
+  transform: scale(1.1);
 }
 
 .error-text {
-  color: #ef4444;
+  color: #dc2626;
   font-size: 0.8rem;
   margin-top: 0.25rem;
+  font-weight: 500;
 }
 
 .login-btn {
-  margin-top: 1rem;
-  padding: 0.75rem 1.5rem;
+  margin-top: 1.5rem;
+  padding: 1rem 1.5rem;
   width: 100%;
   border-radius: 12px;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1rem;
   display: flex;
   align-items: center;
@@ -506,26 +585,36 @@ function animateBackgroundSpheres() {
   overflow: hidden;
   cursor: pointer;
   transition: all var(--transition-normal);
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .glow-btn {
-  background: linear-gradient(90deg, var(--color-accent-primary), var(--color-accent-secondary));
+  background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
   color: white;
   border: none;
-  box-shadow: 0 4px 15px rgba(109, 26, 54, 0.3);
+  box-shadow:
+    0 8px 25px rgba(16, 185, 129, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .dark-mode .glow-btn {
-  box-shadow: var(--shadow-glow-magenta);
+  box-shadow:
+    0 8px 30px rgba(16, 185, 129, 0.5),
+    0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .glow-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(109, 26, 54, 0.4);
+  transform: translateY(-3px);
+  box-shadow:
+    0 12px 35px rgba(16, 185, 129, 0.5),
+    0 6px 20px rgba(0, 0, 0, 0.1);
 }
 
 .dark-mode .glow-btn:hover {
-  box-shadow: 0 0 20px rgba(240, 171, 252, 0.5);
+  box-shadow:
+    0 15px 40px rgba(16, 185, 129, 0.6),
+    0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
 .btn-glint {
@@ -534,7 +623,7 @@ function animateBackgroundSpheres() {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.2);
   transform: rotate(35deg);
   transition: transform var(--transition-slow);
 }
@@ -555,6 +644,56 @@ function animateBackgroundSpheres() {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Money transfer pattern in background */
+.login-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image:
+    radial-gradient(circle at 25% 25%, rgba(16, 185, 129, 0.05) 2px, transparent 2px),
+    radial-gradient(circle at 75% 75%, rgba(5, 150, 105, 0.05) 2px, transparent 2px);
+  background-size: 50px 50px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Floating money symbols */
+.login-page::after {
+  content: '💰';
+  position: absolute;
+  top: 15%;
+  right: 10%;
+  font-size: 2rem;
+  opacity: 0.1;
+  animation: float 6s ease-in-out infinite;
+  z-index: 1;
+}
+
+/* Additional money transfer effects */
+.form-container::after {
+  content: '→';
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  font-size: 20px;
+  color: rgba(16, 185, 129, 0.3);
+  font-weight: bold;
+  animation: slide 3s ease-in-out infinite;
+}
+
+@keyframes slide {
+  0%,
+  100% {
+    transform: translateX(0px);
+  }
+  50% {
+    transform: translateX(10px);
   }
 }
 

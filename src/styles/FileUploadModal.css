@@ -57,7 +57,7 @@
 
 .file-modal-close:hover {
   background-color: #f3f4f6;
-  color: #6d1a36;
+  color: #22c55e;
 }
 
 .file-modal-body {
@@ -82,13 +82,13 @@
 }
 
 .file-upload-area:hover {
-  border-color: #6d1a36;
+  border-color: #22c55e;
   background-color: #f1f5f9;
 }
 
 .file-upload-area.drag-active {
-  border-color: #6d1a36;
-  background-color: rgba(109, 26, 54, 0.05);
+  border-color: #22c55e;
+  background-color: rgba(34, 197, 94, 0.05);
 }
 
 .upload-placeholder {
@@ -210,7 +210,7 @@
 
 .btn-file-upload {
   flex: 1;
-  background: linear-gradient(135deg, #7d1a3c, #5a0d25);
+  background: linear-gradient(135deg, #22c55e, #16a34a);
   color: white;
   border: none;
   border-radius: 8px;
@@ -226,7 +226,7 @@
 }
 
 .btn-file-upload:hover:not(.btn-disabled) {
-  background: linear-gradient(135deg, #8d2a4c, #6a1d35);
+  background: linear-gradient(135deg, #34d399, #22c55e);
   transform: translateY(-2px);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
@@ -341,7 +341,7 @@
 
 :global(.dark-mode) .file-modal-close:hover {
   background-color: #323248;
-  color: #ff9ea0;
+  color: #34d399;
 }
 
 :global(.dark-mode) .file-upload-area {
@@ -350,8 +350,8 @@
 }
 
 :global(.dark-mode) .file-upload-area:hover {
-  border-color: #ff9ea0;
-  background-color: rgba(255, 158, 160, 0.1);
+  border-color: #34d399;
+  background-color: rgba(34, 197, 94, 0.1);
 }
 
 :global(.dark-mode) .upload-icon {
@@ -360,12 +360,12 @@
 }
 
 :global(.dark-mode) .file-upload-area:hover .upload-icon {
-  color: #ff9ea0;
-  border-color: #ff9ea0;
+  color: #34d399;
+  border-color: #34d399;
 }
 
 :global(.dark-mode) .browse-text {
-  color: #ff9ea0;
+  color: #34d399;
 }
 
 :global(.dark-mode) .file-format-note {
@@ -399,11 +399,11 @@
 }
 
 :global(.dark-mode) .btn-file-upload {
-  background: linear-gradient(135deg, #8d2a4c, #6a1d35);
+  background: linear-gradient(135deg, #34d399, #22c55e);
 }
 
 :global(.dark-mode) .btn-file-upload:hover:not(.btn-disabled) {
-  background: linear-gradient(135deg, #9d3a5c, #7a2d45);
+  background: linear-gradient(135deg, #22c55e, #16a34a);
 }
 
 :global(.dark-mode) .btn-file-upload.btn-disabled {

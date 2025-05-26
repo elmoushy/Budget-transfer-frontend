@@ -16,10 +16,6 @@
 
       <div class="toolbar-right">
         <div class="search-container">
-          <SearchIcon
-            class="search-icon"
-            :style="{ transform: isArabic ? 'translateX(-200px)' : 'translateX(200px)' }"
-          />
           <input
             v-model="searchQuery"
             type="search"
@@ -89,7 +85,7 @@
             <th>
               <p
                 :style="{
-                  transform: isArabic ? 'translateX(95px)!important' : 'translateX(30px)',
+                  transform: isArabic ? 'translateX(145px)!important' : 'translateX(66px)',
                 }"
               >
                 {{ tableHeaders.attachment }}
@@ -186,7 +182,11 @@
                   class="attachment-text"
                   :class="{ 'with-attachments': row.attachment_count && row.attachment_count > 0 }"
                 >
-                  {{ row.attachment_count || 0 }}
+                  {{
+                    row.attachment_count && row.attachment_count > 0
+                      ? `${row.attachment_count} attachments`
+                      : 'attachments'
+                  }}
                 </span>
                 <!-- File attachment indicator -->
                 <div
@@ -410,7 +410,6 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { EditIcon, FileTextIcon, SearchIcon, TrashIcon, PaperclipIcon } from 'lucide-vue-next'
 import { useThemeStore } from '@/stores/themeStore'
-import { useAuthStore } from '@/stores/authStore'
 // Replaced NewRequestModal with EnhancementsRequestModel
 import EnhancementsRequestModel from '@/components/EnhancementsRequestModel.vue'
 import EditTransferModal from '@/components/EditTransferModal.vue'
@@ -486,14 +485,6 @@ function formatDate(dateString: string): string {
   return date.toLocaleDateString()
 }
 
-function editGI(row: TransferData) {
-  console.log('Editing GI for row:', row.transaction_id)
-  // Set the current transfer data for editing
-  currentEditTransfer.value = row
-  // Open the edit modal
-  showEditModal.value = true
-}
-
 function formatHtmlContent(html: string): string {
   // Sanitize HTML content if needed
   return html || ''
@@ -551,7 +542,7 @@ function confirmDelete() {
         isArabic.value ? 'تم حذف الطلب بنجاح' : 'Request deleted successfully',
       )
     })
-    .catch((error: any) => {
+    .catch((error: Error) => {
       console.error('Error deleting request:', error)
       // Replace SweetAlert with our custom popup for error
       showFuturisticPopup(
@@ -634,8 +625,6 @@ function showFuturisticPopup(type: 'success' | 'error' | 'warning' | 'info', mes
 
 // ───────────────────────────────────────────────────────────── Theme & Lang
 const themeStore = useThemeStore()
-// Use auth store for API calls but not directly in template
-const authStore = useAuthStore()
 const isArabic = ref(false)
 const isDarkMode = ref(false)
 
@@ -874,7 +863,7 @@ function animateBackgroundOrbs() {
 <style scoped>
 /* Base page styles */
 .enhancements-page {
-  min-height: 100vh;
+  min-height: auto;
   padding: 1.5rem;
   position: relative;
   overflow: hidden;
@@ -1621,6 +1610,140 @@ function animateBackgroundOrbs() {
   }
 }
 
+/* Description Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.desc-modal-container {
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(34, 197, 94, 0.1),
+    0 0 30px rgba(34, 197, 94, 0.1);
+  overflow: hidden;
+  animation: modalAppear 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(20px);
+}
+
+.dark-mode .desc-modal-container {
+  background: rgba(25, 25, 35, 0.95);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(52, 211, 153, 0.2),
+    0 0 30px rgba(52, 211, 153, 0.15);
+}
+
+.desc-modal-container .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(52, 211, 153, 0.05));
+  border-bottom: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.dark-mode .desc-modal-container .modal-header {
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.15), rgba(74, 222, 128, 0.1));
+  border-bottom: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.desc-modal-container .modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #047857;
+  background: linear-gradient(135deg, #16a34a, #059669);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark-mode .desc-modal-container .modal-header h2 {
+  background: linear-gradient(135deg, #4ade80, #34d399);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.desc-modal-container .close-modal {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #047857;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+}
+
+.desc-modal-container .close-modal:hover {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #16a34a;
+  transform: rotate(90deg);
+}
+
+.dark-mode .desc-modal-container .close-modal {
+  background: rgba(52, 211, 153, 0.15);
+  border-color: rgba(52, 211, 153, 0.3);
+  color: #4ade80;
+}
+
+.dark-mode .desc-modal-container .close-modal:hover {
+  background: rgba(52, 211, 153, 0.25);
+  border-color: rgba(52, 211, 153, 0.4);
+  color: #34d399;
+  box-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
+}
+
+.desc-modal-body {
+  padding: 1.5rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.desc-content {
+  line-height: 1.6;
+  color: #374151;
+}
+
+.dark-mode .desc-content {
+  color: #d1d5db;
+}
+
+.no-desc {
+  text-align: center;
+  color: #6b7280;
+  font-style: italic;
+  padding: 2rem;
+}
+
+.dark-mode .no-desc {
+  color: #9ca3af;
+}
+
 /* Futuristic Delete Modal Styles */
 .futuristic-overlay {
   background: rgba(0, 0, 0, 0.7);
@@ -1633,23 +1756,25 @@ function animateBackgroundOrbs() {
   max-width: 450px;
   width: 90%;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(34, 197, 94, 0.2);
   box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(255, 255, 255, 0.1);
+    0 0 0 1px rgba(34, 197, 94, 0.1),
+    0 0 30px rgba(34, 197, 94, 0.1);
   overflow: hidden;
   animation: modalAppear 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   transform-origin: center;
+  backdrop-filter: blur(20px);
 }
 
 .dark-mode .futuristic-modal {
-  background: rgba(25, 25, 35, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(25, 25, 35, 0.95);
+  border: 1px solid rgba(52, 211, 153, 0.3);
   box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.05),
-    0 0 20px rgba(240, 171, 252, 0.1);
+    0 0 0 1px rgba(52, 211, 153, 0.2),
+    0 0 30px rgba(52, 211, 153, 0.15);
 }
 
 .modal-glow-effect {
@@ -1658,13 +1783,14 @@ function animateBackgroundOrbs() {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle, rgba(240, 171, 252, 0.1) 0%, rgba(240, 171, 252, 0) 60%);
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0) 60%);
   z-index: -1;
   opacity: 0;
   animation: glow-pulse 4s ease-in-out infinite alternate;
 }
 
 .dark-mode .modal-glow-effect {
+  background: radial-gradient(circle, rgba(52, 211, 153, 0.15) 0%, rgba(52, 211, 153, 0) 60%);
   opacity: 1;
 }
 
@@ -1676,31 +1802,26 @@ function animateBackgroundOrbs() {
   background: linear-gradient(
     90deg,
     rgba(255, 255, 255, 0),
-    rgba(109, 26, 54, 0.1),
+    rgba(34, 197, 94, 0.1),
     rgba(255, 255, 255, 0)
   );
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgba(34, 197, 94, 0.2);
 }
 
 .dark-mode .futuristic-header {
   background: linear-gradient(
     90deg,
     rgba(25, 25, 35, 0),
-    rgba(240, 171, 252, 0.15),
+    rgba(52, 211, 153, 0.15),
     rgba(25, 25, 35, 0)
   );
-  border-bottom: 1px solid rgba(240, 171, 252, 0.1);
+  border-bottom: 1px solid rgba(52, 211, 153, 0.3);
 }
 
 .modal-decorator {
   height: 2px;
   flex: 1;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--color-accent-primary, #6d1a36),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, #16a34a, transparent);
 }
 
 .modal-decorator.left {
@@ -1720,15 +1841,17 @@ function animateBackgroundOrbs() {
   font-size: 1.5rem;
   font-weight: 600;
   white-space: nowrap;
-  background: linear-gradient(
-    90deg,
-    var(--color-accent-primary, #6d1a36),
-    var(--color-accent-magenta, #f0abfc)
-  );
+  background: linear-gradient(90deg, #16a34a, #4ade80);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-fill-color: transparent;
+}
+
+.dark-mode .futuristic-header h2 {
+  background: linear-gradient(90deg, #34d399, #6ee7b7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .futuristic-close {
@@ -1737,29 +1860,37 @@ function animateBackgroundOrbs() {
   top: 1rem;
   width: 30px;
   height: 30px;
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
   border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #64748b;
+  color: #047857;
   font-size: 1.2rem;
   transition: all 0.3s ease;
   overflow: hidden;
 }
 
 .futuristic-close:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: var(--color-accent-primary, #6d1a36);
+  background: rgba(34, 197, 94, 0.2);
+  color: #16a34a;
   transform: rotate(90deg);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.dark-mode .futuristic-close {
+  background: rgba(52, 211, 153, 0.15);
+  border-color: rgba(52, 211, 153, 0.3);
+  color: #4ade80;
 }
 
 .dark-mode .futuristic-close:hover {
-  background: rgba(240, 171, 252, 0.2);
-  color: var(--color-accent-magenta, #f0abfc);
-  box-shadow: 0 0 10px rgba(240, 171, 252, 0.3);
+  background: rgba(52, 211, 153, 0.25);
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.4);
+  box-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
 }
 
 .close-icon {
@@ -1773,10 +1904,14 @@ function animateBackgroundOrbs() {
   left: 50%;
   width: 0;
   height: 0;
-  background: rgba(240, 171, 252, 0.3);
+  background: rgba(34, 197, 94, 0.3);
   border-radius: 50%;
   transform: translate(-50%, -50%);
   z-index: 1;
+}
+
+.dark-mode .close-pulse {
+  background: rgba(52, 211, 153, 0.3);
 }
 
 .futuristic-close:hover .close-pulse {
@@ -1802,20 +1937,20 @@ function animateBackgroundOrbs() {
   position: absolute;
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, #f87171, #ef4444);
+  background: linear-gradient(135deg, #dc2626, #991b1b);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 20px rgba(220, 38, 38, 0.3);
   animation: warningAppear 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
   z-index: 2;
 }
 
 .dark-mode .warning-icon {
   box-shadow:
-    0 4px 20px rgba(239, 68, 68, 0.5),
-    0 0 0 1px rgba(239, 68, 68, 0.2);
+    0 4px 20px rgba(220, 38, 38, 0.5),
+    0 0 0 1px rgba(220, 38, 38, 0.2);
 }
 
 .warning-circle {
@@ -1843,7 +1978,7 @@ function animateBackgroundOrbs() {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: rgba(239, 68, 68, 0.3);
+  background: rgba(220, 38, 38, 0.3);
   animation: pulse 2s ease-out infinite;
   z-index: 1;
 }
@@ -1907,9 +2042,9 @@ function animateBackgroundOrbs() {
   position: relative;
   padding: 0.6rem 1.2rem;
   border-radius: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
   background: rgba(255, 255, 255, 0.5);
-  color: #64748b;
+  color: #047857;
   font-weight: 500;
   cursor: pointer;
   overflow: hidden;
@@ -1918,19 +2053,21 @@ function animateBackgroundOrbs() {
 
 .futuristic-btn-secondary:hover {
   background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(34, 197, 94, 0.3);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
 }
 
 .dark-mode .futuristic-btn-secondary {
   background: rgba(30, 30, 46, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e2e2e2;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  color: #4ade80;
 }
 
 .dark-mode .futuristic-btn-secondary:hover {
   background: rgba(40, 40, 56, 0.8);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border-color: rgba(52, 211, 153, 0.4);
+  box-shadow: 0 4px 12px rgba(52, 211, 153, 0.25);
 }
 
 .futuristic-btn-delete {
@@ -1938,7 +2075,7 @@ function animateBackgroundOrbs() {
   padding: 0.6rem 1.2rem;
   border-radius: 10px;
   border: none;
-  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  background: linear-gradient(135deg, #dc2626, #991b1b);
   color: white;
   font-weight: 500;
   cursor: pointer;
@@ -1951,13 +2088,13 @@ function animateBackgroundOrbs() {
 
 .futuristic-btn-delete:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
 }
 
 .dark-mode .futuristic-btn-delete:hover {
   box-shadow:
-    0 4px 15px rgba(239, 68, 68, 0.6),
-    0 0 20px rgba(239, 68, 68, 0.3);
+    0 4px 15px rgba(220, 38, 38, 0.6),
+    0 0 20px rgba(220, 38, 38, 0.3);
 }
 
 .btn-glow {
@@ -1995,14 +2132,14 @@ function animateBackgroundOrbs() {
   position: absolute;
   width: 12px;
   height: 12px;
-  border-color: var(--color-accent-primary, #6d1a36);
+  border-color: #16a34a;
   border-style: solid;
   opacity: 0;
   animation: cornerAppear 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .dark-mode .modal-corner {
-  border-color: var(--color-accent-magenta, #f0abfc);
+  border-color: #4ade80;
 }
 
 .top-left {
@@ -2143,7 +2280,7 @@ function animateBackgroundOrbs() {
 
 /* Track link styling */
 .track-link {
-  color: #2563eb;
+  color: #16a34a;
   cursor: pointer;
   font-weight: 500;
   position: relative;
@@ -2154,8 +2291,8 @@ function animateBackgroundOrbs() {
 
 /* Track link hover effects */
 .track-link:hover {
-  background-color: rgba(37, 99, 235, 0.1);
-  color: #1d4ed8;
+  background-color: rgba(34, 197, 94, 0.1);
+  color: #059669;
 }
 
 .track-link::after {
@@ -2165,7 +2302,7 @@ function animateBackgroundOrbs() {
   bottom: -2px;
   width: 100%;
   height: 2px;
-  background-color: #2563eb;
+  background-color: #16a34a;
   transform: scaleX(0);
   transition: transform 0.3s ease;
   transform-origin: right;
@@ -2177,15 +2314,15 @@ function animateBackgroundOrbs() {
 }
 
 .dark-mode .track-link {
-  color: #3b82f6;
+  color: #4ade80;
 }
 
 .dark-mode .track-link:hover {
-  background-color: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
+  background-color: rgba(52, 211, 153, 0.15);
+  color: #34d399;
 }
 
 .dark-mode .track-link::after {
-  background-color: #3b82f6;
+  background-color: #4ade80;
 }
 </style>

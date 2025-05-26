@@ -58,7 +58,7 @@
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>{{ isArabic ? 'الرقم التعريفي' : 'ID' }}</th>
+                  <!-- <th>{{ isArabic ? 'الرقم التعريفي' : 'ID' }}</th> -->
                   <th>{{ isArabic ? 'الحساب' : 'Account' }}</th>
                   <th>{{ isArabic ? 'الأصل' : 'Parent' }}</th>
                   <th>{{ isArabic ? 'الاسم المختصر' : 'Alias' }}</th>
@@ -72,7 +72,7 @@
                   </td>
                 </tr>
                 <tr v-for="account in paginatedAccounts" :key="account.id">
-                  <td>{{ account.id }}</td>
+                  <!-- <td>{{ account.id }}</td> -->
                   <td>{{ account.account }}</td>
                   <td>{{ account.parent }}</td>
                   <td>{{ account.alias_default }}</td>
@@ -176,7 +176,7 @@
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>{{ isArabic ? 'الرقم التعريفي' : 'ID' }}</th>
+                  <!-- <th>{{ isArabic ? 'الرقم التعريفي' : 'ID' }}</th> -->
                   <th>{{ isArabic ? 'الكيان' : 'Entity' }}</th>
                   <th>{{ isArabic ? 'الأصل' : 'Parent' }}</th>
                   <th>{{ isArabic ? 'الاسم المختصر' : 'Alias' }}</th>
@@ -190,7 +190,7 @@
                   </td>
                 </tr>
                 <tr v-for="entity in paginatedEntities" :key="entity.id">
-                  <td>{{ entity.id }}</td>
+                  <!-- <td>{{ entity.id }}</td> -->
                   <td>{{ entity.entity }}</td>
                   <td>{{ entity.parent }}</td>
                   <td>{{ entity.alias_default }}</td>
@@ -624,6 +624,7 @@ export default defineComponent({
         if (isEditMode.value && selectedAccount.value) {
           // Update existing account
           await apiService.accountEntities.updateAccount(selectedAccount.value.id, {
+            account: accountForm.account,
             parent: accountForm.parent,
             alias_default: accountForm.alias_default,
           })
@@ -699,6 +700,7 @@ export default defineComponent({
         if (isEditMode.value && selectedEntity.value) {
           // Update existing entity
           await apiService.accountEntities.updateEntity(selectedEntity.value.id, {
+            entity: entityForm.entity,
             parent: entityForm.parent,
             alias_default: entityForm.alias_default,
           })

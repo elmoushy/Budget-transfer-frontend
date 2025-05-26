@@ -5,14 +5,14 @@
         <h2>{{ isArabic ? 'تقرير المناقلة' : 'Transfer Report' }}</h2>
         <button class="modal-close-btn" @click="closeModal">×</button>
       </div>
-      
+
       <div class="report-modal-body">
         <!-- Loading state -->
         <div v-if="loading" class="loading-container">
           <div class="loading-spinner"></div>
           <p>{{ isArabic ? 'جاري التحميل...' : 'Loading...' }}</p>
         </div>
-        
+
         <!-- Error state -->
         <div v-else-if="error" class="error-container">
           <p>{{ isArabic ? 'حدث خطأ أثناء تحميل البيانات' : 'Error loading data' }}</p>
@@ -20,7 +20,7 @@
             {{ isArabic ? 'إعادة المحاولة' : 'Retry' }}
           </button>
         </div>
-        
+
         <!-- Report content -->
         <div v-else class="report-content">
           <!-- Summary section -->
@@ -28,29 +28,37 @@
             <h3>{{ isArabic ? 'ملخص' : 'Summary' }}</h3>
             <div class="summary-grid">
               <div class="summary-item">
-                <div class="summary-label">{{ isArabic ? 'رقم المعاملة:' : 'Transaction ID:' }}</div>
+                <div class="summary-label">
+                  {{ isArabic ? 'رقم المعاملة:' : 'Transaction ID:' }}
+                </div>
                 <div class="summary-value">{{ reportData.summary?.transaction_id }}</div>
               </div>
               <div class="summary-item">
-                <div class="summary-label">{{ isArabic ? 'عدد المناقلات:' : 'Total Transfers:' }}</div>
+                <div class="summary-label">
+                  {{ isArabic ? 'عدد المناقلات:' : 'Total Transfers:' }}
+                </div>
                 <div class="summary-value">{{ reportData.summary?.total_transfers }}</div>
               </div>
               <div class="summary-item">
-                <div class="summary-label">{{ isArabic ? 'مجموع المناقلات (من):' : 'Total From:' }}</div>
+                <div class="summary-label">
+                  {{ isArabic ? 'مجموع المناقلات (من):' : 'Total From:' }}
+                </div>
                 <div class="summary-value">{{ formatNumber(reportData.summary?.total_from) }}</div>
               </div>
               <div class="summary-item">
-                <div class="summary-label">{{ isArabic ? 'مجموع المناقلات (إلى):' : 'Total To:' }}</div>
+                <div class="summary-label">
+                  {{ isArabic ? 'مجموع المناقلات (إلى):' : 'Total To:' }}
+                </div>
                 <div class="summary-value">{{ formatNumber(reportData.summary?.total_to) }}</div>
               </div>
               <div class="summary-item">
-                <div class="summary-label">{{ isArabic ? 'الحالة:' : 'Status:' }}</div>
-                <div class="summary-value status-badge" :class="getStatusClass()">
+                <!-- <div class="summary-label">{{ isArabic ? 'الحالة:' : 'Status:' }}</div> -->
+                <!-- <div class="summary-value status-badge" :class="getStatusClass()">
                   {{ formatStatus(reportData.status?.status) }}
-                </div>
+                </div> -->
               </div>
               <div class="summary-item">
-                <div class="summary-label">{{ isArabic ? 'متوازن:' : 'Balanced:' }}</div>
+                <!-- <div class="summary-label">{{ isArabic ? 'متوازن:' : 'Balanced:' }}</div>
                 <div class="summary-value">
                   <span v-if="reportData.summary?.balanced" class="balanced-true">
                     {{ isArabic ? 'نعم' : 'Yes' }}
@@ -58,11 +66,11 @@
                   <span v-else class="balanced-false">
                     {{ isArabic ? 'لا' : 'No' }}
                   </span>
-                </div>
+                </div> -->
               </div>
             </div>
           </div>
-          
+
           <!-- Transfers table -->
           <div class="report-transfers">
             <h3>{{ isArabic ? 'تفاصيل المناقلات' : 'Transfer Details' }}</h3>
@@ -97,7 +105,7 @@
               </tbody>
             </table>
           </div>
-          
+
           <!-- Export options -->
           <div class="export-options">
             <h3>{{ isArabic ? 'تصدير التقرير' : 'Export Report' }}</h3>
@@ -106,7 +114,8 @@
                 <span class="export-icon">📊</span> {{ isArabic ? 'تصدير إلى Excel' : 'Export to Excel' }}
               </button> -->
               <button class="btn-export btn-pdf" @click="exportToPDF">
-                <span class="export-icon">📄</span> {{ isArabic ? 'تصدير إلى PDF' : 'Export to PDF' }}
+                <span class="export-icon">📄</span>
+                {{ isArabic ? 'تصدير إلى PDF' : 'Export to PDF' }}
               </button>
               <!-- <button class="btn-export btn-word" @click="exportToWord">
                 <span class="export-icon">📝</span> {{ isArabic ? 'تصدير إلى Word' : 'Export to Word' }}
@@ -120,14 +129,14 @@
 </template>
 
 <script>
-import { ref, onMounted, watch } from 'vue';
-import * as XLSX from 'xlsx';
-import { jsPDF } from 'jspdf';
-import 'jspdf-autotable'; // Make sure this import is present
-import html2canvas from 'html2canvas';
-import transferService from '@/services/transferService';
-import { useThemeStore } from '@/stores/themeStore';
-import logoImage from '@/assets/img/lightidea_logo.png'; // Import the logo image
+import { ref, onMounted, watch } from 'vue'
+import * as XLSX from 'xlsx'
+import { jsPDF } from 'jspdf'
+import 'jspdf-autotable' // Make sure this import is present
+import html2canvas from 'html2canvas'
+import transferService from '@/services/transferService'
+import { useThemeStore } from '@/stores/themeStore'
+import logoImage from '@/assets/img/lightidea_logo.png' // Import the logo image
 
 export default {
   name: 'TransferReport',
@@ -135,189 +144,222 @@ export default {
     show: Boolean,
     transactionId: {
       type: [Number, String],
-      required: true
-    }
+      required: true,
+    },
   },
   setup(props, { emit }) {
-    const themeStore = useThemeStore();
-    const isArabic = () => themeStore.language === 'ar';
-    
-    const loading = ref(false);
-    const error = ref(false);
+    const themeStore = useThemeStore()
+    const isArabic = () => themeStore.language === 'ar'
+
+    const loading = ref(false)
+    const error = ref(false)
     const reportData = ref({
       summary: {},
       transfers: [],
-      status: {}
-    });
+      status: {},
+    })
 
     const loadReportData = async () => {
       if (!props.transactionId) {
-        error.value = true;
-        return;
+        error.value = true
+        return
       }
 
-      loading.value = true;
-      error.value = false;
-      
+      loading.value = true
+      error.value = false
+
       try {
-        const data = await transferService.getTransferDetails(props.transactionId);
-        
+        const data = await transferService.getTransferDetails(props.transactionId)
+
         if (data && data.transfers) {
-          reportData.value = data;
+          reportData.value = data
         } else {
-          console.error('Invalid data structure received:', data);
-          error.value = true;
+          console.error('Invalid data structure received:', data)
+          error.value = true
         }
       } catch (err) {
-        console.error('Failed to load report data:', err);
-        error.value = true;
+        console.error('Failed to load report data:', err)
+        error.value = true
       } finally {
-        loading.value = false;
+        loading.value = false
       }
-    };
+    }
 
     // Add a watcher for the show prop to load data when the modal becomes visible
-    watch(() => props.show, (newValue) => {
-      if (newValue === true) {
-        loadReportData();
-      }
-    });
+    watch(
+      () => props.show,
+      (newValue) => {
+        if (newValue === true) {
+          loadReportData()
+        }
+      },
+    )
 
     // Keep the onMounted hook to handle the initial state
     onMounted(() => {
       if (props.show) {
-        loadReportData();
+        loadReportData()
       }
-    });
+    })
 
     const closeModal = () => {
-      emit('close');
-    };
-    
+      emit('close')
+    }
+
     const formatNumber = (value) => {
-      if (value === null || value === undefined) return '-';
+      if (value === null || value === undefined) return '-'
       return new Intl.NumberFormat(isArabic() ? 'ar-SA' : 'en-US', {
         minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }).format(value);
-    };
-    
+        maximumFractionDigits: 2,
+      }).format(value)
+    }
+
     const formatCostCenterName = (name) => {
-      if (!name) return '-';
+      if (!name) return '-'
       // Remove the code prefix if it exists (e.g., "C0102001: ")
-      return name.includes(':') ? name.split(':')[1].trim() : name;
-    };
-    
+      return name.includes(':') ? name.split(':')[1].trim() : name
+    }
+
     const formatStatus = (status) => {
-      if (!status) return isArabic() ? 'غير معروف' : 'Unknown';
-      
+      if (!status) return isArabic() ? 'غير معروف' : 'Unknown'
+
       if (isArabic()) {
         switch (status) {
-          case 'approved': return 'معتمد';
-          case 'is rejected': return 'مرفوض';
-          case 'watting for approval': return 'في انتظار الموافقة';
-          case 'not yet sent for approval': return 'لم يتم الإرسال للموافقة';
-          default: return status;
+          case 'approved':
+            return 'معتمد'
+          case 'is rejected':
+            return 'مرفوض'
+          case 'watting for approval':
+            return 'في انتظار الموافقة'
+          case 'not yet sent for approval':
+            return 'لم يتم الإرسال للموافقة'
+          default:
+            return status
         }
       } else {
         switch (status) {
-          case 'watting for approval': return 'Waiting for approval';
-          default: return status.charAt(0).toUpperCase() + status.slice(1);
+          case 'watting for approval':
+            return 'Waiting for approval'
+          default:
+            return status.charAt(0).toUpperCase() + status.slice(1)
         }
       }
-    };
-    
+    }
+
     const getStatusClass = () => {
-      const status = reportData.value?.status?.status;
-      if (!status) return '';
-      
+      const status = reportData.value?.status?.status
+      if (!status) return ''
+
       switch (status) {
-        case 'approved': return 'status-approved';
-        case 'is rejected': return 'status-rejected';
-        case 'watting for approval': return 'status-waiting';
-        case 'not yet sent for approval': return 'status-not-sent';
-        default: return '';
+        case 'approved':
+          return 'status-approved'
+        case 'is rejected':
+          return 'status-rejected'
+        case 'watting for approval':
+          return 'status-waiting'
+        case 'not yet sent for approval':
+          return 'status-not-sent'
+        default:
+          return ''
       }
-    };
+    }
 
     /* Add the dictionary for internationalization and helper function */
     const dict = {
       ar: {
-        SUMMARY_TITLE : 'ملخص التقرير',
-        SUMMARY_SHEET : 'ملخص',
-        DETAIL_SHEET  : 'تفاصيل المناقلات',
+        SUMMARY_TITLE: 'ملخص التقرير',
+        SUMMARY_SHEET: 'ملخص',
+        DETAIL_SHEET: 'تفاصيل المناقلات',
         TRANSACTION_ID: 'رقم المعاملة',
-        TOTAL_TRANSFERS:'عدد المناقلات',
-        TOTAL_FROM    : 'إجمالي من',
-        TOTAL_TO      : 'إجمالي إلى',
-        STATUS        : 'الحالة',
-        BALANCED      : 'متوازن',
-        YES           : 'نعم',
-        NO            : 'لا',
-        CC_CODE       : 'رقم البند',
-        CC_NAME       : 'اسم البند',
-        ACC_CODE      : 'رقم الحساب',
-        ACC_NAME      : 'اسم الحساب',
-        FROM          : 'من',
-        TO            : 'إلى',
-        APPROVED      : 'الموازنة المعتمدة',
-        ACTUAL        : 'الحالي',
-        AVAILABLE     : 'الموازنة المتاحة',
-        ENCUMBRANCE   : 'الارتباط',
-        TOTAL_LABEL   : 'المجموع',
-        FILE_PREFIX   : 'تقرير_المناقلات'
+        TOTAL_TRANSFERS: 'عدد المناقلات',
+        TOTAL_FROM: 'إجمالي من',
+        TOTAL_TO: 'إجمالي إلى',
+        STATUS: 'الحالة',
+        BALANCED: 'متوازن',
+        YES: 'نعم',
+        NO: 'لا',
+        CC_CODE: 'رقم البند',
+        CC_NAME: 'اسم البند',
+        ACC_CODE: 'رقم الحساب',
+        ACC_NAME: 'اسم الحساب',
+        FROM: 'من',
+        TO: 'إلى',
+        APPROVED: 'الموازنة المعتمدة',
+        ACTUAL: 'الحالي',
+        AVAILABLE: 'الموازنة المتاحة',
+        ENCUMBRANCE: 'الارتباط',
+        TOTAL_LABEL: 'المجموع',
+        FILE_PREFIX: 'تقرير_المناقلات',
       },
       en: {
-        SUMMARY_TITLE : 'Report Summary',
-        SUMMARY_SHEET : 'Summary',
-        DETAIL_SHEET  : 'Transfer Details',
+        SUMMARY_TITLE: 'Report Summary',
+        SUMMARY_SHEET: 'Summary',
+        DETAIL_SHEET: 'Transfer Details',
         TRANSACTION_ID: 'Transaction ID',
-        TOTAL_TRANSFERS:'Total Transfers',
-        TOTAL_FROM    : 'Total From',
-        TOTAL_TO      : 'Total To',
-        STATUS        : 'Status',
-        BALANCED      : 'Balanced',
-        YES           : 'Yes',
-        NO            : 'No',
-        CC_CODE       : 'Cost Center Code',
-        CC_NAME       : 'Cost Center Name',
-        ACC_CODE      : 'Account Code',
-        ACC_NAME      : 'Account Name',
-        FROM          : 'From',
-        TO            : 'To',
-        APPROVED      : 'Approved Budget',
-        ACTUAL        : 'Actual',
-        AVAILABLE     : 'Available Budget',
-        ENCUMBRANCE   : 'Encumbrance',
-        TOTAL_LABEL   : 'Total',
-        FILE_PREFIX   : 'Transfer_Report'
-      }
-    };
-    
-    const safeName = n => (n.length > 31 ? n.slice(0,30) : n).replace(/[/\\?*[\]:]/g,'');
-    
+        TOTAL_TRANSFERS: 'Total Transfers',
+        TOTAL_FROM: 'Total From',
+        TOTAL_TO: 'Total To',
+        STATUS: 'Status',
+        BALANCED: 'Balanced',
+        YES: 'Yes',
+        NO: 'No',
+        CC_CODE: 'Cost Center Code',
+        CC_NAME: 'Cost Center Name',
+        ACC_CODE: 'Account Code',
+        ACC_NAME: 'Account Name',
+        FROM: 'From',
+        TO: 'To',
+        APPROVED: 'Approved Budget',
+        ACTUAL: 'Actual',
+        AVAILABLE: 'Available Budget',
+        ENCUMBRANCE: 'Encumbrance',
+        TOTAL_LABEL: 'Total',
+        FILE_PREFIX: 'Transfer_Report',
+      },
+    }
+
+    const safeName = (n) => (n.length > 31 ? n.slice(0, 30) : n).replace(/[/\\?*[\]:]/g, '')
+
     const exportToPDF = async () => {
-      if (loading.value || error.value || !reportData.value.transfers || reportData.value.transfers.length === 0) {
-      alert(isArabic() ? 'لا توجد بيانات لتصديرها أو البيانات لا تزال قيد التحميل.' : 'No data to export or data is still loading.');
-      return;
+      if (
+        loading.value ||
+        error.value ||
+        !reportData.value.transfers ||
+        reportData.value.transfers.length === 0
+      ) {
+        alert(
+          isArabic()
+            ? 'لا توجد بيانات لتصديرها أو البيانات لا تزال قيد التحميل.'
+            : 'No data to export or data is still loading.',
+        )
+        return
       }
 
       try {
-      console.log('Starting PDF generation using html2canvas...');
-      const rtl = isArabic();
+        console.log('Starting PDF generation using html2canvas...')
+        const rtl = isArabic()
 
-      // Calculate totals for the footer
-      const totalFrom = reportData.value.summary?.total_from || 0;
-      const totalTo = reportData.value.summary?.total_to || 0;
-      const totalApprovedBudget = reportData.value.transfers.reduce((sum, item) => sum + (parseFloat(item.approved_budget) || 0), 0);
-      const totalActual = reportData.value.transfers.reduce((sum, item) => sum + (parseFloat(item.actual) || 0), 0);
-      const totalAvailableBudget = reportData.value.transfers.reduce((sum, item) => sum + (parseFloat(item.available_budget) || 0), 0);
+        // Calculate totals for the footer
+        const totalFrom = reportData.value.summary?.total_from || 0
+        const totalTo = reportData.value.summary?.total_to || 0
+        const totalApprovedBudget = reportData.value.transfers.reduce(
+          (sum, item) => sum + (parseFloat(item.approved_budget) || 0),
+          0,
+        )
+        const totalActual = reportData.value.transfers.reduce(
+          (sum, item) => sum + (parseFloat(item.actual) || 0),
+          0,
+        )
+        const totalAvailableBudget = reportData.value.transfers.reduce(
+          (sum, item) => sum + (parseFloat(item.available_budget) || 0),
+          0,
+        )
 
-      // Get the absolute URL for the logo image
-      const logoUrl = new URL(logoImage, import.meta.url).href;
+        // Get the absolute URL for the logo image
+        const logoUrl = new URL(logoImage, import.meta.url).href
 
-      const htmlReportContent = `
-      <div id="pdf-export-content" lang="${rtl ? 'ar' : 'en'}" style="direction: ${rtl ? 'rtl' : 'ltr'}; font-family: ${rtl ? "Tahoma, Arial, sans-serif" : "Arial, 'Helvetica Neue', Helvetica, sans-serif"}; width: 1050px; background-color: #fff; padding: 20px; box-sizing: border-box;">
+        const htmlReportContent = `
+      <div id="pdf-export-content" lang="${rtl ? 'ar' : 'en'}" style="direction: ${rtl ? 'rtl' : 'ltr'}; font-family: ${rtl ? 'Tahoma, Arial, sans-serif' : "Arial, 'Helvetica Neue', Helvetica, sans-serif"}; width: 1050px; background-color: #fff; padding: 20px; box-sizing: border-box;">
       <style>
         body { margin: 0; }
         #pdf-export-content h1, #pdf-export-content h2 {
@@ -359,7 +401,7 @@ export default {
         .logo-container { ${rtl ? 'margin-left' : 'margin-right'}: 20px; }
         .report-title { flex: 1; }
       </style>
-      
+
       <div class="report-header">
         <div class="logo-container">
           <img src="${logoUrl}" alt="Logo" style="max-height: 70px; max-width: 200px;" />
@@ -368,7 +410,7 @@ export default {
           <th style="font-size: 42px; color: #333; font-weight: bold; margin-top: 0; margin-bottom: 15px; text-align: ${rtl ? 'right' : 'left'}; display: block; width: 100%;">${rtl ? 'تقرير المناقلة' : 'Transfer Report'}</th>
         </div>
       </div>
-      
+
       <div class="summary-section">
         <th style="font-size: 42px; color: #333; font-weight: bold; margin-top: 0; margin-bottom: 15px; text-align: ${rtl ? 'right' : 'left'}; display: block; width: 100%;">${rtl ? 'ملخص' : 'Summary'}</th>
 
@@ -389,23 +431,9 @@ export default {
           <span class="summary-label">${rtl ? 'مجموع المناقلات (إلى):' : 'Total To:'}</span>
           <span class="summary-value number-cell">${formatNumber(reportData.value.summary?.total_to)}</span>
         </div>
-        <div class="summary-item">
-          <span class="summary-label">${rtl ? 'الحالة:' : 'Status:'}</span>
-          <span class="summary-value">
-          <span class="status-badge ${getStatusClass()}">
-          ${formatStatus(reportData.value.status?.status)}
-          </span>
-          </span>
-        </div>
-        <div class="summary-item">
-          <span class="summary-label">${rtl ? 'متوازن:' : 'Balanced:'}</span>
-          <span class="summary-value ${reportData.value.summary?.balanced ? 'balanced-true' : 'balanced-false'}">
-          ${reportData.value.summary?.balanced ? (rtl ? 'نعم' : 'Yes') : (rtl ? 'لا' : 'No')}
-          </span>
-        </div>
         </div>
       </div>
-      
+
       <div class="details-section">
               <th style="font-size: 42px; color: #333; font-weight: bold; margin-top: 0; margin-bottom: 15px; text-align: ${rtl ? 'right' : 'left'}; display: block; width: 100%;">${rtl ? 'تفاصيل المناقلات' : 'Transfer Details'}</th>
         <table>
@@ -424,7 +452,9 @@ export default {
           </tr>
         </thead>
         <tbody>
-          ${reportData.value.transfers.map((item, index) => `
+          ${reportData.value.transfers
+            .map(
+              (item, index) => `
           <tr>
           <td>${index + 1}</td>
           <td>${item.cost_center_code || '-'}</td>
@@ -437,7 +467,9 @@ export default {
           <td class="number-cell">${formatNumber(item.actual)}</td>
           <td class="number-cell">${formatNumber(item.available_budget)}</td>
           </tr>
-          `).join('')}
+          `,
+            )
+            .join('')}
         </tbody>
         <tfoot>
           <tr>
@@ -452,66 +484,69 @@ export default {
         </table>
       </div>
       </div>
-      `;
+      `
 
-      const tempDiv = document.createElement('div');
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px'; // Position off-screen
-      tempDiv.style.top = '-9999px';
-      tempDiv.style.width = '1050px'; // Width for html2canvas rendering
-      tempDiv.innerHTML = htmlReportContent;
-      document.body.appendChild(tempDiv);
+        const tempDiv = document.createElement('div')
+        tempDiv.style.position = 'absolute'
+        tempDiv.style.left = '-9999px' // Position off-screen
+        tempDiv.style.top = '-9999px'
+        tempDiv.style.width = '1050px' // Width for html2canvas rendering
+        tempDiv.innerHTML = htmlReportContent
+        document.body.appendChild(tempDiv)
 
-      const contentElement = tempDiv.querySelector('#pdf-export-content');
-      if (!contentElement) {
-      document.body.removeChild(tempDiv);
-      throw new Error("Could not find #pdf-export-content element for rendering.");
-      }
-      
-      const canvas = await html2canvas(contentElement, { 
-      scale: 2, // Higher scale for better resolution
-      useCORS: true,
-      logging: false, 
-      backgroundColor: '#ffffff' 
-      });
-      
-      document.body.removeChild(tempDiv); 
+        const contentElement = tempDiv.querySelector('#pdf-export-content')
+        if (!contentElement) {
+          document.body.removeChild(tempDiv)
+          throw new Error('Could not find #pdf-export-content element for rendering.')
+        }
 
-      const imgData = canvas.toDataURL('image/png');
-      
-      const pdf = new jsPDF({
-      orientation: 'landscape',
-      unit: 'mm',
-      format: 'a4'
-      });
+        const canvas = await html2canvas(contentElement, {
+          scale: 2, // Higher scale for better resolution
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+        })
 
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfPageWidth = pdf.internal.pageSize.getWidth();
-      const pdfPageHeight = pdf.internal.pageSize.getHeight();
+        document.body.removeChild(tempDiv)
 
-      const imgRenderedHeight = (imgProps.height * pdfPageWidth) / imgProps.width;
+        const imgData = canvas.toDataURL('image/png')
 
-      let heightLeft = imgRenderedHeight;
-      let yPositionOnPdf = 0; 
+        const pdf = new jsPDF({
+          orientation: 'landscape',
+          unit: 'mm',
+          format: 'a4',
+        })
 
-      pdf.addImage(imgData, 'PNG', 0, yPositionOnPdf, pdfPageWidth, imgRenderedHeight);
-      heightLeft -= pdfPageHeight;
+        const imgProps = pdf.getImageProperties(imgData)
+        const pdfPageWidth = pdf.internal.pageSize.getWidth()
+        const pdfPageHeight = pdf.internal.pageSize.getHeight()
 
-      while (heightLeft > 0) {
-      yPositionOnPdf -= pdfPageHeight; 
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, yPositionOnPdf, pdfPageWidth, imgRenderedHeight);
-      heightLeft -= pdfPageHeight;
-      }
-      
-      pdf.save(`Transfer_Report_${props.transactionId}.pdf`);
-      console.log('PDF generated successfully using html2canvas');
+        const imgRenderedHeight = (imgProps.height * pdfPageWidth) / imgProps.width
 
+        let heightLeft = imgRenderedHeight
+        let yPositionOnPdf = 0
+
+        pdf.addImage(imgData, 'PNG', 0, yPositionOnPdf, pdfPageWidth, imgRenderedHeight)
+        heightLeft -= pdfPageHeight
+
+        while (heightLeft > 0) {
+          yPositionOnPdf -= pdfPageHeight
+          pdf.addPage()
+          pdf.addImage(imgData, 'PNG', 0, yPositionOnPdf, pdfPageWidth, imgRenderedHeight)
+          heightLeft -= pdfPageHeight
+        }
+
+        pdf.save(`Transfer_Report_${props.transactionId}.pdf`)
+        console.log('PDF generated successfully using html2canvas')
       } catch (error) {
-      console.error('Error generating PDF with html2canvas:', error);
-      alert(isArabic() ? 'حدث خطأ أثناء إنشاء ملف PDF. يرجى التحقق من وحدة التحكم للحصول على التفاصيل.' : 'Could not generate PDF. Please check console for details.');
+        console.error('Error generating PDF with html2canvas:', error)
+        alert(
+          isArabic()
+            ? 'حدث خطأ أثناء إنشاء ملف PDF. يرجى التحقق من وحدة التحكم للحصول على التفاصيل.'
+            : 'Could not generate PDF. Please check console for details.',
+        )
       }
-    };
+    }
 
     return {
       loading,
@@ -524,10 +559,10 @@ export default {
       formatCostCenterName,
       formatStatus,
       getStatusClass,
-      exportToPDF
-    };
-  }
-};
+      exportToPDF,
+    }
+  },
+}
 </script>
 
 <style scoped>
@@ -588,7 +623,8 @@ export default {
   padding: 20px;
 }
 
-.loading-container, .error-container {
+.loading-container,
+.error-container {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -607,13 +643,17 @@ export default {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .btn-retry {
   padding: 8px 16px;
-  background-color: #2196F3;
+  background-color: #2196f3;
   color: white;
   border: none;
   border-radius: 4px;
@@ -664,7 +704,8 @@ export default {
   margin: 20px 0;
 }
 
-.transfers-table th, .transfers-table td {
+.transfers-table th,
+.transfers-table td {
   padding: 10px;
   text-align: left;
   border: 1px solid #ddd;
@@ -705,7 +746,9 @@ export default {
   font-weight: 500;
   display: flex;
   align-items: center;
-  transition: background-color 0.2s, transform 0.1s;
+  transition:
+    background-color 0.2s,
+    transform 0.1s;
 }
 
 .btn-export:hover {
@@ -748,21 +791,21 @@ export default {
 }
 
 /* RTL Support */
-:host-context([dir="rtl"]) .summary-grid,
-:host-context([dir="rtl"]) .export-buttons {
+:host-context([dir='rtl']) .summary-grid,
+:host-context([dir='rtl']) .export-buttons {
   direction: rtl;
 }
 
-:host-context([dir="rtl"]) .transfers-table th,
-:host-context([dir="rtl"]) .transfers-table td {
+:host-context([dir='rtl']) .transfers-table th,
+:host-context([dir='rtl']) .transfers-table td {
   text-align: right;
 }
 
-:host-context([dir="rtl"]) .number-cell {
+:host-context([dir='rtl']) .number-cell {
   text-align: left;
 }
 
-:host-context([dir="rtl"]) .export-icon {
+:host-context([dir='rtl']) .export-icon {
   margin-right: 0;
   margin-left: 8px;
 }

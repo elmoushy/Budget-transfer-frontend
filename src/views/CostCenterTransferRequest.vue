@@ -222,13 +222,25 @@
             <tr>
               <td colspan="11" class="add-row-cell">
                 <button
-                  class="btn-add-row"
+                  class="btn-modern btn-add-row-modern"
                   @click="addNewRow"
                   :disabled="!isScreenEditable"
                   :class="{ 'btn-disabled': !isScreenEditable }"
                 >
-                  <span class="add-icon">+</span>
-                  {{ isArabic ? 'إضافة صف جديد' : 'Add New Row' }}
+                  <span class="btn-icon-modern">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                  </span>
+                  <span class="btn-text">{{ isArabic ? 'إضافة صف جديد' : 'Add New Row' }}</span>
                 </button>
               </td>
             </tr>
@@ -242,37 +254,91 @@
       </div>
 
       <!-- Action buttons -->
-      <div class="action-buttons">
+      <div class="action-buttons-modern">
         <button
-          class="btn-action btn-submit"
+          class="btn-modern btn-submit"
           @click="submitRequest"
           :disabled="!isSubmitButtonEnabled"
           :class="{ 'btn-disabled': !isSubmitButtonEnabled }"
         >
-          <span class="btn-icon">→</span>
-          {{ isArabic ? 'تقديم' : 'Submit' }}
+          <span class="btn-icon-modern">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </span>
+          <span class="btn-text">{{ isArabic ? 'تقديم' : 'Submit' }}</span>
         </button>
+
         <button
-          class="btn-action btn-upload"
+          class="btn-modern btn-upload"
           @click="uploadFile"
           :disabled="!isUploadButtonEnabled"
           :class="{ 'btn-disabled': !isUploadButtonEnabled }"
         >
-          <span class="btn-icon">↑</span>
-          {{ isArabic ? 'رفع ملف المناقلة' : 'Upload Transfer File' }}
+          <span class="btn-icon-modern">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7,10 12,15 17,10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </span>
+          <span class="btn-text">{{ isArabic ? 'رفع ملف المناقلة' : 'Upload Transfer File' }}</span>
         </button>
+
         <button
-          class="btn-action btn-reopen"
+          class="btn-modern btn-reopen"
           @click="reopenRequest"
           :disabled="!isReopenButtonEnabled"
           :class="{ 'btn-disabled': !isReopenButtonEnabled }"
         >
-          <span class="btn-icon">↻</span>
-          {{ isArabic ? 'إعادة فتح الطلب' : 'Re-open Request' }}
+          <span class="btn-icon-modern">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M1 4v6h6" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+            </svg>
+          </span>
+          <span class="btn-text">{{ isArabic ? 'إعادة فتح الطلب' : 'Re-open Request' }}</span>
         </button>
-        <button class="btn-action btn-report" @click="generateReport">
-          <span class="btn-icon">📄</span>
-          {{ isArabic ? 'تقرير' : 'Report' }}
+
+        <button class="btn-modern btn-report" @click="generateReport">
+          <span class="btn-icon-modern">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14,2 14,8 20,8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <polyline points="10,9 9,9 8,9" />
+            </svg>
+          </span>
+          <span class="btn-text">{{ isArabic ? 'تقرير' : 'Report' }}</span>
         </button>
       </div>
 
@@ -294,25 +360,160 @@
       />
     </div>
 
-    <!-- Error details modal (outside table structure) -->
-    <div v-if="showErrorModal" class="error-modal-overlay" @click="hideErrorModal">
-      <div class="error-modal-content" @click.stop>
-        <div class="error-modal-header">
-          <h3>{{ isArabic ? 'أخطاء التحقق' : 'Validation Errors' }}</h3>
-          <button class="error-modal-close" @click="hideErrorModal">×</button>
-        </div>
-        <div class="error-modal-body">
-          <ul class="error-list">
-            <li v-for="(error, errorIndex) in currentErrors" :key="errorIndex">{{ error }}</li>
-          </ul>
-        </div>
+    <!-- Enhanced Error Details Modal -->
+    <Transition name="modal-fade" appear>
+      <div v-if="showErrorModal" class="enhanced-error-modal-overlay" @click="hideErrorModal">
+        <div class="enhanced-error-modal-backdrop"></div>
+        <Transition name="modal-slide" appear>
+          <div
+            class="enhanced-error-modal-container"
+            @click.stop
+            tabindex="-1"
+            role="dialog"
+            aria-labelledby="error-modal-title"
+            aria-describedby="error-modal-description"
+            aria-modal="true"
+          >
+            <div class="enhanced-error-modal-content">
+              <!-- Header with icon and gradient -->
+              <div class="enhanced-error-modal-header">
+                <div class="error-header-icon">
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    class="error-icon-svg"
+                  >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                  </svg>
+                </div>
+                <div class="error-header-content">
+                  <h3 class="error-modal-title">
+                    {{ isArabic ? 'أخطاء التحقق من صحة البيانات' : 'Data Validation Errors' }}
+                  </h3>
+                  <p class="error-modal-subtitle">
+                    {{
+                      isArabic
+                        ? `تم العثور على ${currentErrors.length} أخطاء تحتاج إلى إصلاح`
+                        : `Found ${currentErrors.length} errors that need to be fixed`
+                    }}
+                  </p>
+                </div>
+                <button
+                  class="enhanced-error-modal-close"
+                  @click="hideErrorModal"
+                  :aria-label="isArabic ? 'إغلاق' : 'Close'"
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Enhanced Error List -->
+              <div class="enhanced-error-modal-body">
+                <div class="error-summary-stats">
+                  <div class="error-stat-item">
+                    <span class="error-stat-number">{{ currentErrors.length }}</span>
+                    <span class="error-stat-label">
+                      {{ isArabic ? 'أخطاء' : 'Errors' }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="error-list-container">
+                  <TransitionGroup name="error-item" tag="div" class="enhanced-error-list">
+                    <div
+                      v-for="(error, errorIndex) in currentErrors"
+                      :key="`error-${errorIndex}`"
+                      class="enhanced-error-item"
+                      :style="{ animationDelay: `${errorIndex * 100}ms` }"
+                    >
+                      <div class="error-item-icon">
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        >
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <line x1="12" y1="8" x2="12" y2="12"></line>
+                          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                      </div>
+                      <div class="error-item-content">
+                        <span class="error-item-text">{{ error }}</span>
+                        <div class="error-item-type">
+                          {{ getErrorType(error) }}
+                        </div>
+                      </div>
+                    </div>
+                  </TransitionGroup>
+                </div>
+              </div>
+
+              <!-- Enhanced Footer -->
+              <div class="enhanced-error-modal-footer">
+                <div class="error-help-text">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                  <span>
+                    {{
+                      isArabic
+                        ? 'قم بإصلاح هذه الأخطاء قبل المتابعة'
+                        : 'Please fix these errors before proceeding'
+                    }}
+                  </span>
+                </div>
+                <button class="enhanced-error-modal-action-btn" @click="hideErrorModal">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M9 18l6-6-6-6" />
+                  </svg>
+                  <span>{{ isArabic ? 'فهمت' : 'Got it' }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </Transition>
       </div>
-    </div>
+    </Transition>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, watchEffect } from 'vue'
+import { ref, computed, onMounted, watch, watchEffect, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -999,14 +1200,37 @@ const showErrorModal = ref(false)
 const currentErrors = ref<string[]>([])
 
 // Method to show error details in modal
-const showErrorDetails = (errors: any[]) => {
+const showErrorDetails = (errors: string[]) => {
   currentErrors.value = errors
   showErrorModal.value = true
+  // Add keyboard navigation
+  document.addEventListener('keydown', handleErrorModalKeydown)
+  // Focus the modal for accessibility
+  nextTick(() => {
+    const modal = document.querySelector('.enhanced-error-modal-container') as HTMLElement
+    if (modal) {
+      modal.focus()
+    }
+  })
 }
 
-// Method to hide error modal
+// Enhanced error modal with keyboard navigation and accessibility
 const hideErrorModal = () => {
   showErrorModal.value = false
+  currentErrors.value = []
+  // Remove event listeners
+  document.removeEventListener('keydown', handleErrorModalKeydown)
+}
+
+const handleErrorModalKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape') {
+    hideErrorModal()
+  } else if (
+    event.key === 'Enter' &&
+    (event.target as HTMLElement)?.classList.contains('enhanced-error-modal-action-btn')
+  ) {
+    hideErrorModal()
+  }
 }
 
 // File upload modal state
@@ -1028,6 +1252,67 @@ const handleUploadSuccess = () => {
   loadData()
 }
 
+// Enhanced error modal methods
+const getErrorType = (error: string) => {
+  if (error.toLowerCase().includes('required') || error.toLowerCase().includes('مطلوب')) {
+    return isArabic.value ? 'حقل مطلوب' : 'Required Field'
+  } else if (error.toLowerCase().includes('invalid') || error.toLowerCase().includes('غير صحيح')) {
+    return isArabic.value ? 'قيمة غير صحيحة' : 'Invalid Value'
+  } else if (error.toLowerCase().includes('format') || error.toLowerCase().includes('تنسيق')) {
+    return isArabic.value ? 'خطأ في التنسيق' : 'Format Error'
+  } else if (error.toLowerCase().includes('budget') || error.toLowerCase().includes('ميزانية')) {
+    return isArabic.value ? 'خطأ في الميزانية' : 'Budget Error'
+  }
+  return isArabic.value ? 'خطأ عام' : 'General Error'
+}
+
+const getErrorPriority = (error: string) => {
+  if (error.toLowerCase().includes('required') || error.toLowerCase().includes('budget')) {
+    return 'high-priority'
+  } else if (error.toLowerCase().includes('format') || error.toLowerCase().includes('invalid')) {
+    return 'medium-priority'
+  }
+  return 'low-priority'
+}
+
+const getErrorPriorityText = (error: string) => {
+  const priority = getErrorPriority(error)
+  if (priority === 'high-priority') {
+    return isArabic.value ? 'عالي' : 'High'
+  } else if (priority === 'medium-priority') {
+    return isArabic.value ? 'متوسط' : 'Medium'
+  }
+  return isArabic.value ? 'منخفض' : 'Low'
+}
+
+const errorCategories = computed(() => {
+  const categories = {}
+
+  currentErrors.value.forEach((error) => {
+    const type = getErrorType(error)
+    if (!categories[type]) {
+      categories[type] = { name: type, count: 0, icon: '⚠️' }
+    }
+    categories[type].count++
+  })
+
+  // Set appropriate icons
+  Object.keys(categories).forEach((key) => {
+    const category = categories[key]
+    if (key.includes('Required') || key.includes('مطلوب')) {
+      category.icon = '📋'
+    } else if (key.includes('Invalid') || key.includes('غير صحيح')) {
+      category.icon = '❌'
+    } else if (key.includes('Format') || key.includes('تنسيق')) {
+      category.icon = '📝'
+    } else if (key.includes('Budget') || key.includes('ميزانية')) {
+      category.icon = '💰'
+    }
+  })
+
+  return Object.values(categories)
+})
+
 // Add these new methods after the existing methods in the script setup section
 const fetchPivotFundDetails = async (item: any) => {
   // Only fetch if both cost center and account codes are set
@@ -1041,14 +1326,32 @@ const fetchPivotFundDetails = async (item: any) => {
       item.account_code,
     )
 
-    if (response && response.data) {
+    // Check if the response contains "Pivot fund not found" message
+    if (response && (response as { message?: string }).message === 'Pivot fund not found.') {
+      // Reset financial values but keep the cost center and account selections
+      item.actual = 0
+      item.available_budget = 0
+      item.approved_budget = 0
+      item.encumbrance = 0
+      item.financialDataFromApi = false
+
+      // Alert the user about the missing data
+      alert(
+        isArabic.value
+          ? `لا توجد بيانات مالية لهذا التحديد. المركز: ${item.cost_center_code}, الحساب: ${item.account_code}`
+          : `No financial data found for Cost Center: ${item.cost_center_code}, Account: ${item.account_code}`,
+      )
+
+      // Mark that changes have been made
+      checkForChanges()
+    } else if (response && response.data) {
       // Update financial fields with retrieved data
       const data = response.data as any
 
-      // Update numeric values using safe conversion
+      // Update numeric values using safe conversion mapping API fields to component fields
       item.actual = toSafeNumber(data.actual)
-      item.available_budget = toSafeNumber(data.available_budget)
-      item.approved_budget = toSafeNumber(data.approved_budget)
+      item.available_budget = toSafeNumber(data.fund) // API returns 'fund' for available budget
+      item.approved_budget = toSafeNumber(data.budget) // API returns 'budget' for approved budget
       item.encumbrance = toSafeNumber(data.encumbrance)
 
       // Set flag to indicate data came from API
@@ -1235,5 +1538,75 @@ const showReportModal = ref(false)
   background-color: #444;
   border-color: #555;
   color: #aaa;
+}
+
+/* Modern button styles */
+.btn-modern {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 0.3s,
+    transform 0.3s;
+  outline: none;
+}
+
+.btn-modern:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-icon-modern {
+  margin-right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Specific button styles */
+.btn-submit {
+  background-color: #4caf50;
+  color: white;
+}
+
+.btn-submit:hover:not(:disabled) {
+  background-color: #45a049;
+  transform: translateY(-2px);
+}
+
+.btn-upload {
+  background-color: #2196f3;
+  color: white;
+}
+
+.btn-upload:hover:not(:disabled) {
+  background-color: #1e88e5;
+  transform: translateY(-2px);
+}
+
+.btn-reopen {
+  background-color: #ff9800;
+  color: white;
+}
+
+.btn-reopen:hover:not(:disabled) {
+  background-color: #fb8c00;
+  transform: translateY(-2px);
+}
+
+.btn-report {
+  background-color: #673ab7;
+  color: white;
+}
+
+.btn-report:hover:not(:disabled) {
+  background-color: #5e35b1;
+  transform: translateY(-2px);
 }
 </style>

@@ -3,10 +3,15 @@
   <header class="header" :class="{ 'dark-theme': isDarkMode }">
     <!-- logo + title -->
     <div class="left">
-      <img src="@/assets/img/lightidea_logo.png" alt="LightIdea Logo" class="logo-img" />
-      <h1 class="logo-text" style="transform: translateY(12px) !important">
+      <img
+        src="@/assets/img/Public_Investment Fund_id.png"
+        alt="LightIdea Logo"
+        class="logo-img"
+        style="width: 115px; height: auto"
+      />
+      <!-- <h1 class="logo-text" style="transform: translateY(12px) !important">
         {{ isArabic ? 'مناقلة' : 'Budget Transfer' }}
-      </h1>
+      </h1> -->
     </div>
 
     <!-- action icons -->
@@ -171,23 +176,23 @@ function toggleNotifications() {
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  background: linear-gradient(135deg, rgba(80, 19, 39, 0.85), rgba(99, 12, 41, 0.85));
+  background: linear-gradient(90deg, #e5f6f5 0%, #a4cac5 35%, #5e9b92 70%, #2c6d62 100%);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  color: #fff;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  color: #0c362f;
+  box-shadow: 0 4px 20px rgba(14, 77, 67, 0.08);
   position: sticky;
   top: 0;
   z-index: 100;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(44, 109, 98, 0.12);
+  transition: all 0.3s ease-in-out;
 }
 
 .header.dark-theme {
-  background: rgba(40, 10, 20, 0.85);
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.25),
-    0 0 0 1px rgba(255, 255, 255, 0.05),
-    inset 0 0 30px rgba(180, 70, 100, 0.03);
+  background: linear-gradient(90deg, #a4cac5 0%, #5e9b92 25%, #2c6d62 65%, #0e4d43 100%);
+  color: #e5f6f5;
+  box-shadow: 0 4px 20px rgba(14, 77, 67, 0.15);
+  border-bottom: 1px solid rgba(229, 246, 245, 0.15);
 }
 
 /* <-- clean left block --> */
@@ -196,25 +201,35 @@ function toggleNotifications() {
   align-items: center;
   gap: 16px;
   position: relative;
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: rgba(229, 246, 245, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.3s ease-in-out;
+}
+
+.header.dark-theme .left {
+  background: rgba(229, 246, 245, 0.15);
 }
 
 /* Logo with light effect */
 .logo-img {
   width: 36px;
   height: auto;
-  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
-  transition: all 0.3s ease;
+  filter: drop-shadow(0 0 4px rgba(14, 77, 67, 0.1));
+  transition: all 0.3s ease-in-out;
 }
 
 .logo-img:hover {
   transform: scale(1.05);
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
+  filter: drop-shadow(0 0 8px rgba(14, 77, 67, 0.2));
 }
 
 .logo-text {
   font-weight: 700;
   font-size: 22px;
-  background: linear-gradient(90deg, #ffffff, #f0f0f0);
+  background: linear-gradient(90deg, #0c362f, #2c6d62);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -241,7 +256,7 @@ function toggleNotifications() {
   justify-content: center;
   padding: 8px;
   border-radius: 50%;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.3s ease-in-out;
   position: relative;
   overflow: hidden;
 }
@@ -251,10 +266,14 @@ function toggleNotifications() {
   position: absolute;
   width: 100%;
   height: 100%;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(14, 77, 67, 0.08);
   border-radius: 50%;
   transform: scale(0);
-  transition: transform 0.4s ease;
+  transition: transform 0.3s ease-in-out;
+}
+
+.header.dark-theme .icon::before {
+  background: rgba(229, 246, 245, 0.1);
 }
 
 .icon:hover::before {
@@ -263,7 +282,11 @@ function toggleNotifications() {
 
 .icon:hover {
   transform: translateY(-2px);
-  color: rgba(255, 255, 255, 0.95);
+  color: #0e4d43;
+}
+
+.header.dark-theme .icon:hover {
+  color: #e5f6f5;
 }
 
 .icon:active {
@@ -286,8 +309,8 @@ function toggleNotifications() {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: linear-gradient(45deg, #ff9800, #ff5252);
-  box-shadow: 0 0 10px rgba(255, 152, 0, 0.6);
+  background: linear-gradient(45deg, #0e4d43, #2c6d62);
+  box-shadow: 0 0 10px rgba(14, 77, 67, 0.4);
   animation: pulse 2s infinite;
   z-index: 1;
 }
@@ -296,17 +319,18 @@ function toggleNotifications() {
   position: absolute;
   top: 40px;
   right: -20px;
-  background: #e53e3e;
-  color: white;
+  background: #0e4d43;
+  color: #e5f6f5;
   font-size: 0.8rem;
   font-weight: 500;
   padding: 8px 12px;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+  box-shadow: 0 4px 12px rgba(14, 77, 67, 0.25);
   white-space: nowrap;
   pointer-events: none;
   z-index: 300;
   animation: toast-slide-in 0.3s ease-out forwards;
+  transition: all 0.3s ease-in-out;
 }
 
 .notification-toast::before {
@@ -318,7 +342,19 @@ function toggleNotifications() {
   height: 0;
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
-  border-bottom: 6px solid #e53e3e;
+  border-bottom: 6px solid #0e4d43;
+}
+
+.notification-toast::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 26px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid #0e4d43;
 }
 
 [dir='rtl'] .notification-toast {
@@ -329,17 +365,30 @@ function toggleNotifications() {
 [dir='rtl'] .notification-toast::before {
   right: auto;
   left: 26px;
+  border-bottom: 6px solid #0e4d43;
 }
 
 .logout {
-  color: #ffcccb;
-  box-shadow: 0 0 0 1px rgba(255, 204, 203, 0.2);
+  color: #0e4d43;
+  box-shadow: 0 0 0 1px rgba(14, 77, 67, 0.2);
+  transition: all 0.3s ease-in-out;
 }
 
 .logout:hover {
   box-shadow:
-    0 0 0 1px rgba(255, 204, 203, 0.4),
-    0 0 15px rgba(255, 204, 203, 0.2);
+    0 0 0 1px rgba(14, 77, 67, 0.4),
+    0 0 15px rgba(14, 77, 67, 0.15);
+}
+
+.header.dark-theme .logout {
+  color: #e5f6f5;
+  box-shadow: 0 0 0 1px rgba(229, 246, 245, 0.2);
+}
+
+.header.dark-theme .logout:hover {
+  box-shadow:
+    0 0 0 1px rgba(229, 246, 245, 0.4),
+    0 0 15px rgba(229, 246, 245, 0.15);
 }
 
 /* Toggle switches */
@@ -353,6 +402,12 @@ function toggleNotifications() {
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.03em;
+  color: #0c362f;
+  transition: color 0.3s ease-in-out;
+}
+
+.header.dark-theme .toggle-label {
+  color: #e5f6f5;
 }
 
 .switch {
@@ -375,13 +430,18 @@ function toggleNotifications() {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(150, 150, 150, 0.2);
-  transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  background-color: rgba(94, 155, 146, 0.2);
+  transition: 0.3s ease-in-out;
   border-radius: 24px;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(44, 109, 98, 0.15);
   overflow: hidden;
+}
+
+.header.dark-theme .slider {
+  background-color: rgba(164, 202, 197, 0.2);
+  border: 1px solid rgba(229, 246, 245, 0.15);
 }
 
 .slider:before {
@@ -391,11 +451,15 @@ function toggleNotifications() {
   width: 18px;
   left: 3px;
   bottom: 2px;
-  background-color: white;
-  transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  background-color: #e5f6f5;
+  transition: 0.3s ease-in-out;
   border-radius: 50%;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 6px rgba(14, 77, 67, 0.15);
   z-index: 2;
+}
+
+.header.dark-theme .slider:before {
+  background-color: #2c6d62;
 }
 
 .slider::after {
@@ -403,13 +467,17 @@ function toggleNotifications() {
   position: absolute;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 152, 0, 0.1));
+  background: linear-gradient(90deg, transparent, rgba(14, 77, 67, 0.1));
   transform: translateX(-100%);
-  transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: 0.3s ease-in-out;
 }
 
 input:checked + .slider {
-  background-color: rgba(255, 152, 0, 0.3);
+  background-color: rgba(14, 77, 67, 0.3);
+}
+
+.header.dark-theme input:checked + .slider {
+  background-color: rgba(164, 202, 197, 0.3);
 }
 
 input:checked + .slider::after {
@@ -418,25 +486,30 @@ input:checked + .slider::after {
 
 input:focus + .slider {
   box-shadow:
-    0 0 2px rgba(255, 152, 0, 0.6),
-    0 0 0 1px rgba(255, 152, 0, 0.3);
+    0 0 2px rgba(14, 77, 67, 0.4),
+    0 0 0 1px rgba(14, 77, 67, 0.2);
 }
 
 input:checked + .slider:before {
   transform: translateX(22px);
-  background: #ff9800;
-  box-shadow: 0 0 8px rgba(255, 152, 0, 0.4);
+  background: #0e4d43;
+  box-shadow: 0 0 8px rgba(14, 77, 67, 0.3);
+}
+
+.header.dark-theme input:checked + .slider:before {
+  background: #a4cac5;
+  box-shadow: 0 0 8px rgba(164, 202, 197, 0.3);
 }
 
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7);
+    box-shadow: 0 0 0 0 rgba(14, 77, 67, 0.5);
   }
   70% {
-    box-shadow: 0 0 0 6px rgba(255, 152, 0, 0);
+    box-shadow: 0 0 0 6px rgba(14, 77, 67, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(255, 152, 0, 0);
+    box-shadow: 0 0 0 0 rgba(14, 77, 67, 0);
   }
 }
 
@@ -455,31 +528,48 @@ input:checked + .slider:before {
   font-size: 0.9rem;
   font-weight: 500;
   padding-right: 16px;
-  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  border-right: 1px solid rgba(44, 109, 98, 0.2);
   margin-right: 16px;
   letter-spacing: 0.02em;
   display: flex;
   align-items: center;
   gap: 8px;
   position: relative;
+  color: #0c362f;
+  transition: color 0.3s ease-in-out;
+}
+
+.header.dark-theme .username {
+  color: #e5f6f5;
+  border-right: 1px solid rgba(164, 202, 197, 0.2);
 }
 
 .username::before {
   content: '';
   width: 8px;
   height: 8px;
-  background: #4ade80;
+  background: #0e4d43;
   border-radius: 50%;
-  box-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
+  box-shadow: 0 0 8px rgba(14, 77, 67, 0.4);
   display: inline-block;
+  transition: all 0.3s ease-in-out;
+}
+
+.header.dark-theme .username::before {
+  background: #a4cac5;
+  box-shadow: 0 0 8px rgba(164, 202, 197, 0.4);
 }
 
 [dir='rtl'] .username {
   padding-right: 0;
   padding-left: 16px;
   border-right: none;
-  border-left: 1px solid rgba(255, 255, 255, 0.15);
+  border-left: 1px solid rgba(44, 109, 98, 0.2);
   margin-right: 0;
   margin-left: 16px;
+}
+
+[dir='rtl'] .header.dark-theme .username {
+  border-left: 1px solid rgba(164, 202, 197, 0.2);
 }
 </style>

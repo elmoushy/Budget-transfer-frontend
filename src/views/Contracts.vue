@@ -16,10 +16,6 @@
 
       <div class="toolbar-right">
         <div class="search-container">
-          <SearchIcon
-            class="search-icon"
-            :style="{ transform: isArabic ? 'translateX(-200px)' : 'translateX(200px)' }"
-          />
           <input
             v-model="searchQuery"
             type="search"
@@ -89,7 +85,7 @@
             <th>
               <p
                 :style="{
-                  transform: isArabic ? 'translateX(95px)!important' : 'translateX(30px)',
+                  transform: isArabic ? 'translateX(145px)!important' : 'translateX(66px)',
                 }"
               >
                 {{ tableHeaders.attachment }}
@@ -171,7 +167,7 @@
                   {{
                     row.attachment_count && row.attachment_count > 0
                       ? `${row.attachment_count} attachments`
-                      : 'No attachments'
+                      : 'attachments'
                   }}
                 </span>
                 <div
@@ -396,7 +392,6 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { EditIcon, FileTextIcon, SearchIcon, TrashIcon, PaperclipIcon } from 'lucide-vue-next'
 import { useThemeStore } from '@/stores/themeStore'
-import { useAuthStore } from '@/stores/authStore'
 import NewContractModal from '@/components/NewContractModal.vue'
 import EditContractModal from '@/components/EditContractModal.vue'
 import AttachmentModal from '@/components/AttachmentModal.vue'
@@ -464,14 +459,6 @@ function formatDate(dateString: string): string {
   if (!dateString) return ''
   const date = new Date(dateString)
   return date.toLocaleDateString()
-}
-
-function editGI(row: ContractData) {
-  console.log('Editing GI for row:', row.transaction_id)
-  // Set the current contract data for editing
-  currentEditContract.value = row
-  // Open the edit modal
-  showEditModal.value = true
 }
 
 function formatHtmlContent(html: string): string {
@@ -678,8 +665,6 @@ function animateBackgroundOrbs() {
 
 // ───────────────────────────────────────────────────────────── Theme & Lang
 const themeStore = useThemeStore()
-// Use auth store for API calls but not directly in template
-const authStore = useAuthStore()
 const isArabic = ref(false)
 const isDarkMode = ref(false)
 
@@ -745,11 +730,18 @@ async function fetchData() {
     const response = await contractService.fetchContracts(searchQuery.value, currentPage.value)
 
     // Handle the correct response structure
-    apiData.value = response
-    displayedRows.value = response?.results || []
-    totalCount.value = response?.count || 0
-    hasNextPage.value = !!response.next
-    hasPrevPage.value = !!response.previous
+    interface ContractApiResponse {
+      results: ContractData[]
+      count: number
+      next?: string
+      previous?: string
+    }
+    const data = response as unknown as ContractApiResponse
+    apiData.value = data as unknown as typeof apiData.value
+    displayedRows.value = data.results || []
+    totalCount.value = data.count || 0
+    hasNextPage.value = !!data.next
+    hasPrevPage.value = !!data.previous
 
     // Debug the response to see what we're getting
     console.log('API Response:', response)
@@ -844,7 +836,7 @@ function showFuturisticPopup(type: 'success' | 'error' | 'info', message: string
 <style scoped>
 /* Base page styles */
 .contract-page {
-  min-height: 100vh;
+  min-height: auto;
   padding: 1.5rem;
   position: relative;
   overflow: hidden;
@@ -1546,57 +1538,6 @@ function showFuturisticPopup(type: 'success' | 'error' | 'info', message: string
   }
 }
 
-/* Pagination styling */
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.page-btn {
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 10px;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 500;
-  backdrop-filter: blur(5px);
-}
-
-.page-btn:hover:not(.disabled) {
-  background: rgba(255, 255, 255, 0.8);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.page-btn.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.page-info {
-  color: #64748b;
-  font-size: 0.875rem;
-}
-
-.dark-mode .page-btn {
-  background: rgba(30, 30, 46, 0.6);
-  border-color: rgba(255, 255, 255, 0.05);
-  color: #e2e2e2;
-}
-
-.dark-mode .page-btn:hover:not(.disabled) {
-  background: rgba(40, 40, 56, 0.8);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-}
-
-.dark-mode .page-info {
-  color: #a0a0b8;
-}
-
 /* Responsive adjustments */
 @media (max-width: 1024px) {
   .contract-page {
@@ -1652,23 +1593,25 @@ function showFuturisticPopup(type: 'success' | 'error' | 'info', message: string
   max-width: 450px;
   width: 90%;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(34, 197, 94, 0.2);
   box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(255, 255, 255, 0.1);
+    0 0 0 1px rgba(34, 197, 94, 0.1),
+    0 0 30px rgba(34, 197, 94, 0.1);
   overflow: hidden;
   animation: modalAppear 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   transform-origin: center;
+  backdrop-filter: blur(20px);
 }
 
 .dark-mode .futuristic-modal {
-  background: rgba(25, 25, 35, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(25, 25, 35, 0.95);
+  border: 1px solid rgba(52, 211, 153, 0.3);
   box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.05),
-    0 0 20px rgba(240, 171, 252, 0.1);
+    0 0 0 1px rgba(52, 211, 153, 0.2),
+    0 0 30px rgba(52, 211, 153, 0.15);
 }
 
 .modal-glow-effect {
@@ -1677,7 +1620,7 @@ function showFuturisticPopup(type: 'success' | 'error' | 'info', message: string
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle, rgba(240, 171, 252, 0.1) 0%, rgba(240, 171, 252, 0) 60%);
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0) 60%);
   z-index: -1;
   opacity: 0;
   animation: glow-pulse 4s ease-in-out infinite alternate;
@@ -1695,31 +1638,26 @@ function showFuturisticPopup(type: 'success' | 'error' | 'info', message: string
   background: linear-gradient(
     90deg,
     rgba(255, 255, 255, 0),
-    rgba(109, 26, 54, 0.1),
+    rgba(34, 197, 94, 0.1),
     rgba(255, 255, 255, 0)
   );
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgba(34, 197, 94, 0.2);
 }
 
 .dark-mode .futuristic-header {
   background: linear-gradient(
     90deg,
     rgba(25, 25, 35, 0),
-    rgba(240, 171, 252, 0.15),
+    rgba(52, 211, 153, 0.15),
     rgba(25, 25, 35, 0)
   );
-  border-bottom: 1px solid rgba(240, 171, 252, 0.1);
+  border-bottom: 1px solid rgba(52, 211, 153, 0.3);
 }
 
 .modal-decorator {
   height: 2px;
   flex: 1;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--color-accent-primary, #6d1a36),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, #16a34a, transparent);
 }
 
 .modal-decorator.left {
@@ -1739,15 +1677,10 @@ function showFuturisticPopup(type: 'success' | 'error' | 'info', message: string
   font-size: 1.5rem;
   font-weight: 600;
   white-space: nowrap;
-  background: linear-gradient(
-    90deg,
-    var(--color-accent-primary, #6d1a36),
-    var(--color-accent-magenta, #f0abfc)
-  );
+  background: linear-gradient(90deg, #16a34a, #4ade80);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-fill-color: transparent;
 }
 
 .futuristic-close {
@@ -1770,15 +1703,15 @@ function showFuturisticPopup(type: 'success' | 'error' | 'info', message: string
 }
 
 .futuristic-close:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: var(--color-accent-primary, #6d1a36);
+  background: rgba(34, 197, 94, 0.2);
+  color: #16a34a;
   transform: rotate(90deg);
 }
 
 .dark-mode .futuristic-close:hover {
-  background: rgba(240, 171, 252, 0.2);
-  color: var(--color-accent-magenta, #f0abfc);
-  box-shadow: 0 0 10px rgba(240, 171, 252, 0.3);
+  background: rgba(52, 211, 153, 0.2);
+  color: #4ade80;
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.3);
 }
 
 .close-icon {
@@ -1792,7 +1725,7 @@ function showFuturisticPopup(type: 'success' | 'error' | 'info', message: string
   left: 50%;
   width: 0;
   height: 0;
-  background: rgba(240, 171, 252, 0.3);
+  background: rgba(52, 211, 153, 0.3);
   border-radius: 50%;
   transform: translate(-50%, -50%);
   z-index: 1;
@@ -2014,14 +1947,14 @@ function showFuturisticPopup(type: 'success' | 'error' | 'info', message: string
   position: absolute;
   width: 12px;
   height: 12px;
-  border-color: var(--color-accent-primary, #6d1a36);
+  border-color: #16a34a;
   border-style: solid;
   opacity: 0;
   animation: cornerAppear 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .dark-mode .modal-corner {
-  border-color: var(--color-accent-magenta, #f0abfc);
+  border-color: #4ade80;
 }
 
 .top-left {
@@ -2054,7 +1987,7 @@ function showFuturisticPopup(type: 'success' | 'error' | 'info', message: string
 
 /* Track link styling */
 .track-link {
-  color: #2563eb;
+  color: #16a34a;
   cursor: pointer;
   font-weight: 500;
   position: relative;
@@ -2065,8 +1998,8 @@ function showFuturisticPopup(type: 'success' | 'error' | 'info', message: string
 
 /* Track link hover effects */
 .track-link:hover {
-  background-color: rgba(37, 99, 235, 0.1);
-  color: #1d4ed8;
+  background-color: rgba(34, 197, 94, 0.1);
+  color: #059669;
 }
 
 .track-link::after {
@@ -2076,7 +2009,7 @@ function showFuturisticPopup(type: 'success' | 'error' | 'info', message: string
   bottom: -2px;
   width: 100%;
   height: 2px;
-  background-color: #2563eb;
+  background-color: #16a34a;
   transform: scaleX(0);
   transition: transform 0.3s ease;
   transform-origin: right;
@@ -2088,16 +2021,16 @@ function showFuturisticPopup(type: 'success' | 'error' | 'info', message: string
 }
 
 .dark-mode .track-link {
-  color: #3b82f6;
+  color: #4ade80;
 }
 
 .dark-mode .track-link:hover {
-  background-color: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
+  background-color: rgba(52, 211, 153, 0.15);
+  color: #34d399;
 }
 
 .dark-mode .track-link::after {
-  background-color: #3b82f6;
+  background-color: #4ade80;
 }
 
 @keyframes modalAppear {
@@ -2203,5 +2136,170 @@ function showFuturisticPopup(type: 'success' | 'error' | 'info', message: string
     width: 100%;
     justify-content: center;
   }
+}
+
+/* Description Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.desc-modal-container {
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(34, 197, 94, 0.1),
+    0 0 30px rgba(34, 197, 94, 0.1);
+  overflow: hidden;
+  animation: modalAppear 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(20px);
+}
+
+.dark-mode .desc-modal-container {
+  background: rgba(25, 25, 35, 0.95);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(52, 211, 153, 0.2),
+    0 0 30px rgba(52, 211, 153, 0.15);
+}
+
+.desc-modal-container .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(52, 211, 153, 0.05));
+  border-bottom: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.dark-mode .desc-modal-container .modal-header {
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.15), rgba(74, 222, 128, 0.1));
+  border-bottom: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.desc-modal-container .modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #047857;
+  background: linear-gradient(135deg, #16a34a, #059669);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark-mode .desc-modal-container .modal-header h2 {
+  background: linear-gradient(135deg, #4ade80, #34d399);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.desc-modal-container .close-modal {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #047857;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+}
+
+.desc-modal-container .close-modal:hover {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #16a34a;
+  transform: rotate(90deg);
+}
+
+.dark-mode .desc-modal-container .close-modal {
+  background: rgba(52, 211, 153, 0.15);
+  border-color: rgba(52, 211, 153, 0.3);
+  color: #4ade80;
+}
+
+.dark-mode .desc-modal-container .close-modal:hover {
+  background: rgba(52, 211, 153, 0.25);
+  border-color: rgba(52, 211, 153, 0.4);
+  color: #34d399;
+  box-shadow: 0 0 15px rgba(52, 211, 153, 0.3);
+}
+
+.desc-modal-body {
+  padding: 1.5rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.desc-content {
+  line-height: 1.6;
+  color: #374151;
+}
+
+.dark-mode .desc-content {
+  color: #d1d5db;
+}
+
+.no-desc {
+  text-align: center;
+  color: #6b7280;
+  font-style: italic;
+  padding: 2rem;
+}
+
+.dark-mode .no-desc {
+  color: #9ca3af;
+}
+
+/* Scrollbar styling for the description modal */
+.desc-modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.desc-modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 8px;
+}
+
+.desc-modal-body::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 8px;
+}
+
+.desc-modal-body::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.dark-mode .desc-modal-body::-webkit-scrollbar-track {
+  background: #2c2c44;
+}
+
+.dark-mode .desc-modal-body::-webkit-scrollbar-thumb {
+  background: #4f4f6f;
+}
+
+.dark-mode .desc-modal-body::-webkit-scrollbar-thumb:hover {
+  background: #5f5f7f;
 }
 </style>

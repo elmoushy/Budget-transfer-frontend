@@ -108,11 +108,11 @@ const menuItemsData = {
   en: [
     { label: 'Dashboard', route: 'Dashboard' },
     { label: 'Transfers', route: 'Home' },
-    { label: 'Fund Adjustment department', route: 'Settlements' },
-    { label: 'Additional fund request', route: 'Enhancements' },
+    { label: 'Fund Adjustment Department', route: 'Settlements' },
+    { label: 'Additional Fund Request', route: 'Enhancements' },
     { label: 'Pending Transfers', route: 'EnhancementsPendingApproval' },
     { label: 'Pending Fund Adjustment', route: 'ContractsPendingApproval' },
-    { label: 'Pending Additional fund', route: 'SettlementsPendingApproval' },
+    { label: 'Pending Additional Fund', route: 'SettlementsPendingApproval' },
   ],
 }
 
@@ -127,21 +127,22 @@ const adminMenuItems = computed(() =>
 .navigation-menu {
   position: sticky;
   top: 64px; /* Adjusted to match new header height */
-  background: rgba(138, 42, 68, 0.85);
+  background: linear-gradient(90deg, #e5f6f5 0%, #a4cac5 35%, #5e9b92 70%, #2c6d62 100%);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  color: #fff;
+  color: #0c362f;
   z-index: 90;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s ease;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(14, 77, 67, 0.15); /* Enhanced shadow */
+  transition: all 0.3s ease-in-out;
+  border-bottom: 1px solid rgba(44, 109, 98, 0.2); /* More visible border */
+  padding: 1px 0; /* Small vertical padding */
 }
 
 .navigation-menu.dark-theme {
-  background: rgba(90, 28, 46, 0.85);
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.2),
-    inset 0 0 30px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(90deg, #a4cac5 0%, #5e9b92 25%, #2c6d62 65%, #0e4d43 100%);
+  color: #e5f6f5;
+  box-shadow: 0 4px 20px rgba(14, 77, 67, 0.15);
+  border-bottom: 1px solid rgba(229, 246, 245, 0.15);
 }
 
 .container {
@@ -151,8 +152,8 @@ const adminMenuItems = computed(() =>
   align-items: center;
   justify-content: flex-start;
   height: 54px; /* Slightly taller for better scrolling area */
-  transition: all 0.3s ease;
-  padding: 0 18px;
+  transition: all 0.3s ease-in-out;
+  padding: 0 24px; /* Match header padding */
   position: relative;
 }
 
@@ -165,11 +166,12 @@ const adminMenuItems = computed(() =>
   width: 100%;
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.2) 50%,
-    rgba(255, 255, 255, 0) 100%
+    rgba(229, 246, 245, 0) 0%,
+    rgba(229, 246, 245, 0.3) 50%,
+    rgba(229, 246, 245, 0) 100%
   );
-  opacity: 0.5;
+  opacity: 0.6;
+  transition: opacity 0.3s ease-in-out;
 }
 
 [dir='rtl'] .container {
@@ -180,12 +182,14 @@ const adminMenuItems = computed(() =>
   display: flex;
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 2px; /* Small padding to improve spacing */
   flex-wrap: nowrap;
   overflow-x: auto;
   width: 100%;
   scrollbar-width: none; /* Hide scrollbar for Firefox */
   -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
+  gap: 4px; /* Increased gap between links for better separation */
+  align-items: center; /* Ensure vertical centering */
 }
 
 .nav-links::-webkit-scrollbar {
@@ -202,13 +206,20 @@ const adminMenuItems = computed(() =>
   display: flex;
   align-items: center;
   padding: 0.75rem 1rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: #0c362f; /* Darker color for better contrast */
   text-decoration: none;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.3s ease-in-out;
   border-radius: 6px;
-  font-weight: 500;
+  font-weight: 600; /* Increased font weight */
   position: relative;
   overflow: hidden;
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.1); /* Subtle text shadow for clarity */
+  letter-spacing: 0.02em; /* Slightly improved letter spacing */
+}
+
+.navigation-menu.dark-theme .nav-links a {
+  color: rgba(229, 246, 245, 1); /* Full opacity for better contrast */
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.2); /* Shadow for clarity in dark mode */
 }
 
 .nav-links a::before {
@@ -218,9 +229,13 @@ const adminMenuItems = computed(() =>
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+  background: linear-gradient(135deg, rgba(14, 77, 67, 0.05) 0%, rgba(14, 77, 67, 0) 100%);
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.navigation-menu.dark-theme .nav-links a::before {
+  background: linear-gradient(135deg, rgba(229, 246, 245, 0.1) 0%, rgba(229, 246, 245, 0) 100%);
 }
 
 .nav-links a::after {
@@ -230,28 +245,49 @@ const adminMenuItems = computed(() =>
   left: 50%;
   width: 0;
   height: 2px;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(14, 77, 67, 0.5);
   transform: translateX(-50%);
-  transition: width 0.3s ease;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+  transition: width 0.3s ease-in-out;
+  box-shadow: 0 0 8px rgba(14, 77, 67, 0.2);
+}
+
+.navigation-menu.dark-theme .nav-links a::after {
+  background: rgba(229, 246, 245, 0.8);
+  box-shadow: 0 0 8px rgba(229, 246, 245, 0.4);
 }
 
 .nav-links li.active > a {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.15);
-  font-weight: 600;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  color: #0e4d43;
+  background: rgba(255, 255, 255, 0.5); /* Lighter background for better contrast */
+  font-weight: 700; /* Bolder for active items */
+  box-shadow: 0 4px 15px rgba(14, 77, 67, 0.15); /* Enhanced shadow */
+}
+
+.navigation-menu.dark-theme .nav-links li.active > a {
+  color: #ffffff; /* Pure white for maximum contrast */
+  background: rgba(229, 246, 245, 0.25); /* Slightly more visible */
+  box-shadow: 0 4px 15px rgba(14, 77, 67, 0.2); /* Enhanced shadow */
 }
 
 .nav-links li.active > a::after {
   width: 80%;
-  background: #5eead4;
-  box-shadow: 0 0 10px rgba(94, 234, 212, 0.6);
+  height: 3px; /* Thicker underline */
+  background: #0c362f; /* Darker for more visibility */
+  box-shadow: 0 0 12px rgba(14, 77, 67, 0.5); /* Enhanced glow effect */
+}
+
+.navigation-menu.dark-theme .nav-links li.active > a::after {
+  background: #ffffff; /* Pure white for maximum visibility */
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.8); /* Stronger glow effect */
 }
 
 .nav-links a:hover {
-  color: #fff;
+  color: #0e4d43;
   transform: translateY(-2px);
+}
+
+.navigation-menu.dark-theme .nav-links a:hover {
+  color: #e5f6f5;
 }
 
 .nav-links a:hover::before {
@@ -270,15 +306,27 @@ const adminMenuItems = computed(() =>
   cursor: pointer;
   padding: 0.75rem 1rem;
   border-radius: 6px;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  color: rgba(255, 255, 255, 0.85);
+  transition: all 0.3s ease-in-out;
+  color: #0c362f; /* Darker for better contrast */
   position: relative;
   overflow: hidden;
+  font-weight: 600; /* Increased font weight */
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.1); /* Subtle text shadow for clarity */
+}
+
+.navigation-menu.dark-theme .dropdown-toggle {
+  color: rgba(229, 246, 245, 1); /* Full opacity for better contrast */
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.2); /* Shadow for clarity in dark mode */
 }
 
 .dropdown-toggle i {
-  font-size: 12px;
-  transition: transform 0.3s ease;
+  font-size: 14px; /* Larger icon size */
+  transition: transform 0.3s ease-in-out;
+  filter: drop-shadow(0 0 1px rgba(14, 77, 67, 0.2)); /* Subtle shadow for icon */
+}
+
+.navigation-menu.dark-theme .dropdown-toggle i {
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.3)); /* Shadow for dark mode icon */
 }
 
 .dropdown-toggle i.open {
@@ -286,8 +334,12 @@ const adminMenuItems = computed(() =>
 }
 
 .dropdown-toggle:hover {
-  color: #fff;
+  color: #0e4d43;
   transform: translateY(-2px);
+}
+
+.navigation-menu.dark-theme .dropdown-toggle:hover {
+  color: #e5f6f5;
 }
 
 .dropdown-toggle:hover i {
@@ -301,9 +353,13 @@ const adminMenuItems = computed(() =>
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+  background: linear-gradient(135deg, rgba(14, 77, 67, 0.05) 0%, rgba(14, 77, 67, 0) 100%);
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.navigation-menu.dark-theme .dropdown-toggle::before {
+  background: linear-gradient(135deg, rgba(229, 246, 245, 0.1) 0%, rgba(229, 246, 245, 0) 100%);
 }
 
 .dropdown-toggle:hover::before {
@@ -313,7 +369,7 @@ const adminMenuItems = computed(() =>
 .dropdown-menu {
   position: absolute;
   top: calc(100% + 10px);
-  background: rgba(122, 37, 64, 0.95);
+  background: rgba(164, 202, 197, 0.95);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   list-style: none;
@@ -321,17 +377,25 @@ const adminMenuItems = computed(() =>
   padding: 0.5rem;
   border-radius: 12px;
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.1),
-    inset 0 0 20px rgba(0, 0, 0, 0.2);
+    0 8px 32px rgba(14, 77, 67, 0.15),
+    0 0 0 1px rgba(14, 77, 67, 0.08),
+    inset 0 0 20px rgba(14, 77, 67, 0.05);
   overflow: hidden;
   z-index: 100;
   min-width: 200px;
   opacity: 0;
   transform: translateY(10px);
   transition:
-    opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 0.3s ease-in-out,
+    transform 0.3s ease-in-out;
+}
+
+.navigation-menu.dark-theme .dropdown-menu {
+  background: rgba(44, 109, 98, 0.95);
+  box-shadow:
+    0 8px 32px rgba(14, 77, 67, 0.2),
+    0 0 0 1px rgba(229, 246, 245, 0.1),
+    inset 0 0 20px rgba(14, 77, 67, 0.1);
 }
 
 .dropdown-menu.open {
@@ -360,11 +424,26 @@ const adminMenuItems = computed(() =>
   white-space: nowrap;
   border-radius: 6px;
   width: 100%;
+  transition: all 0.3s ease-in-out;
+  color: #0c362f; /* Darker for better visibility */
+  font-weight: 600; /* Bolder text */
+  letter-spacing: 0.01em; /* Improved letter spacing */
+}
+
+.navigation-menu.dark-theme .dropdown-menu li a {
+  color: #ffffff; /* Pure white for maximum contrast */
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.2); /* Shadow for clarity */
 }
 
 .dropdown-menu li a:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(14, 77, 67, 0.08);
+  color: #0e4d43;
   transform: none;
+}
+
+.navigation-menu.dark-theme .dropdown-menu li a:hover {
+  background: rgba(229, 246, 245, 0.15);
+  color: #e5f6f5;
 }
 
 /* Arabic font size adjustment for navbar */
@@ -381,7 +460,8 @@ const adminMenuItems = computed(() =>
 
   .nav-links a {
     padding: 0.75rem 0.8rem;
-    font-size: 0.85rem;
+    font-size: 0.9rem; /* Slightly larger font on mobile for readability */
+    letter-spacing: 0; /* Remove letter spacing on mobile */
   }
 }
 </style>
