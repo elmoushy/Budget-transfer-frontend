@@ -12,7 +12,8 @@
           }}
         </span>
       </div>
-      <div class="header-actions">
+      <!-- Only show action buttons if not in view-only mode -->
+      <div class="header-actions" v-if="!route.query.viewOnly">
         <button
           class="btn-header-create"
           @click="createTransfer"
@@ -22,6 +23,10 @@
           <span class="btn-icon">✓</span>
           {{ isArabic ? 'حفظ' : 'Save' }}
         </button>
+      </div>
+      <!-- Show status info if in view-only mode -->
+      <div class="view-status-info" v-if="route.query.viewOnly === 'true'">
+        <span class="status-badge" :class="statusClass">{{ formattedStatus }}</span>
       </div>
     </div>
 
@@ -219,7 +224,7 @@
                 {{ isArabic ? 'المجموع الكلي' : 'Overall Sum' }}
               </td>
             </tr>
-            <tr>
+            <tr v-if="!route.query.viewOnly">
               <td colspan="11" class="add-row-cell">
                 <button
                   class="btn-modern btn-add-row-modern"
@@ -253,8 +258,8 @@
         {{ isArabic ? `المجموع ${transferData.length}` : `Total ${transferData.length}` }}
       </div>
 
-      <!-- Action buttons -->
-      <div class="action-buttons-modern">
+      <!-- Action buttons - hidden in view-only mode -->
+      <div class="action-buttons-modern" v-if="!route.query.viewOnly">
         <button
           class="btn-modern btn-submit"
           @click="submitRequest"
@@ -277,6 +282,7 @@
         </button>
 
         <button
+          v-if="!route.query.viewOnly"
           class="btn-modern btn-upload"
           @click="uploadFile"
           :disabled="!isUploadButtonEnabled"
@@ -300,6 +306,7 @@
         </button>
 
         <button
+          v-if="!route.query.viewOnly"
           class="btn-modern btn-reopen"
           @click="reopenRequest"
           :disabled="!isReopenButtonEnabled"
@@ -585,6 +592,10 @@ const hasValidationErrors = computed(() => {
 
 // Computed properties to control UI based on status
 const isScreenEditable = computed(() => {
+  // If viewOnly parameter is present in the URL, make the screen read-only
+  if (route.query.viewOnly === 'true') {
+    return false
+  }
   return (
     currentStatus.value === 'is rejected' || currentStatus.value === 'not yet sent for approval'
   )
@@ -1540,35 +1551,6 @@ const showReportModal = ref(false)
   color: #aaa;
 }
 
-/* Modern button styles */
-.btn-modern {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    background-color 0.3s,
-    transform 0.3s;
-  outline: none;
-}
-
-.btn-modern:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.btn-icon-modern {
-  margin-right: 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* Specific button styles */
 .btn-submit {
   background-color: #4caf50;
@@ -1579,6 +1561,23 @@ const showReportModal = ref(false)
   background-color: #45a049;
   transform: translateY(-2px);
 }
+
+/* View-only mode status display */
+.view-status-info {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-right: 1rem;
+}
+
+.view-status-info .status-badge {
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+/* End of view-only styles */
 
 .btn-upload {
   background-color: #2196f3;

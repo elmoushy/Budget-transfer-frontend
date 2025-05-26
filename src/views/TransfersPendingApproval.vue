@@ -87,7 +87,14 @@
                 {{ translateStatus(row.status) }}
               </span>
             </td>
-            <td class="code-cell">{{ row.code }}</td>
+            <td class="code-cell">
+              <router-link
+                :to="`/cost-center-transfer/${row.transaction_id}?viewOnly=true`"
+                class="code-link"
+              >
+                {{ row.code }}
+              </router-link>
+            </td>
             <td>{{ formatDate(row.request_date) }}</td>
             <td>{{ row.requested_by }}</td>
             <td>{{ row.transaction_date }}</td>
@@ -219,6 +226,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { SearchIcon, EyeIcon, CheckIcon, XIcon } from 'lucide-vue-next'
 import { useThemeStore } from '@/stores/themeStore'
 import TransfersFlowService from '@/services/TransfersFlowService'
+import { useRouter } from 'vue-router'
 
 // Define component name explicitly
 defineOptions({

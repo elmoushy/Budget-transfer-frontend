@@ -87,15 +87,26 @@
                 {{ translateStatus(row.status) }}
               </span>
             </td>
-            <td class="code-cell">{{ row.code }}</td>
+            <td class="code-cell">
+              <router-link
+                :to="`/cost-center-transfer/${row.transaction_id}?viewOnly=true`"
+                class="code-link"
+              >
+                {{ row.code }}
+              </router-link>
+            </td>
             <td>{{ formatDate(row.request_date) }}</td>
             <td>{{ row.requested_by }}</td>
             <td>{{ row.transaction_date }}</td>
             <td>
               <div class="action-buttons-cell">
-                <button class="icon-btn view-btn" @click="viewDetails(row)" title="View Details">
+                <router-link
+                  :to="`/cost-center-settlement/${row.transaction_id}?viewOnly=true`"
+                  class="icon-btn view-btn"
+                  title="View Details"
+                >
                   <EyeIcon />
-                </button>
+                </router-link>
                 <button class="icon-btn approve-btn" @click="approveRow(row)" title="Approve">
                   <CheckIcon />
                 </button>
@@ -221,6 +232,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { SearchIcon, EyeIcon, CheckIcon, XIcon } from 'lucide-vue-next'
 import { useThemeStore } from '@/stores/themeStore'
+import { useRouter } from 'vue-router'
 import TransfersFlowService from '@/services/TransfersFlowService'
 
 // Define component name explicitly
@@ -240,6 +252,7 @@ interface RowData {
 
 // ───────────────────────────────────────────────────────────── Theme & Lang
 const themeStore = useThemeStore()
+const router = useRouter()
 const isArabic = ref(false)
 const isDarkMode = ref(false)
 
@@ -422,12 +435,6 @@ const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage))
 const paginatedRows = computed(() => rows.value)
 
 // ───────────────────────────────────────────────────────────── Row Actions
-function viewDetails(row: RowData) {
-  console.log('View details for row:', row.transaction_id)
-  // Implement view details functionality - could navigate to a detail page
-  // router.push(`/transfers/${row.transaction_id}`)
-}
-
 function approveRow(row: RowData) {
   showConfirmationModal('approve', [row])
 }
