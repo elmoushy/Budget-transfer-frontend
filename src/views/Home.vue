@@ -411,7 +411,7 @@ import ApprovalPipelineModal from '@/components/ApprovalPipelineModal.vue'
 import RejectionReportModal from '@/components/RejectionReportModal.vue'
 import FuturisticPopup from '@/components/FuturisticPopup.vue'
 import OracleApprovalPipelineModal from '@/components/OracleApprovalPipelineModal.vue'
-import transferService, { type ApiResponse, type TransferData } from '@/services/transferService'
+import transferService, { type ApiResponse, type TransferData } from '@/services/TransferService'
 
 // Import CSS
 import '@/assets/css/shared-page-styles.css'

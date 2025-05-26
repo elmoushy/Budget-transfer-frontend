@@ -401,7 +401,7 @@ import FuturisticPopup from '@/components/FuturisticPopup.vue'
 import OracleApprovalPipelineModal from '@/components/OracleApprovalPipelineModal.vue'
 import contractService from '@/services/contractService'
 import type { ContractData } from '@/services/contractService'
-import type { ApiResponse } from '@/services/transferService'
+import type { ApiResponse } from '@/services/TransferService'
 
 // Import CSS
 import '@/assets/css/shared-page-styles.css'
