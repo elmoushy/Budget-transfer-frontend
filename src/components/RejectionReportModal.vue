@@ -85,7 +85,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useThemeStore } from '@/stores/themeStore'
-import transferService from '@/services/transferService'
+import transferService from '@/services/TransferService'
 
 // Define props
 const props = defineProps({
@@ -103,7 +103,7 @@ const props = defineProps({
 const emit = defineEmits(['update:show'])
 
 // Define data
-import type { RejectionReport } from '@/services/transferService'
+import type { RejectionReport } from '@/services/TransferService'
 const reports = ref<RejectionReport[]>([])
 const loading = ref(false)
 const error = ref('')
