@@ -1,10 +1,9 @@
 <template>
   <div class="unified-page" :class="pageClass">
-    <!-- Background effects -->
+    <!-- Simplified background effects -->
     <div class="background-effects">
       <div class="floating-orb orb-1"></div>
       <div class="floating-orb orb-2"></div>
-      <div class="floating-orb orb-3"></div>
     </div>
 
     <!-- Page Header -->
@@ -51,21 +50,10 @@
     <!-- Main Table -->
     <div class="table-container glass-panel">
       <div v-if="loading" class="loading-state">
-        <!-- Floating particles for enhanced visual effect -->
-        <div class="loading-particles">
-          <div class="particle particle-1"></div>
-          <div class="particle particle-2"></div>
-          <div class="particle particle-3"></div>
-          <div class="particle particle-4"></div>
-          <div class="particle particle-5"></div>
-          <div class="particle particle-6"></div>
-        </div>
-
         <div class="loading-container">
           <div class="loading-spinner-enhanced">
             <div class="spinner-ring ring-1"></div>
             <div class="spinner-ring ring-2"></div>
-            <div class="spinner-ring ring-3"></div>
             <div class="loading-core">
               <div class="core-dot"></div>
             </div>
@@ -88,7 +76,7 @@
         <p>{{ emptyStateMessage }}</p>
       </div>
 
-      <div class="modern-table-wrapper">
+      <div v-if="!loading" class="modern-table-wrapper">
         <table class="modern-table">
           <thead>
             <tr class="table-header">
@@ -359,7 +347,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { EditIcon, FileTextIcon, TrashIcon } from 'lucide-vue-next'
 import { useThemeStore } from '@/stores/themeStore'
@@ -872,6 +860,22 @@ onMounted(() => {
   fetchData()
 })
 
+// Add cleanup on unmount
+onUnmounted(() => {
+  // Clear any timers
+  if (searchTimer.value) {
+    clearTimeout(searchTimer.value)
+    searchTimer.value = null
+  }
+
+  // Clear any running animations
+  const elements = document.querySelectorAll('.unified-page *')
+  elements.forEach((el) => {
+    const htmlEl = el as HTMLElement
+    htmlEl.style.animation = 'none'
+  })
+})
+
 // Watch for route changes
 watch(
   () => route.name,
@@ -893,12 +897,9 @@ watch(
 </script>
 
 <style scoped>
-/* Import the specific CSS file based on the route */
-@import '@/assets/css/Home.css';
-@import '@/assets/css/Enhancements.css';
-@import '@/assets/css/Contracts.css';
+/* Optimized CSS with reduced animations */
 
-/* Futuristic Berry Theme - Main Styles */
+/* Simplified main page background */
 .unified-page {
   min-height: auto;
   padding: 1.5rem;
@@ -906,93 +907,47 @@ watch(
   overflow: hidden;
   background: linear-gradient(135deg, #f8f6f8 0%, #fff6fa 50%, #f8f6f8 100%);
   color: #1a1423;
-  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  animation: backgroundShift 20s ease-in-out infinite;
-}
-
-@keyframes backgroundShift {
-  0%,
-  100% {
-    background: linear-gradient(135deg, #f8f6f8 0%, #fff6fa 50%, #f8f6f8 100%);
-  }
-  50% {
-    background: linear-gradient(135deg, #fff6fa 0%, #f8f6f8 50%, #fff6fa 100%);
-  }
+  transition: all 0.3s ease;
+  /* Removed heavy backgroundShift animation */
 }
 
 .unified-page.dark-mode {
   background: linear-gradient(135deg, #18131a 0%, #241726 50%, #18131a 100%);
   color: #f8e9f0;
-  animation: backgroundShiftDark 20s ease-in-out infinite;
+  /* Removed heavy backgroundShiftDark animation */
 }
 
-@keyframes backgroundShiftDark {
-  0%,
-  100% {
-    background: linear-gradient(135deg, #18131a 0%, #241726 50%, #18131a 100%);
-  }
-  50% {
-    background: linear-gradient(135deg, #241726 0%, #18131a 50%, #241726 100%);
-  }
-}
-
-/* Futuristic Glass Panel Effect */
+/* Simplified glass panel effect */
 .glass-panel {
-  background: rgba(255, 246, 250, 0.85);
-  backdrop-filter: blur(20px) saturate(180%);
+  background: rgba(255, 246, 250, 0.9);
+  backdrop-filter: blur(10px); /* Reduced from 20px */
   border: 1px solid rgba(228, 201, 214, 0.4);
   border-radius: 16px;
-  box-shadow:
-    0 8px 32px rgba(138, 42, 68, 0.1),
-    0 4px 16px rgba(109, 26, 54, 0.05),
-    inset 0 1px 1px rgba(255, 255, 255, 0.3);
-  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow: 0 4px 16px rgba(138, 42, 68, 0.1); /* Simplified shadow */
+  transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
 }
 
-.glass-panel::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(225, 75, 106, 0.1), transparent);
-  transition: left 0.8s ease;
-}
-
-.glass-panel:hover::before {
-  left: 100%;
-}
-
+/* Removed heavy hover effects */
 .glass-panel:hover {
-  transform: translateY(-2px);
-  box-shadow:
-    0 12px 48px rgba(138, 42, 68, 0.15),
-    0 6px 24px rgba(109, 26, 54, 0.08),
-    inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px); /* Reduced from -2px */
+  box-shadow: 0 6px 24px rgba(138, 42, 68, 0.15); /* Simplified shadow */
   border-color: rgba(225, 75, 106, 0.3);
 }
 
 .dark-mode .glass-panel {
-  background: rgba(36, 23, 38, 0.85);
+  background: rgba(36, 23, 38, 0.9);
   border-color: rgba(81, 32, 60, 0.4);
-  box-shadow:
-    0 8px 32px rgba(167, 56, 92, 0.2),
-    0 4px 16px rgba(109, 26, 54, 0.1),
-    inset 0 1px 1px rgba(167, 56, 92, 0.1);
+  box-shadow: 0 4px 16px rgba(167, 56, 92, 0.15); /* Simplified shadow */
 }
 
 .dark-mode .glass-panel:hover {
-  box-shadow:
-    0 12px 48px rgba(167, 56, 92, 0.25),
-    0 6px 24px rgba(109, 26, 54, 0.15),
-    inset 0 1px 1px rgba(167, 56, 92, 0.2);
+  box-shadow: 0 6px 24px rgba(167, 56, 92, 0.2); /* Simplified shadow */
   border-color: rgba(225, 75, 106, 0.4);
 }
 
-/* Futuristic Page Header */
+/* Simplified page header */
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -1004,6 +959,7 @@ watch(
   overflow: hidden;
 }
 
+/* Removed heavy headerGlow animation */
 .page-header::before {
   content: '';
   position: absolute;
@@ -1013,22 +969,11 @@ watch(
   bottom: 0;
   background: linear-gradient(
     135deg,
-    rgba(138, 42, 68, 0.1) 0%,
-    rgba(225, 75, 106, 0.05) 50%,
-    rgba(109, 26, 54, 0.1) 100%
+    rgba(138, 42, 68, 0.05) 0%,
+    rgba(225, 75, 106, 0.03) 50%,
+    rgba(109, 26, 54, 0.05) 100%
   );
   z-index: -1;
-  animation: headerGlow 8s ease-in-out infinite;
-}
-
-@keyframes headerGlow {
-  0%,
-  100% {
-    opacity: 0.5;
-  }
-  50% {
-    opacity: 1;
-  }
 }
 
 .page-title {
@@ -1040,20 +985,11 @@ watch(
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-shadow: 0 2px 4px rgba(138, 42, 68, 0.1);
-  animation: titlePulse 4s ease-in-out infinite;
   position: relative;
+  /* Removed heavy titlePulse animation */
 }
 
-@keyframes titlePulse {
-  0%,
-  100% {
-    filter: brightness(1);
-  }
-  50% {
-    filter: brightness(1.1);
-  }
-}
-
+/* Removed heavy underline animation */
 .page-title::after {
   content: '';
   position: absolute;
@@ -1062,17 +998,7 @@ watch(
   width: 100%;
   height: 3px;
   background: linear-gradient(90deg, transparent, #e14b6a, transparent);
-  animation: underlineFlow 3s ease-in-out infinite;
-}
-
-@keyframes underlineFlow {
-  0%,
-  100% {
-    transform: scaleX(0);
-  }
-  50% {
-    transform: scaleX(1);
-  }
+  opacity: 0.5;
 }
 
 .page-subtitle {
@@ -1080,18 +1006,8 @@ watch(
   color: #6d1a36a0;
   font-size: 1.1rem;
   font-weight: 500;
-  opacity: 0.9;
-  animation: subtitleFade 6s ease-in-out infinite;
-}
-
-@keyframes subtitleFade {
-  0%,
-  100% {
-    opacity: 0.7;
-  }
-  50% {
-    opacity: 1;
-  }
+  opacity: 0.8;
+  /* Removed subtitleFade animation */
 }
 
 .dark-mode .page-title {
@@ -1105,7 +1021,7 @@ watch(
   color: #c8a9b4;
 }
 
-/* Futuristic Primary Button */
+/* Simplified primary button */
 .btn-primary {
   padding: 0.875rem 2rem;
   border: none;
@@ -1115,44 +1031,25 @@ watch(
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
-  box-shadow:
-    0 4px 16px rgba(138, 42, 68, 0.3),
-    0 2px 8px rgba(225, 75, 106, 0.2);
-  transform-style: preserve-3d;
+  box-shadow: 0 4px 16px rgba(138, 42, 68, 0.2); /* Simplified shadow */
 }
 
-.btn-primary::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: left 0.6s ease;
-}
-
-.btn-primary:hover::before {
-  left: 100%;
-}
-
+/* Removed heavy hover shimmer effect */
 .btn-primary:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow:
-    0 8px 24px rgba(138, 42, 68, 0.4),
-    0 4px 12px rgba(225, 75, 106, 0.3);
+  transform: translateY(-2px) scale(1.01); /* Reduced scale */
+  box-shadow: 0 6px 24px rgba(138, 42, 68, 0.3); /* Simplified shadow */
   background: linear-gradient(135deg, #a7385c 0%, #e14b6a 100%);
 }
 
 .btn-primary:active {
-  transform: translateY(-1px) scale(0.98);
+  transform: translateY(-1px) scale(0.99);
   transition: all 0.1s ease;
 }
 
-/* Background effects */
+/* Simplified background effects */
 .background-effects {
   position: absolute;
   top: 0;
@@ -1166,45 +1063,40 @@ watch(
 .floating-orb {
   position: absolute;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(109, 26, 54, 0.1), rgba(138, 42, 68, 0.05));
-  animation: float 6s ease-in-out infinite;
+  background: linear-gradient(135deg, rgba(109, 26, 54, 0.05), rgba(138, 42, 68, 0.03));
+  animation: float-simple 8s ease-in-out infinite; /* Simplified animation */
 }
 
 .orb-1 {
-  width: 200px;
-  height: 200px;
+  width: 150px; /* Reduced size */
+  height: 150px;
   top: 10%;
   left: 10%;
   animation-delay: 0s;
 }
 
 .orb-2 {
-  width: 150px;
-  height: 150px;
+  width: 100px; /* Reduced size */
+  height: 100px;
   top: 60%;
   right: 15%;
-  animation-delay: 2s;
-}
-
-.orb-3 {
-  width: 100px;
-  height: 100px;
-  bottom: 20%;
-  left: 60%;
   animation-delay: 4s;
 }
 
-@keyframes float {
+/* Removed orb-3 to reduce complexity */
+
+/* Simplified float animation */
+@keyframes float-simple {
   0%,
   100% {
-    transform: translateY(0px) rotate(0deg);
+    transform: translateY(0px);
   }
   50% {
-    transform: translateY(-20px) rotate(180deg);
+    transform: translateY(-10px); /* Reduced movement */
   }
 }
 
-/* Enhanced Loading state */
+/* Simplified loading state */
 .loading-state {
   display: flex;
   flex-direction: column;
@@ -1217,92 +1109,7 @@ watch(
   overflow: hidden;
 }
 
-.loading-particles {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.particle {
-  position: absolute;
-  width: 4px;
-  height: 4px;
-  background: #16a34a;
-  border-radius: 50%;
-  opacity: 0.6;
-}
-
-.particle-1 {
-  top: 20%;
-  left: 10%;
-  animation: float-particle 3s ease-in-out infinite;
-  animation-delay: 0s;
-}
-
-.particle-2 {
-  top: 60%;
-  left: 80%;
-  animation: float-particle 4s ease-in-out infinite;
-  animation-delay: 0.5s;
-}
-
-.particle-3 {
-  top: 30%;
-  left: 70%;
-  animation: float-particle 3.5s ease-in-out infinite;
-  animation-delay: 1s;
-}
-
-.particle-4 {
-  top: 80%;
-  left: 20%;
-  animation: float-particle 4.5s ease-in-out infinite;
-  animation-delay: 1.5s;
-}
-
-.particle-5 {
-  top: 40%;
-  left: 90%;
-  animation: float-particle 3.2s ease-in-out infinite;
-  animation-delay: 2s;
-}
-
-.particle-6 {
-  top: 70%;
-  left: 5%;
-  animation: float-particle 4.2s ease-in-out infinite;
-  animation-delay: 2.5s;
-}
-
-@keyframes float-particle {
-  0%,
-  100% {
-    transform: translateY(0px) translateX(0px) scale(1);
-    opacity: 0.6;
-  }
-  25% {
-    transform: translateY(-20px) translateX(10px) scale(1.2);
-    opacity: 0.8;
-  }
-  50% {
-    transform: translateY(-10px) translateX(-15px) scale(0.8);
-    opacity: 0.4;
-  }
-  75% {
-    transform: translateY(-25px) translateX(8px) scale(1.1);
-    opacity: 0.7;
-  }
-}
-
-/* Enhanced dark mode support for particles */
-.dark-mode .particle {
-  background: #4ade80;
-  box-shadow: 0 0 6px rgba(74, 222, 128, 0.4);
-}
+/* Removed heavy loading particles */
 
 .loading-container {
   position: relative;
@@ -1315,8 +1122,8 @@ watch(
 
 .loading-spinner-enhanced {
   position: relative;
-  width: 80px;
-  height: 80px;
+  width: 60px; /* Reduced size */
+  height: 60px;
   margin-bottom: 1.5rem;
 }
 
@@ -1324,20 +1131,20 @@ watch(
   position: absolute;
   border-radius: 50%;
   border: 2px solid transparent;
-  animation: spin-enhanced 2s linear infinite;
+  animation: spin-simple 2s linear infinite; /* Simplified animation */
 }
 
 .ring-1 {
-  width: 80px;
-  height: 80px;
+  width: 60px;
+  height: 60px;
   border-top: 2px solid #16a34a;
   border-right: 2px solid #16a34a;
   animation-duration: 1.5s;
 }
 
 .ring-2 {
-  width: 60px;
-  height: 60px;
+  width: 40px;
+  height: 40px;
   top: 10px;
   left: 10px;
   border-bottom: 2px solid #059669;
@@ -1346,23 +1153,15 @@ watch(
   animation-direction: reverse;
 }
 
-.ring-3 {
-  width: 40px;
-  height: 40px;
-  top: 20px;
-  left: 20px;
-  border-top: 2px solid #4ade80;
-  border-right: 2px solid #4ade80;
-  animation-duration: 1.2s;
-}
+/* Removed ring-3 to reduce complexity */
 
 .loading-core {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 20px;
-  height: 20px;
+  width: 16px; /* Reduced size */
+  height: 16px;
 }
 
 .core-dot {
@@ -1370,11 +1169,8 @@ watch(
   height: 100%;
   background: linear-gradient(45deg, #16a34a, #4ade80);
   border-radius: 50%;
-  animation: pulse-core 1.5s ease-in-out infinite;
-  box-shadow:
-    0 0 10px rgba(22, 163, 74, 0.5),
-    0 0 20px rgba(22, 163, 74, 0.3),
-    0 0 30px rgba(22, 163, 74, 0.1);
+  animation: pulse-simple 1.5s ease-in-out infinite; /* Simplified animation */
+  box-shadow: 0 0 8px rgba(22, 163, 74, 0.3); /* Simplified shadow */
 }
 
 .loading-dots {
@@ -1384,11 +1180,11 @@ watch(
 }
 
 .dot {
-  width: 8px;
-  height: 8px;
+  width: 6px; /* Reduced size */
+  height: 6px;
   background: #16a34a;
   border-radius: 50%;
-  animation: bounce-dots 1.4s ease-in-out infinite;
+  animation: bounce-simple 1.4s ease-in-out infinite; /* Simplified animation */
 }
 
 .dot-1 {
@@ -1404,16 +1200,16 @@ watch(
 }
 
 .loading-text {
-  font-size: 1.1rem;
+  font-size: 1rem; /* Reduced size */
   font-weight: 600;
   color: #16a34a;
   margin-bottom: 1.5rem;
-  animation: fade-pulse 2s ease-in-out infinite;
+  /* Removed fade-pulse animation */
 }
 
 .loading-progress {
-  width: 200px;
-  height: 4px;
+  width: 150px; /* Reduced size */
+  height: 3px; /* Reduced height */
   background: rgba(22, 163, 74, 0.1);
   border-radius: 2px;
   overflow: hidden;
@@ -1425,11 +1221,53 @@ watch(
   background: linear-gradient(90deg, #16a34a, #4ade80, #16a34a);
   background-size: 200% 100%;
   border-radius: 2px;
-  animation: progress-flow 2s ease-in-out infinite;
-  box-shadow: 0 0 10px rgba(22, 163, 74, 0.5);
+  animation: progress-simple 2s ease-in-out infinite; /* Simplified animation */
+  box-shadow: 0 0 6px rgba(22, 163, 74, 0.3); /* Simplified shadow */
 }
 
-/* Dark mode enhancements */
+/* Simplified animations */
+@keyframes spin-simple {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse-simple {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes bounce-simple {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-6px); /* Reduced movement */
+  }
+}
+
+@keyframes progress-simple {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Dark mode optimizations */
 .dark-mode .loading-text {
   color: #4ade80;
 }
@@ -1444,17 +1282,9 @@ watch(
   border-left-color: #22c55e;
 }
 
-.dark-mode .ring-3 {
-  border-top-color: #86efac;
-  border-right-color: #86efac;
-}
-
 .dark-mode .core-dot {
   background: linear-gradient(45deg, #4ade80, #86efac);
-  box-shadow:
-    0 0 10px rgba(74, 222, 128, 0.5),
-    0 0 20px rgba(74, 222, 128, 0.3),
-    0 0 30px rgba(74, 222, 128, 0.1);
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.3);
 }
 
 .dark-mode .dot {
@@ -1467,97 +1297,7 @@ watch(
 
 .dark-mode .progress-bar {
   background: linear-gradient(90deg, #4ade80, #86efac, #4ade80);
-  box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
-}
-
-/* Enhanced Animations */
-@keyframes spin-enhanced {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes pulse-core {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.2);
-    opacity: 0.8;
-  }
-}
-
-@keyframes bounce-dots {
-  0%,
-  80%,
-  100% {
-    transform: scale(1) translateY(0);
-    opacity: 0.5;
-  }
-  40% {
-    transform: scale(1.2) translateY(-10px);
-    opacity: 1;
-  }
-}
-
-@keyframes fade-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
-}
-
-@keyframes progress-flow {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .loading-spinner-enhanced {
-    width: 60px;
-    height: 60px;
-  }
-
-  .ring-1 {
-    width: 60px;
-    height: 60px;
-  }
-
-  .ring-2 {
-    width: 45px;
-    height: 45px;
-    top: 7.5px;
-    left: 7.5px;
-  }
-
-  .ring-3 {
-    width: 30px;
-    height: 30px;
-    top: 15px;
-    left: 15px;
-  }
-
-  .loading-core {
-    width: 15px;
-    height: 15px;
-  }
-
-  .loading-progress {
-    width: 150px;
-  }
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.3);
 }
 
 /* Empty state */
@@ -2254,6 +1994,24 @@ watch(
   .action-buttons-group {
     flex-direction: column;
     gap: 0.25rem;
+  }
+}
+
+/* Performance optimization: Reduce animations when user prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .floating-orb,
+  .spinner-ring,
+  .core-dot,
+  .dot,
+  .progress-bar {
+    animation: none;
+  }
+
+  .glass-panel,
+  .btn-primary,
+  .pagination-btn,
+  .action-btn {
+    transition: none;
   }
 }
 </style>

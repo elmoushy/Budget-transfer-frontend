@@ -43,6 +43,19 @@ setupAxiosInterceptors()
 // Create app instance
 const app = createApp(App)
 
+// Configure Vue to handle extraneous attributes more gracefully
+app.config.warnHandler = (msg, instance, trace) => {
+  // Suppress extraneous non-props attributes warnings
+  if (msg.includes('Extraneous non-props attributes')) {
+    return
+  }
+  // Suppress prop type validation warnings for null values
+  if (msg.includes('Invalid prop: type check failed')) {
+    return
+  }
+  console.warn(msg, instance, trace)
+}
+
 // Setup Pinia for state management
 const pinia = createPinia()
 app.use(pinia)

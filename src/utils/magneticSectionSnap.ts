@@ -68,6 +68,12 @@ export default class MagneticSectionSnap {
   }
 
   private updateCurrentSection(): void {
+    // Early return if no sections available
+    if (this.sections.length === 0) {
+      this.currentSection = 0
+      return
+    }
+
     const windowHeight = window.innerHeight
 
     // Find which section is most in view
@@ -116,6 +122,17 @@ export default class MagneticSectionSnap {
     // If already scrolling, don't interfere
     if (this.scrolling) return
 
+    // Early return if no sections available
+    if (this.sections.length === 0) {
+      return
+    }
+
+    // Ensure currentSection is within valid range
+    if (this.currentSection < 0 || this.currentSection >= this.sections.length) {
+      this.currentSection = 0
+      return
+    }
+
     // Determine direction
     const direction = e.deltaY > 0 ? 1 : -1
 
@@ -159,11 +176,27 @@ export default class MagneticSectionSnap {
     // If already scrolling, don't interfere
     if (this.scrolling || e.touches.length !== 1) return
 
+    // Early return if no sections available
+    if (this.sections.length === 0) {
+      return
+    }
+
+    // Ensure currentSection is within valid range
+    if (this.currentSection < 0 || this.currentSection >= this.sections.length) {
+      this.currentSection = 0
+      return
+    }
+
     const touchY = e.touches[0].clientY
     const direction = this.touchStartY > touchY ? 1 : -1
 
     // Check if we should switch sections
     const section = this.sections[this.currentSection]
+
+    if (!section) {
+      return // Exit early if section is undefined
+    }
+
     const rect = section.getBoundingClientRect()
     const threshold = rect.height * this.config.threshold
 
@@ -195,6 +228,11 @@ export default class MagneticSectionSnap {
   }
 
   private snapToNearestSection(): void {
+    // Early return if no sections available
+    if (this.sections.length === 0) {
+      return
+    }
+
     // Find nearest section based on current scroll position
     const windowHeight = window.innerHeight
 
@@ -219,12 +257,18 @@ export default class MagneticSectionSnap {
   }
 
   private scrollTo(index: number): void {
-    if (index < 0 || index >= this.sections.length) return
+    if (index < 0 || index >= this.sections.length || this.sections.length === 0) return
 
     this.scrolling = true
     this.currentSection = index
 
     const section = this.sections[index]
+
+    if (!section) {
+      this.scrolling = false
+      return
+    }
+
     const sectionTop = section.offsetTop
 
     // Use smooth scrolling for a better user experience
