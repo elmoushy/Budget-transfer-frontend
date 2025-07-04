@@ -68,7 +68,6 @@ export default class MagneticSectionSnap {
   }
 
   private updateCurrentSection(): void {
-    const scrollY = window.scrollY
     const windowHeight = window.innerHeight
 
     // Find which section is most in view
@@ -97,7 +96,7 @@ export default class MagneticSectionSnap {
     this.currentSection = maxVisibilityIndex
   }
 
-  private handleScroll(e: Event): void {
+  private handleScroll(_e: Event): void {
     // Update previous scroll position
     this.previousScrollY = window.scrollY
 
@@ -122,12 +121,14 @@ export default class MagneticSectionSnap {
 
     // Check if we should switch sections
     const section = this.sections[this.currentSection]
-    
+
     if (!section) {
-      console.warn(`Section at index ${this.currentSection} is undefined. Total sections: ${this.sections.length}`);
-      return; // Exit early if section is undefined
+      console.warn(
+        `Section at index ${this.currentSection} is undefined. Total sections: ${this.sections.length}`,
+      )
+      return // Exit early if section is undefined
     }
-    
+
     const rect = section.getBoundingClientRect()
     const threshold = rect.height * this.config.threshold
 
@@ -189,13 +190,12 @@ export default class MagneticSectionSnap {
     }
   }
 
-  private handleTouchEnd(e: TouchEvent): void {
+  private handleTouchEnd(_e: TouchEvent): void {
     this.snapToNearestSection()
   }
 
   private snapToNearestSection(): void {
     // Find nearest section based on current scroll position
-    const scrollY = window.scrollY
     const windowHeight = window.innerHeight
 
     let nearestIndex = 0

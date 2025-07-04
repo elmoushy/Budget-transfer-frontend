@@ -18,19 +18,19 @@ const routes = [
   {
     path: '/',
     name: 'Home',
-    component: () => import('@/views/Home.vue'),
+    component: () => import('@/views/UnifiedTransfers.vue'),
     meta: { requiresAuth: true },
   },
   {
     path: '/enhancements',
     name: 'Enhancements',
-    component: () => import('@/views/Enhancements.vue'),
+    component: () => import('@/views/UnifiedTransfers.vue'),
     meta: { requiresAuth: true },
   },
   {
     path: '/settlements',
     name: 'Settlements', // This must match the name used in NavigationMenu.vue
-    component: () => import('@/views/Contracts.vue'), // Loads the Contracts component
+    component: () => import('@/views/UnifiedTransfers.vue'), // Now uses the unified component
     meta: { requiresAuth: true },
     // Add alias for better consistency with component name
     alias: '/contracts',
