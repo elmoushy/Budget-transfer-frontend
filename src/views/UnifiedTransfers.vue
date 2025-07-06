@@ -1,5 +1,9 @@
 <template>
-  <div class="unified-page" :class="pageClass">
+  <div
+    class="unified-page"
+    :class="[pageClass, { 'dark-theme': themeStore.darkMode }]"
+    :dir="isArabic ? 'rtl' : 'ltr'"
+  >
     <!-- Simplified background effects -->
     <div class="background-effects">
       <div class="floating-orb orb-1"></div>
@@ -366,9 +370,8 @@ import FuturisticPopup from '@/components/FuturisticPopup.vue'
 import OracleApprovalPipelineModal from '@/components/OracleApprovalPipelineModal.vue'
 
 // Service imports
-// @ts-expect-error - Service is JavaScript file
 import unifiedTransferService from '@/services/UnifiedTransferService'
-import type { TransferData, ApiResponse } from '@/services/TransferService'
+import type { TransferData } from '@/services/TransferService'
 
 // CSS imports
 import '@/assets/css/shared-page-styles.css'
@@ -499,9 +502,18 @@ const paginationText = computed(() => {
     : `Showing ${start} to ${end} of ${totalCount.value} items`
 })
 
+// Type definitions
+interface UnifiedTransferResponse {
+  results: TransferData[]
+  count: number
+  next?: string | null
+  previous?: string | null
+  [key: string]: unknown
+}
+
 // ───────────────────────────────────────────────────────────── State Variables
 const loading = ref(false)
-const apiData = ref<ApiResponse<{ results: TransferData[]; count: number }> | null>(null)
+const apiData = ref<UnifiedTransferResponse | null>(null)
 const displayedRows = ref<TransferData[]>([])
 const totalCount = ref(0)
 const hasNextPage = ref(false)
@@ -657,12 +669,13 @@ async function fetchData() {
       routeConfig.value.code,
       searchQuery.value,
       currentPage.value,
-      pageSize.value, // Add page size parameter
     )
 
     if (response && response.results) {
-      apiData.value = response
-      displayedRows.value = response.results
+      apiData.value = response as unknown as UnifiedTransferResponse
+      displayedRows.value = Array.isArray(response.results)
+        ? response.results
+        : response.results.results || []
       totalCount.value = response.count || 0
       hasNextPage.value = !!response.next
       hasPrevPage.value = !!response.previous
@@ -897,9 +910,9 @@ watch(
 </script>
 
 <style scoped>
-/* Optimized CSS with reduced animations */
+/* Optimized CSS with RTL and dark-theme support */
 
-/* Simplified main page background */
+/* Main page background with RTL support */
 .unified-page {
   min-height: auto;
   padding: 1.5rem;
@@ -908,13 +921,21 @@ watch(
   background: linear-gradient(135deg, #f8f6f8 0%, #fff6fa 50%, #f8f6f8 100%);
   color: #1a1423;
   transition: all 0.3s ease;
-  /* Removed heavy backgroundShift animation */
+  direction: inherit;
 }
 
-.unified-page.dark-mode {
+/* RTL adjustments */
+[dir='rtl'] .unified-page {
+  background: linear-gradient(225deg, #f8f6f8 0%, #fff6fa 50%, #f8f6f8 100%);
+}
+
+.unified-page.dark-theme {
   background: linear-gradient(135deg, #18131a 0%, #241726 50%, #18131a 100%);
   color: #f8e9f0;
-  /* Removed heavy backgroundShiftDark animation */
+}
+
+[dir='rtl'] .unified-page.dark-theme {
+  background: linear-gradient(225deg, #18131a 0%, #241726 50%, #18131a 100%);
 }
 
 /* Simplified glass panel effect */
@@ -929,6 +950,11 @@ watch(
   overflow: hidden;
 }
 
+/* RTL adjustments for glass panel */
+[dir='rtl'] .glass-panel {
+  direction: rtl;
+}
+
 /* Removed heavy hover effects */
 .glass-panel:hover {
   transform: translateY(-1px); /* Reduced from -2px */
@@ -936,13 +962,13 @@ watch(
   border-color: rgba(225, 75, 106, 0.3);
 }
 
-.dark-mode .glass-panel {
+.dark-theme .glass-panel {
   background: rgba(36, 23, 38, 0.9);
   border-color: rgba(81, 32, 60, 0.4);
   box-shadow: 0 4px 16px rgba(167, 56, 92, 0.15); /* Simplified shadow */
 }
 
-.dark-mode .glass-panel:hover {
+.dark-theme .glass-panel:hover {
   box-shadow: 0 6px 24px rgba(167, 56, 92, 0.2); /* Simplified shadow */
   border-color: rgba(225, 75, 106, 0.4);
 }
@@ -1010,15 +1036,13 @@ watch(
   /* Removed subtitleFade animation */
 }
 
-.dark-mode .page-title {
-  background: linear-gradient(135deg, #a7385c 0%, #e14b6a 50%, #6d1a36 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.dark-theme .page-title {
+  color: #f8e9f0;
+  text-shadow: 0 0 10px rgba(248, 233, 240, 0.3);
 }
 
-.dark-mode .page-subtitle {
-  color: #c8a9b4;
+.dark-theme .page-subtitle {
+  color: #d1c4d9;
 }
 
 /* Simplified primary button */
@@ -1268,34 +1292,34 @@ watch(
 }
 
 /* Dark mode optimizations */
-.dark-mode .loading-text {
+.dark-theme .loading-text {
   color: #4ade80;
 }
 
-.dark-mode .ring-1 {
+.dark-theme .ring-1 {
   border-top-color: #4ade80;
   border-right-color: #4ade80;
 }
 
-.dark-mode .ring-2 {
+.dark-theme .ring-2 {
   border-bottom-color: #22c55e;
   border-left-color: #22c55e;
 }
 
-.dark-mode .core-dot {
+.dark-theme .core-dot {
   background: linear-gradient(45deg, #4ade80, #86efac);
   box-shadow: 0 0 6px rgba(74, 222, 128, 0.3);
 }
 
-.dark-mode .dot {
+.dark-theme .dot {
   background: #4ade80;
 }
 
-.dark-mode .loading-progress {
+.dark-theme .loading-progress {
   background: rgba(74, 222, 128, 0.1);
 }
 
-.dark-mode .progress-bar {
+.dark-theme .progress-bar {
   background: linear-gradient(90deg, #4ade80, #86efac, #4ade80);
   box-shadow: 0 0 6px rgba(74, 222, 128, 0.3);
 }
@@ -1340,9 +1364,24 @@ watch(
   overflow: hidden;
 }
 
-.dark-mode .modal-container {
+.dark-theme .modal-container {
   background: #1e1e2e;
   color: #e2e2e2;
+}
+
+/* RTL support for modals */
+[dir='rtl'] .modal-header {
+  direction: rtl;
+}
+
+[dir='rtl'] .modal-footer {
+  direction: rtl;
+  justify-content: flex-start;
+}
+
+[dir='rtl'] .modal-body {
+  direction: rtl;
+  text-align: right;
 }
 
 .modal-header {
@@ -1353,7 +1392,7 @@ watch(
   border-bottom: 1px solid #e5e7eb;
 }
 
-.dark-mode .modal-header {
+.dark-theme .modal-header {
   border-bottom-color: #374151;
 }
 
@@ -1371,7 +1410,7 @@ watch(
   border-top: 1px solid #e5e7eb;
 }
 
-.dark-mode .modal-footer {
+.dark-theme .modal-footer {
   border-top-color: #374151;
 }
 
@@ -1389,7 +1428,7 @@ watch(
   background-color: rgba(0, 0, 0, 0.1);
 }
 
-.dark-mode .close-modal:hover {
+.dark-theme .close-modal:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
@@ -1398,11 +1437,39 @@ watch(
   color: #374151;
 }
 
-.dark-mode .description-content {
+.dark-theme .description-content {
   color: #d1d5db;
 }
 
-/* Enhanced Search Section Styles */
+/* Additional RTL typography and spacing */
+[dir='rtl'] .page-title {
+  text-align: right;
+}
+
+[dir='rtl'] .page-subtitle {
+  text-align: right;
+}
+
+[dir='rtl'] .header-left {
+  text-align: right;
+}
+
+[dir='rtl'] .header-right {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+/* Dark theme text adjustments */
+.dark-theme .page-title {
+  color: #f8e9f0;
+  text-shadow: 0 0 10px rgba(248, 233, 240, 0.3);
+}
+
+.dark-theme .page-subtitle {
+  color: #d1c4d9;
+}
+
+/* Simplified Search Section Styles */
 .search-section {
   margin-bottom: 1.5rem;
   padding: 1.5rem;
@@ -1422,6 +1489,21 @@ watch(
   min-width: 300px;
   display: flex;
   align-items: center;
+}
+
+/* RTL support for search container */
+[dir='rtl'] .search-icon {
+  left: auto;
+  right: 1rem;
+}
+
+[dir='rtl'] .search-input {
+  padding: 0.875rem 3rem 0.875rem 1rem;
+}
+
+[dir='rtl'] .clear-search {
+  right: auto;
+  left: 0.75rem;
 }
 
 .search-icon {
@@ -1450,13 +1532,13 @@ watch(
   transform: translateY(-1px);
 }
 
-.dark-mode .search-input {
+.dark-theme .search-input {
   background: #2d3748;
   border-color: #4a5568;
   color: #e2e2e2;
 }
 
-.dark-mode .search-input:focus {
+.dark-theme .search-input:focus {
   border-color: #8a2a44;
   box-shadow: 0 0 0 3px rgba(138, 42, 68, 0.1);
 }
@@ -1512,15 +1594,15 @@ watch(
   box-shadow: 0 4px 12px rgba(109, 26, 54, 0.2);
 }
 
-.dark-mode .btn-filter,
-.dark-mode .btn-refresh {
+.dark-theme .btn-filter,
+.dark-theme .btn-refresh {
   background: #2d3748;
   border-color: #4a5568;
   color: #e2e2e2;
 }
 
-.dark-mode .btn-filter:hover,
-.dark-mode .btn-refresh:hover {
+.dark-theme .btn-filter:hover,
+.dark-theme .btn-refresh:hover {
   border-color: #8a2a44;
   background: #8a2a44;
 }
@@ -1545,7 +1627,7 @@ watch(
   font-size: 0.875rem;
 }
 
-.dark-mode .modern-table {
+.dark-theme .modern-table {
   background: #1e1e2e;
 }
 
@@ -1554,7 +1636,7 @@ watch(
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
 }
 
-.dark-mode .table-header {
+.dark-theme .table-header {
   background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
 }
 
@@ -1568,9 +1650,32 @@ watch(
   font-size: 0.875rem;
 }
 
-.dark-mode .modern-table th {
+.dark-theme .modern-table th {
   color: #e2e2e2;
   border-bottom-color: #4a5568;
+}
+
+/* RTL comprehensive support */
+[dir='rtl'] {
+  text-align: right;
+}
+
+[dir='rtl'] .modern-table th,
+[dir='rtl'] .modern-table td {
+  text-align: right;
+}
+
+[dir='rtl'] .search-section {
+  direction: rtl;
+}
+
+[dir='rtl'] .page-header {
+  direction: rtl;
+  text-align: right;
+}
+
+[dir='rtl'] .btn-primary {
+  direction: rtl;
 }
 
 /* Table Data Cells */
@@ -1581,7 +1686,7 @@ watch(
   vertical-align: middle;
 }
 
-.dark-mode .modern-table td {
+.dark-theme .modern-table td {
   border-bottom-color: #374151;
 }
 
@@ -1596,8 +1701,29 @@ watch(
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.dark-mode .table-row:hover {
+.dark-theme .table-row:hover {
   background: #2d3748;
+}
+
+/* RTL support for table rows and status indicators */
+[dir='rtl'] .row-pending {
+  border-left: none;
+  border-right: 4px solid #f59e0b;
+}
+
+[dir='rtl'] .row-approved {
+  border-left: none;
+  border-right: 4px solid #10b981;
+}
+
+[dir='rtl'] .row-rejected {
+  border-left: none;
+  border-right: 4px solid #ef4444;
+}
+
+[dir='rtl'] .row-submitted {
+  border-left: none;
+  border-right: 4px solid #6366f1;
 }
 
 /* Status-based Row Colors */
@@ -1710,7 +1836,7 @@ watch(
   transform: translateY(-1px);
 }
 
-.dark-mode .track-btn {
+.dark-theme .track-btn {
   background: #374151;
   color: #e2e2e2;
   border-color: #4a5568;
@@ -1735,7 +1861,7 @@ watch(
   transform: translateY(-1px);
 }
 
-.dark-mode .attachment-btn {
+.dark-theme .attachment-btn {
   background: #374151;
   color: #e2e2e2;
   border-color: #4a5568;
@@ -1850,7 +1976,7 @@ watch(
   box-shadow: 0 0 0 3px rgba(109, 26, 54, 0.1);
 }
 
-.dark-mode .page-size-select {
+.dark-theme .page-size-select {
   background: #374151;
   color: #e2e2e2;
   border-color: #4a5568;
@@ -1924,20 +2050,33 @@ watch(
   box-shadow: none;
 }
 
-.dark-mode .pagination-btn {
+.dark-theme .pagination-btn {
   background: #374151;
   color: #e2e2e2;
   border-color: #4a5568;
 }
 
-.dark-mode .pagination-btn:hover:not(:disabled) {
+.dark-theme .pagination-btn:hover:not(:disabled) {
   background: #8a2a44;
   border-color: #8a2a44;
 }
 
-.dark-mode .pagination-btn.active {
+.dark-theme .pagination-btn.active {
   background: #8a2a44;
   border-color: #8a2a44;
+}
+
+/* RTL support for pagination */
+[dir='rtl'] .pagination-wrapper {
+  direction: rtl;
+}
+
+[dir='rtl'] .pagination-controls {
+  direction: rtl;
+}
+
+[dir='rtl'] .pagination-info {
+  direction: rtl;
 }
 
 /* Responsive Design */
