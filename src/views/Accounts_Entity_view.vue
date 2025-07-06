@@ -1,5 +1,5 @@
 <template>
-  <main class="accounts-entity-view" :class="{ 'dark-mode': isDarkMode }">
+  <main class="accounts-entity-view" :class="{ 'dark-mode': istnbkMode }">
     <div class="container">
       <div class="tabs-container">
         <div class="tabs">
@@ -231,15 +231,15 @@
               </div>
               <button
                 class="pagination-btn"
-                :disabled="currentEntityPage >= totalAccountPages"
+                :disabled="currentEntityPage >= totalEntityPages"
                 @click="currentEntityPage++"
               >
                 <i class="fas fa-angle-right"></i>
               </button>
               <button
                 class="pagination-btn"
-                :disabled="currentEntityPage >= totalAccountPages"
-                @click="currentEntityPage = totalAccountPages"
+                :disabled="currentEntityPage >= totalEntityPages"
+                @click="currentEntityPage = totalEntityPages"
               >
                 <i class="fas fa-angle-double-right"></i>
               </button>
@@ -803,6 +803,7 @@ export default defineComponent({
       // Theme and language
       isArabic,
       isDarkMode,
+      istnbkMode: isDarkMode,
 
       // Methods
       filterAccounts,
@@ -828,11 +829,11 @@ export default defineComponent({
   padding: 1.5rem;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, #f8f6f8 0%, #fff6fa 50%, #f8f6f8 100%);
 }
 
 .accounts-entity-view.dark-mode {
-  background: linear-gradient(135deg, #1a1a2e 0%, #111122 100%);
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   color: #e2e8f0;
 }
 
@@ -847,8 +848,8 @@ export default defineComponent({
   z-index: -1;
   overflow: hidden;
   background:
-    radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 20% 30%, rgba(138, 42, 68, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(225, 75, 106, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 50% 50%, rgba(109, 26, 54, 0.05) 0%, transparent 50%);
   animation: backgroundFloat 20s ease-in-out infinite;
 }
@@ -870,10 +871,10 @@ export default defineComponent({
   max-width: 2500px;
   margin: 0 auto;
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 246, 250, 0.7);
   backdrop-filter: blur(20px);
   box-shadow:
-    0 25px 50px rgba(0, 0, 0, 0.1),
+    0 25px 50px rgba(138, 42, 68, 0.1),
     0 0 0 1px rgba(255, 255, 255, 0.1);
   padding: 2rem;
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -882,11 +883,11 @@ export default defineComponent({
 }
 
 .dark-mode .container {
-  background: rgba(17, 17, 34, 0.8);
+  background: rgba(30, 30, 46, 0.8);
   box-shadow:
     0 25px 50px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+    0 0 0 1px rgba(225, 75, 106, 0.05);
+  border: 1px solid rgba(225, 75, 106, 0.1);
 }
 
 /* Container glow effect */
@@ -899,10 +900,10 @@ export default defineComponent({
   bottom: 0;
   background: linear-gradient(
     135deg,
-    rgba(59, 130, 246, 0.05) 0%,
+    rgba(138, 42, 68, 0.05) 0%,
     transparent 30%,
     transparent 70%,
-    rgba(16, 185, 129, 0.05) 100%
+    rgba(225, 75, 106, 0.05) 100%
   );
   border-radius: 24px;
   pointer-events: none;
@@ -922,7 +923,7 @@ export default defineComponent({
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(59, 130, 246, 0.3) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(138, 42, 68, 0.3) 50%, transparent 100%);
 }
 
 .tabs {
@@ -930,13 +931,13 @@ export default defineComponent({
   border-radius: 16px;
   overflow: hidden;
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 8px 32px rgba(138, 42, 68, 0.1),
     0 0 0 1px rgba(255, 255, 255, 0.1);
   width: fit-content;
   margin: 0 auto;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 246, 250, 0.6);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(225, 75, 106, 0.2);
   position: relative;
 }
 
@@ -944,8 +945,8 @@ export default defineComponent({
   background: rgba(30, 30, 50, 0.8);
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+    0 0 0 1px rgba(225, 75, 106, 0.05);
+  border: 1px solid rgba(225, 75, 106, 0.1);
 }
 
 .tabs button {
@@ -953,7 +954,7 @@ export default defineComponent({
   border: none;
   background: transparent;
   cursor: pointer;
-  color: #64748b;
+  color: #8a2a44;
   font-size: 1rem;
   font-weight: 600;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -969,16 +970,16 @@ export default defineComponent({
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(138, 42, 68, 0.1) 0%, rgba(225, 75, 106, 0.1) 100%);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
 
 .tabs button.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+  background: linear-gradient(135deg, #8a2a44 0%, #e14b6a 100%);
   color: #ffffff;
   box-shadow:
-    0 8px 25px rgba(59, 130, 246, 0.4),
+    0 8px 25px rgba(138, 42, 68, 0.4),
     0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
@@ -987,16 +988,16 @@ export default defineComponent({
 }
 
 .tabs button:hover:not(.active) {
-  background: rgba(59, 130, 246, 0.1);
-  color: #334155;
+  background: rgba(138, 42, 68, 0.1);
+  color: #6d1a36;
 }
 
 .dark-mode .tabs button {
-  color: #94a3b8;
+  color: #e14b6a;
 }
 
 .dark-mode .tabs button:hover:not(.active) {
-  background: rgba(59, 130, 246, 0.15);
+  background: rgba(225, 75, 106, 0.15);
   color: #e2e8f0;
 }
 
@@ -1007,12 +1008,12 @@ export default defineComponent({
   align-items: center;
   margin-bottom: 2rem;
   padding: 2rem;
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 246, 250, 0.5);
   backdrop-filter: blur(15px);
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(225, 75, 106, 0.2);
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.06),
+    0 8px 32px rgba(138, 42, 68, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   position: relative;
   overflow: hidden;
@@ -1020,25 +1021,25 @@ export default defineComponent({
 
 .dark-mode .header-actions {
   background: rgba(30, 30, 50, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(225, 75, 106, 0.1);
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .header-actions h2 {
-  color: #1e293b;
+  color: #8a2a44;
   margin: 0;
   font-size: 1.875rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, #8a2a44 0%, #e14b6a 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .dark-mode .header-actions h2 {
-  background: linear-gradient(135deg, #f1f5f9 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, #e14b6a 0%, #a7385c 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -1058,33 +1059,33 @@ export default defineComponent({
 .search-box input {
   width: 100%;
   padding: 1rem 1.25rem 1rem 3.5rem;
-  border: 2px solid rgba(59, 130, 246, 0.1);
+  border: 2px solid rgba(138, 42, 68, 0.1);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 246, 250, 0.8);
   backdrop-filter: blur(10px);
-  color: #334155;
+  color: #6d1a36;
   outline: none;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   font-size: 0.95rem;
   box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.05),
+    0 4px 20px rgba(138, 42, 68, 0.05),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .search-box input:focus {
-  border-color: #3b82f6;
+  border-color: #8a2a44;
   box-shadow:
-    0 0 0 4px rgba(59, 130, 246, 0.1),
-    0 8px 25px rgba(59, 130, 246, 0.15);
+    0 0 0 4px rgba(138, 42, 68, 0.1),
+    0 8px 25px rgba(138, 42, 68, 0.15);
 }
 
 .search-box input::placeholder {
-  color: #94a3b8;
+  color: #a7385c;
 }
 
 .dark-mode .search-box input {
   background: rgba(30, 30, 50, 0.8);
-  border-color: rgba(59, 130, 246, 0.2);
+  border-color: rgba(225, 75, 106, 0.2);
   color: #e2e8f0;
   box-shadow:
     0 4px 20px rgba(0, 0, 0, 0.1),
@@ -1092,14 +1093,14 @@ export default defineComponent({
 }
 
 .dark-mode .search-box input:focus {
-  border-color: #3b82f6;
+  border-color: #e14b6a;
   box-shadow:
-    0 0 0 4px rgba(59, 130, 246, 0.15),
-    0 8px 25px rgba(59, 130, 246, 0.1);
+    0 0 0 4px rgba(225, 75, 106, 0.15),
+    0 8px 25px rgba(225, 75, 106, 0.1);
 }
 
 .dark-mode .search-box input::placeholder {
-  color: #64748b;
+  color: #94a3b8;
 }
 
 .search-box i {
@@ -1107,28 +1108,13 @@ export default defineComponent({
   left: 1.25rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #64748b;
+  color: #8a2a44;
   font-size: 1.1rem;
   transition: color 0.3s ease;
 }
 
 .search-box input:focus + i {
-  color: #3b82f6;
-}
-
-.dark-mode .search-box input {
-  background: rgba(30, 30, 50, 0.8);
-  border-color: rgba(59, 130, 246, 0.2);
-  color: #e2e8f0;
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-
-.dark-mode .search-box input:focus {
-  box-shadow:
-    0 0 0 4px rgba(59, 130, 246, 0.2),
-    0 8px 25px rgba(59, 130, 246, 0.3);
+  color: #e14b6a;
 }
 
 .btn-add {
@@ -1138,13 +1124,13 @@ export default defineComponent({
   padding: 1rem 2rem;
   border: none;
   border-radius: 12px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #8a2a44 0%, #e14b6a 100%);
   color: #ffffff;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow:
-    0 8px 25px rgba(16, 185, 129, 0.3),
+    0 8px 25px rgba(138, 42, 68, 0.3),
     0 0 0 1px rgba(255, 255, 255, 0.1);
   font-size: 0.95rem;
   position: relative;
@@ -1154,7 +1140,7 @@ export default defineComponent({
 .btn-add:hover {
   transform: translateY(-3px);
   box-shadow:
-    0 12px 35px rgba(16, 185, 129, 0.4),
+    0 12px 35px rgba(138, 42, 68, 0.4),
     0 0 0 1px rgba(255, 255, 255, 0.2);
 }
 
@@ -1162,15 +1148,15 @@ export default defineComponent({
 .data-table-container {
   overflow-x: auto;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 246, 250, 0.9);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(225, 75, 106, 0.2);
+  box-shadow: 0 8px 32px rgba(138, 42, 68, 0.08);
 }
 
 .dark-mode .data-table-container {
   background: rgba(30, 30, 50, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(225, 75, 106, 0.1);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
@@ -1180,7 +1166,7 @@ export default defineComponent({
 }
 
 .data-table thead th {
-  background: #1e293b;
+  background: linear-gradient(135deg, #8a2a44 0%, #6d1a36 100%);
   color: #ffffff;
   text-align: left;
   padding: 1rem;
@@ -1191,14 +1177,14 @@ export default defineComponent({
 
 .data-table tbody td {
   padding: 0.875rem 1rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  color: #374151;
+  border-bottom: 1px solid rgba(138, 42, 68, 0.05);
+  color: #6d1a36;
   font-size: 0.875rem;
   vertical-align: middle;
 }
 
 .data-table tbody tr:hover {
-  background: rgba(59, 130, 246, 0.05);
+  background: rgba(138, 42, 68, 0.05);
 }
 
 .data-table tbody tr:last-child td {
@@ -1207,11 +1193,11 @@ export default defineComponent({
 
 .dark-mode .data-table tbody td {
   color: #cbd5e1;
-  border-bottom-color: rgba(255, 255, 255, 0.05);
+  border-bottom-color: rgba(225, 75, 106, 0.05);
 }
 
 .dark-mode .data-table tbody tr:hover {
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(225, 75, 106, 0.1);
 }
 
 .actions-column {
@@ -1242,13 +1228,13 @@ export default defineComponent({
 }
 
 .btn-edit {
-  color: #3b82f6;
-  background: rgba(59, 130, 246, 0.1);
+  color: #8a2a44;
+  background: rgba(138, 42, 68, 0.1);
 }
 
 .btn-edit:hover {
-  background: rgba(59, 130, 246, 0.2);
-  color: #1d4ed8;
+  background: rgba(138, 42, 68, 0.2);
+  color: #6d1a36;
 }
 
 .btn-delete {
@@ -1261,18 +1247,6 @@ export default defineComponent({
   color: #dc2626;
 }
 
-.no-data {
-  text-align: center;
-  padding: 3rem !important;
-  color: #64748b;
-  font-size: 1rem;
-  font-style: italic;
-}
-
-.dark-mode .no-data {
-  color: #94a3b8;
-}
-
 /* Modal */
 .modal {
   position: fixed;
@@ -1280,7 +1254,7 @@ export default defineComponent({
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(138, 42, 68, 0.6);
   backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
@@ -1289,48 +1263,48 @@ export default defineComponent({
 }
 
 .modal-content {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 246, 250, 0.95);
   backdrop-filter: blur(25px);
   border-radius: 16px;
   width: 500px;
   max-width: 95%;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 20px 40px rgba(138, 42, 68, 0.2);
+  border: 1px solid rgba(225, 75, 106, 0.2);
 }
 
 .dark-mode .modal-content {
   background: rgba(30, 30, 50, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(225, 75, 106, 0.1);
 }
 
 .modal-header {
   padding: 1.5rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(138, 42, 68, 0.1);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .dark-mode .modal-header {
-  border-bottom-color: rgba(255, 255, 255, 0.1);
+  border-bottom-color: rgba(225, 75, 106, 0.1);
 }
 
 .modal-header h3 {
   margin: 0;
-  color: #1e293b;
+  color: #8a2a44;
   font-size: 1.25rem;
   font-weight: 600;
 }
 
 .dark-mode .modal-header h3 {
-  color: #f1f5f9;
+  color: #e14b6a;
 }
 
 .close-btn {
   background: none;
   border: none;
   font-size: 1.5rem;
-  color: #64748b;
+  color: #8a2a44;
   cursor: pointer;
   padding: 0.25rem;
   border-radius: 6px;
@@ -1354,30 +1328,30 @@ export default defineComponent({
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #374151;
+  color: #6d1a36;
   font-weight: 500;
   font-size: 0.875rem;
 }
 
 .dark-mode .form-group label {
-  color: #cbd5e1;
+  color: #e14b6a;
 }
 
 .form-group input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid rgba(138, 42, 68, 0.2);
   border-radius: 8px;
   background: #ffffff;
-  color: #374151;
+  color: #6d1a36;
   outline: none;
   transition: all 0.2s ease;
   font-size: 0.875rem;
 }
 
 .form-group input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #8a2a44;
+  box-shadow: 0 0 0 3px rgba(138, 42, 68, 0.1);
 }
 
 .form-group input:disabled {
@@ -1387,18 +1361,18 @@ export default defineComponent({
 }
 
 .form-group input::placeholder {
-  color: #9ca3af;
+  color: #a7385c;
 }
 
 .dark-mode .form-group input {
   background: rgba(55, 65, 81, 0.5);
-  border-color: rgba(75, 85, 99, 0.5);
+  border-color: rgba(225, 75, 106, 0.5);
   color: #e5e7eb;
 }
 
 .dark-mode .form-group input:focus {
-  border-color: #60a5fa;
-  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+  border-color: #e14b6a;
+  box-shadow: 0 0 0 3px rgba(225, 75, 106, 0.1);
 }
 
 .form-actions {
@@ -1407,11 +1381,11 @@ export default defineComponent({
   gap: 1rem;
   margin-top: 1.5rem;
   padding-top: 1.5rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-top: 1px solid rgba(138, 42, 68, 0.1);
 }
 
 .dark-mode .form-actions {
-  border-top-color: rgba(255, 255, 255, 0.1);
+  border-top-color: rgba(225, 75, 106, 0.1);
 }
 
 .btn-cancel,
@@ -1426,33 +1400,33 @@ export default defineComponent({
 }
 
 .btn-cancel {
-  background: #f3f4f6;
-  color: #374151;
-  border-color: #d1d5db;
+  background: rgba(138, 42, 68, 0.1);
+  color: #8a2a44;
+  border-color: rgba(138, 42, 68, 0.2);
 }
 
 .btn-cancel:hover {
-  background: #e5e7eb;
-  border-color: #9ca3af;
+  background: rgba(138, 42, 68, 0.15);
+  border-color: rgba(138, 42, 68, 0.3);
 }
 
 .btn-save {
-  background: #3b82f6;
+  background: linear-gradient(135deg, #8a2a44 0%, #e14b6a 100%);
   color: #ffffff;
 }
 
 .btn-save:hover {
-  background: #2563eb;
+  background: linear-gradient(135deg, #a7385c 0%, #e14b6a 100%);
 }
 
 .dark-mode .btn-cancel {
-  background: rgba(55, 65, 81, 0.5);
-  color: #d1d5db;
-  border-color: rgba(75, 85, 99, 0.5);
+  background: rgba(225, 75, 106, 0.1);
+  color: #e14b6a;
+  border-color: rgba(225, 75, 106, 0.2);
 }
 
 .dark-mode .btn-cancel:hover {
-  background: rgba(75, 85, 99, 0.5);
+  background: rgba(225, 75, 106, 0.15);
 }
 
 /* Confirmation Dialog */
@@ -1462,13 +1436,13 @@ export default defineComponent({
 
 .confirmation-dialog p {
   margin: 1rem 0 2rem;
-  color: #374151;
+  color: #6d1a36;
   text-align: center;
   line-height: 1.5;
 }
 
 .dark-mode .confirmation-dialog p {
-  color: #d1d5db;
+  color: #e14b6a;
 }
 
 .confirmation-dialog .btn-delete {
@@ -1490,15 +1464,15 @@ export default defineComponent({
   align-items: center;
   justify-content: center;
   padding: 3rem 0;
-  color: #64748b;
+  color: #8a2a44;
 }
 
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(59, 130, 246, 0.2);
+  border: 3px solid rgba(138, 42, 68, 0.2);
   border-radius: 50%;
-  border-top-color: #3b82f6;
+  border-top-color: #8a2a44;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
 }
@@ -1512,35 +1486,47 @@ export default defineComponent({
   }
 }
 
+.no-data {
+  text-align: center;
+  padding: 3rem !important;
+  color: #8a2a44;
+  font-size: 1rem;
+  font-style: italic;
+}
+
+.dark-mode .no-data {
+  color: #e14b6a;
+}
+
 /* Table info bar */
 .table-info-bar {
   display: flex;
   align-items: center;
   margin-bottom: 1rem;
   padding: 0.75rem 1rem;
-  background: rgba(248, 250, 252, 0.8);
+  background: rgba(255, 246, 250, 0.8);
   border-radius: 8px;
-  border: 1px solid rgba(226, 232, 240, 0.5);
+  border: 1px solid rgba(225, 75, 106, 0.5);
 }
 
 .dark-mode .table-info-bar {
   background: rgba(55, 65, 81, 0.3);
-  border-color: rgba(75, 85, 99, 0.3);
+  border-color: rgba(225, 75, 106, 0.3);
 }
 
 .item-count {
   font-weight: 500;
-  color: #374151;
+  color: #6d1a36;
   font-size: 0.875rem;
 }
 
 .dark-mode .item-count {
-  color: #d1d5db;
+  color: #e14b6a;
 }
 
 .filtered-info {
   margin-left: 0.75rem;
-  color: #6b7280;
+  color: #a7385c;
   font-size: 0.875rem;
 }
 
@@ -1556,14 +1542,14 @@ export default defineComponent({
   margin-top: 2rem;
   gap: 0.5rem;
   padding: 1rem;
-  background: rgba(248, 250, 252, 0.8);
+  background: rgba(255, 246, 250, 0.8);
   border-radius: 12px;
-  border: 1px solid rgba(226, 232, 240, 0.5);
+  border: 1px solid rgba(225, 75, 106, 0.5);
 }
 
 .dark-mode .pagination {
   background: rgba(55, 65, 81, 0.3);
-  border-color: rgba(75, 85, 99, 0.3);
+  border-color: rgba(225, 75, 106, 0.3);
 }
 
 .pagination-btn {
@@ -1573,18 +1559,18 @@ export default defineComponent({
   width: 36px;
   height: 36px;
   border-radius: 6px;
-  border: 1px solid #d1d5db;
+  border: 1px solid rgba(138, 42, 68, 0.2);
   background: #ffffff;
-  color: #6b7280;
+  color: #8a2a44;
   cursor: pointer;
   transition: all 0.2s ease;
   font-weight: 500;
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background: #3b82f6;
+  background: #8a2a44;
   color: #ffffff;
-  border-color: #3b82f6;
+  border-color: #8a2a44;
 }
 
 .pagination-btn:disabled {
@@ -1594,25 +1580,25 @@ export default defineComponent({
 
 .pagination-info {
   padding: 0 1rem;
-  color: #374151;
+  color: #6d1a36;
   font-size: 0.875rem;
   font-weight: 500;
 }
 
 .dark-mode .pagination-info {
-  color: #d1d5db;
+  color: #e14b6a;
 }
 
 .dark-mode .pagination-btn {
   background: rgba(55, 65, 81, 0.5);
-  border-color: rgba(75, 85, 99, 0.5);
-  color: #9ca3ab;
+  border-color: rgba(225, 75, 106, 0.5);
+  color: #e14b6a;
 }
 
 .dark-mode .pagination-btn:hover:not(:disabled) {
-  background: #3b82f6;
+  background: #e14b6a;
   color: #ffffff;
-  border-color: #3b82f6;
+  border-color: #e14b6a;
 }
 
 /* RTL Support */

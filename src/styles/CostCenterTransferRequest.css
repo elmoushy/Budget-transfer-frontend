@@ -567,7 +567,7 @@
   max-width: auto;
   margin: 0 auto;
   transition: var(--hover-transition);
-  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0fdf4 100%);
+  background: linear-gradient(135deg, #f8f6f8 0%, #fff6fa 50%, #f8f6f8 100%);
   min-height: 100vh;
   position: relative;
 }
@@ -588,7 +588,7 @@
 
 /* Dark mode */
 .transfer-request-page.dark-mode {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   color: #e2e8f0;
 }
 

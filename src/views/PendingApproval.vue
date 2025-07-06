@@ -1,10 +1,8 @@
 <template>
-  <div class="approval-page" :class="{ 'dark-mode': isDarkMode }">
+  <div class="approval-page" :class="{ 'dark-theme': isDarkMode }" :dir="isArabic ? 'rtl' : 'ltr'">
     <!-- top bar: title / search -->
     <div class="toolbar">
-      <h1 class="page-title">
-        {{ isArabic ? 'المناقلات قيد الاعتماد' : 'Transfers Pending Approval' }}
-      </h1>
+      <h1 class="page-title">{{ pageTitle }}</h1>
 
       <div class="toolbar-right">
         <div class="search-container">
@@ -88,10 +86,7 @@
               </span>
             </td>
             <td class="code-cell">
-              <router-link
-                :to="`/cost-center-transfer/${row.transaction_id}?viewOnly=true`"
-                class="code-link"
-              >
+              <router-link :to="getDetailRoute(row)" class="code-link">
                 {{ row.code }}
               </router-link>
             </td>
@@ -100,57 +95,47 @@
             <td>{{ row.transaction_date }}</td>
             <td>
               <div class="action-buttons-cell">
-                <button class="icon-btn view-btn" @click="viewDetails(row)" title="View Details">
-                  <EyeIcon />
+                <button @click="viewDetails(row)" class="icon-btn view-btn" title="View Details">
+                  <EyeIcon :size="16" />
                 </button>
-                <button class="icon-btn approve-btn" @click="approveRow(row)" title="Approve">
-                  <CheckIcon />
+                <button @click="approveRow(row)" class="icon-btn approve-btn" title="Approve">
+                  <CheckIcon :size="16" />
                 </button>
-                <button class="icon-btn reject-btn" @click="rejectRow(row)" title="Reject">
-                  <XIcon />
+                <button @click="rejectRow(row)" class="icon-btn reject-btn" title="Reject">
+                  <XIcon :size="16" />
                 </button>
               </div>
             </td>
           </tr>
-          <tr v-if="paginatedRows.length === 0" key="no-results">
-            <td colspan="7" class="no-results">
-              {{ isArabic ? 'لا توجد نتائج' : 'No results found' }}
-            </td>
-          </tr>
         </tbody>
       </transition-group>
+
+      <!-- No results message -->
+      <div v-if="!isLoading && paginatedRows.length === 0" class="no-results">
+        {{ isArabic ? 'لا توجد نتائج' : 'No results found' }}
+      </div>
     </div>
 
     <!-- Pagination -->
-    <div class="pagination">
-      <button
-        @click="prevPage"
-        class="page-btn"
-        :disabled="currentPage === 1"
-        :class="{ disabled: currentPage === 1 }"
-      >
+    <div v-if="!isLoading && totalItems > 0" class="pagination">
+      <button @click="prevPage" :disabled="currentPage === 1" class="page-btn">
         {{ isArabic ? 'السابق' : 'Previous' }}
       </button>
-
       <span class="page-info">
         {{
-          isArabic ? `صفحة ${currentPage} من ${totalPages}` : `Page ${currentPage} of ${totalPages}`
+          isArabic
+            ? `الصفحة ${currentPage} من ${totalPages}`
+            : `Page ${currentPage} of ${totalPages}`
         }}
       </span>
-
-      <button
-        @click="nextPage"
-        class="page-btn"
-        :disabled="currentPage >= totalPages"
-        :class="{ disabled: currentPage >= totalPages }"
-      >
+      <button @click="nextPage" :disabled="currentPage >= totalPages" class="page-btn">
         {{ isArabic ? 'التالي' : 'Next' }}
       </button>
     </div>
 
     <!-- Confirmation Modal -->
     <div v-if="showConfirmModal" class="modal-overlay" @click="closeConfirmModal">
-      <div class="modal-container" :class="{ 'dark-mode': isDarkMode }" @click.stop>
+      <div class="modal-container" :class="{ 'dark-theme': isDarkMode }" @click.stop>
         <div class="modal-header">
           <h2>{{ confirmModalTitle }}</h2>
           <button class="close-modal" @click="closeConfirmModal">×</button>
@@ -206,7 +191,7 @@
 
     <!-- Error Modal -->
     <div v-if="showErrorModal" class="modal-overlay" @click="closeErrorModal">
-      <div class="modal-container error-modal" :class="{ 'dark-mode': isDarkMode }" @click.stop>
+      <div class="modal-container error-modal" :class="{ 'dark-theme': isDarkMode }" @click.stop>
         <div class="modal-header">
           <h2>{{ isArabic ? 'خطأ' : 'Error' }}</h2>
           <button class="close-modal" @click="closeErrorModal">×</button>
@@ -226,13 +211,55 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { SearchIcon, EyeIcon, CheckIcon, XIcon } from 'lucide-vue-next'
 import { useThemeStore } from '@/stores/themeStore'
 import TransfersFlowService from '@/services/TransfersFlowService'
 
 // Define component name explicitly
 defineOptions({
-  name: 'ContractsPendingApprovalPage',
+  name: 'PendingApprovalPage',
+})
+
+// ───────────────────────────────────────────────────────────── Route Configuration
+const route = useRoute()
+const router = useRouter()
+const themeStore = useThemeStore()
+
+// Route-based configuration
+const routeConfig = computed(() => {
+  const routeName = route.name as string
+
+  switch (routeName) {
+    case 'transfers-pending-approval':
+      return {
+        code: 'FAR',
+        title: 'Transfers Pending Approval',
+        titleAr: 'المناقلات قيد الاعتماد',
+        detailRoute: '/cost-center-transfer',
+      }
+    case 'contracts-pending-approval':
+      return {
+        code: 'FAD',
+        title: 'Contracts Pending Approval',
+        titleAr: 'العقود قيد الاعتماد',
+        detailRoute: '/contract-detail',
+      }
+    case 'settlements-pending-approval':
+      return {
+        code: 'AFS',
+        title: 'Settlements Pending Approval',
+        titleAr: 'التسويات قيد الاعتماد',
+        detailRoute: '/settlement-detail',
+      }
+    default:
+      return {
+        code: 'FAR',
+        title: 'Pending Approval',
+        titleAr: 'قيد الاعتماد',
+        detailRoute: '/cost-center-transfer',
+      }
+  }
 })
 
 // ───────────────────────────────────────────────────────────── Type Declarations
@@ -246,23 +273,12 @@ interface RowData {
 }
 
 // ───────────────────────────────────────────────────────────── Theme & Lang
-const themeStore = useThemeStore()
-const isArabic = ref(false)
-const isDarkMode = ref(false)
+const isArabic = computed(() => themeStore.language === 'ar')
+const isDarkMode = computed(() => themeStore.darkMode)
 
-onMounted(() => {
-  isArabic.value = themeStore.language === 'ar'
-  isDarkMode.value = themeStore.darkMode
-  loadTransfers()
-})
-
-watch(
-  () => themeStore.language,
-  (l) => (isArabic.value = l === 'ar'),
-)
-watch(
-  () => themeStore.darkMode,
-  (d) => (isDarkMode.value = d),
+// ───────────────────────────────────────────────────────────── Computed Properties
+const pageTitle = computed(() =>
+  isArabic.value ? routeConfig.value.titleAr : routeConfig.value.title,
 )
 
 // ───────────────────────────────────────────────────────────── Table Headers
@@ -296,9 +312,9 @@ const showErrorModal = ref(false)
 function translateStatus(status: string) {
   const statusMap: Record<string, string> = {
     pending: isArabic.value ? 'قيد الانتظار' : 'Pending',
+    approved: isArabic.value ? 'موافق عليه' : 'Approved',
+    rejected: isArabic.value ? 'مرفوض' : 'Rejected',
     'under-review': isArabic.value ? 'قيد المراجعة' : 'Under Review',
-    approved: isArabic.value ? 'تمت الموافقة' : 'Approved',
-    rejected: isArabic.value ? 'تم الرفض' : 'Rejected',
   }
   return statusMap[status.toLowerCase()] || status
 }
@@ -311,9 +327,13 @@ function formatDate(dateString: string) {
       month: '2-digit',
       day: '2-digit',
     }).format(date)
-  } catch (e) {
+  } catch {
     return dateString
   }
+}
+
+function getDetailRoute(row: RowData) {
+  return `${routeConfig.value.detailRoute}/${row.transaction_id}?viewOnly=true`
 }
 
 // ───────────────────────────────────────────────────────────── Row Selection
@@ -366,7 +386,6 @@ function handleSearchInput() {
     clearTimeout(searchTimer.value)
   }
   searchTimer.value = window.setTimeout(() => {
-    currentPage.value = 1
     loadTransfers()
   }, 500) as unknown as number
 }
@@ -380,29 +399,22 @@ function clearSearch() {
 async function loadTransfers() {
   try {
     isLoading.value = true
+    selectedRows.value = []
+
     const response = await TransfersFlowService.fetchPendingTransfers(
       currentPage.value,
       itemsPerPage,
       searchQuery.value,
-      'FAD',
+      routeConfig.value.code,
     )
-    rows.value = (response.results || []).map((item: any) => ({
-      transaction_id: item.id || item.transaction_id,
-      status: item.status,
-      code: item.code,
-      request_date: item.request_date,
-      requested_by: item.requested_by,
-      transaction_date: item.transaction_date,
-      ...item, // Include any additional properties
-    }))
+
+    rows.value = response.results || []
     totalItems.value = response.count || 0
-    // Clear selection when data changes
-    selectedRows.value = []
   } catch (error) {
-    console.error('Failed to load transfers:', error)
+    console.error('Error loading transfers:', error)
     errorMessage.value = isArabic.value
-      ? 'حدث خطأ أثناء تحميل البيانات. يرجى المحاولة مرة أخرى.'
-      : 'An error occurred while loading data. Please try again.'
+      ? 'حدث خطأ أثناء تحميل البيانات'
+      : 'An error occurred while loading data'
     showErrorModal.value = true
     rows.value = []
     totalItems.value = 0
@@ -430,9 +442,7 @@ const paginatedRows = computed(() => rows.value)
 
 // ───────────────────────────────────────────────────────────── Row Actions
 function viewDetails(row: RowData) {
-  console.log('View details for row:', row.transaction_id)
-  // Implement view details functionality - could navigate to a detail page
-  // router.push(`/transfers/${row.transaction_id}`)
+  router.push(getDetailRoute(row))
 }
 
 function approveRow(row: RowData) {
@@ -472,13 +482,13 @@ function showConfirmationModal(type: 'approve' | 'reject', rowsToAction: RowData
   if (type === 'approve') {
     confirmModalTitle.value = isArabic.value ? 'تأكيد الموافقة' : 'Confirm Approval'
     confirmModalMessage.value = isArabic.value
-      ? `هل أنت متأكد من موافقتك على ${count} من المناقلات؟`
-      : `Are you sure you want to approve ${count} transfer request${count === 1 ? '' : 's'}?`
+      ? `هل أنت متأكد من الموافقة على ${count} عنصر؟`
+      : `Are you sure you want to approve ${count} item(s)?`
   } else {
     confirmModalTitle.value = isArabic.value ? 'تأكيد الرفض' : 'Confirm Rejection'
     confirmModalMessage.value = isArabic.value
-      ? `هل أنت متأكد من رفضك لـ ${count} من المناقلات؟`
-      : `Are you sure you want to reject ${count} transfer request${count === 1 ? '' : 's'}?`
+      ? `هل أنت متأكد من رفض ${count} عنصر؟`
+      : `Are you sure you want to reject ${count} item(s)?`
   }
 
   showConfirmModal.value = true
@@ -493,28 +503,31 @@ async function confirmAction() {
 
   try {
     isProcessingAction.value = true
-    const type = confirmModalType.value
-    const actionItems = rowsToProcess.value
-    const transactionIds = actionItems.map((item) => item.transaction_id)
+    const transactionIds = rowsToProcess.value.map((row) => row.transaction_id)
 
-    // Call API based on action type
-    if (type === 'approve') {
+    if (confirmModalType.value === 'approve') {
       await TransfersFlowService.approveRejectTransfers(transactionIds, 2)
     } else {
-      // For rejection, pass an array of the same reason for all IDs
       const reasons = transactionIds.map(() => rejectionReason.value.trim())
       await TransfersFlowService.approveRejectTransfers(transactionIds, 3, reasons)
     }
 
-    // Reload data after successful action
+    // Refresh the data
     await loadTransfers()
-
     closeConfirmModal()
+
+    // Show success message
+    const action = confirmModalType.value === 'approve' ? 'approved' : 'rejected'
+    const actionAr = confirmModalType.value === 'approve' ? 'موافقة' : 'رفض'
+    errorMessage.value = isArabic.value
+      ? `تم ${actionAr} العناصر بنجاح`
+      : `Items ${action} successfully`
+    showErrorModal.value = true
   } catch (error) {
     console.error('Error processing action:', error)
     errorMessage.value = isArabic.value
-      ? 'حدث خطأ أثناء معالجة الإجراء. يرجى المحاولة مرة أخرى.'
-      : 'An error occurred while processing your action. Please try again.'
+      ? 'حدث خطأ أثناء معالجة الطلب'
+      : 'An error occurred while processing the request'
     showErrorModal.value = true
   } finally {
     isProcessingAction.value = false
@@ -528,22 +541,49 @@ function closeConfirmModal() {
 function closeErrorModal() {
   showErrorModal.value = false
 }
+
+// ───────────────────────────────────────────────────────────── Lifecycle
+onMounted(() => {
+  loadTransfers()
+})
+
+// Watch for route changes
+watch(
+  () => route.name,
+  () => {
+    currentPage.value = 1
+    searchQuery.value = ''
+    loadTransfers()
+  },
+)
 </script>
 
 <style scoped>
+/* Base page styles with RTL and dark-theme support */
 .approval-page {
   padding: 1.5rem;
   max-width: auto;
   margin: 0 auto;
-  transition:
-    background-color 0.3s ease,
-    color 0.3s ease;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  color: #374151;
+  transition: all 0.3s ease;
+  direction: inherit;
 }
 
-/* Dark mode styles */
-.dark-mode {
-  background-color: #1a1a2e;
-  color: #e2e2e2;
+/* RTL adjustments */
+[dir='rtl'] .approval-page {
+  background: linear-gradient(225deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+/* Dark theme styles */
+.approval-page.dark-theme {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #d1d5db;
+}
+
+[dir='rtl'] .approval-page.dark-theme {
+  background: linear-gradient(225deg, #0f172a 0%, #1e293b 100%);
 }
 
 /* Top bar and title */
@@ -561,14 +601,21 @@ function closeErrorModal() {
   margin: 0;
 }
 
-.dark-mode .page-title {
-  color: #e2e2e2;
+.dark-theme .page-title {
+  color: #f8e9f0;
+  text-shadow: 0 0 10px rgba(248, 233, 240, 0.3);
 }
 
 .toolbar-right {
   display: flex;
   align-items: center;
   gap: 0.8rem;
+}
+
+/* RTL toolbar adjustments */
+[dir='rtl'] .toolbar-right {
+  margin-left: 0;
+  margin-right: auto;
 }
 
 /* Search input */
@@ -586,6 +633,12 @@ function closeErrorModal() {
   height: 16px;
 }
 
+/* RTL search adjustments */
+[dir='rtl'] .search-icon {
+  left: auto;
+  right: 10px;
+}
+
 .input-search {
   width: 250px;
   padding: 0.6rem 0.6rem 0.6rem 2.2rem;
@@ -594,6 +647,10 @@ function closeErrorModal() {
   transition: all 0.3s ease;
   font-size: 0.9rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+[dir='rtl'] .input-search {
+  padding: 0.6rem 2.2rem 0.6rem 0.6rem;
 }
 
 .input-search:focus {
@@ -614,19 +671,24 @@ function closeErrorModal() {
   line-height: 1;
 }
 
-/* Dark mode search */
-.dark-mode .input-search {
-  background-color: #2c2c44;
-  color: #e2e2e2;
-  border-color: #3f3f5f;
+[dir='rtl'] .clear-search {
+  right: auto;
+  left: 10px;
 }
 
-.dark-mode .input-search::placeholder {
+/* Dark mode search */
+.dark-theme .input-search {
+  background-color: #2d3748;
+  color: #e2e2e2;
+  border-color: #4a5568;
+}
+
+.dark-theme .input-search::placeholder {
   color: #8f8fa8;
 }
 
-.dark-mode .search-icon,
-.dark-mode .clear-search {
+.dark-theme .search-icon,
+.dark-theme .clear-search {
   color: #8f8fa8;
 }
 
@@ -635,7 +697,8 @@ function closeErrorModal() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #f8fafc;
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
   border-radius: 8px;
   padding: 0.75rem 1rem;
   margin-bottom: 1rem;
@@ -643,8 +706,13 @@ function closeErrorModal() {
   animation: slideIn 0.3s ease-out;
 }
 
-.dark-mode .selection-bar {
-  background-color: #2c2c44;
+/* RTL selection bar */
+[dir='rtl'] .selection-bar {
+  direction: rtl;
+}
+
+.dark-theme .selection-bar {
+  background-color: rgba(30, 41, 59, 0.9);
 }
 
 .selection-info {
@@ -652,7 +720,7 @@ function closeErrorModal() {
   color: #4b5563;
 }
 
-.dark-mode .selection-info {
+.dark-theme .selection-info {
   color: #e2e2e2;
 }
 
@@ -664,10 +732,16 @@ function closeErrorModal() {
 /* Table container */
 .table-container {
   overflow-x: auto;
-  background-color: white;
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   margin-bottom: 1rem;
+}
+
+.dark-theme .table-container {
+  background-color: rgba(30, 41, 59, 0.9);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
 .main-table {
@@ -703,6 +777,31 @@ function closeErrorModal() {
   border-top-right-radius: 8px;
 }
 
+/* RTL table adjustments */
+[dir='rtl'] .main-table th,
+[dir='rtl'] .main-table td {
+  text-align: right;
+}
+
+[dir='rtl'] .main-table th:first-child {
+  border-top-left-radius: 0;
+  border-top-right-radius: 8px;
+}
+
+[dir='rtl'] .main-table th:last-child {
+  border-top-right-radius: 0;
+  border-top-left-radius: 8px;
+}
+
+.dark-theme .main-table th {
+  background: #1e293b;
+  color: #a0a0b8;
+}
+
+.dark-theme .main-table td {
+  border-bottom-color: #374151;
+}
+
 .table-row {
   transition: all 0.2s ease;
 }
@@ -711,11 +810,15 @@ function closeErrorModal() {
   background-color: rgba(109, 26, 54, 0.05);
 }
 
+.dark-theme .table-row:hover {
+  background-color: rgba(125, 42, 70, 0.15);
+}
+
 .row-selected {
   background-color: rgba(109, 26, 54, 0.1) !important;
 }
 
-.dark-mode .row-selected {
+.dark-theme .row-selected {
   background-color: rgba(125, 42, 70, 0.2) !important;
 }
 
@@ -726,26 +829,7 @@ function closeErrorModal() {
   font-style: italic;
 }
 
-/* Dark mode table styling */
-.dark-mode .table-container {
-  background-color: #2c2c44;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-}
-
-.dark-mode .main-table th {
-  background: #252538;
-  color: #a0a0b8;
-}
-
-.dark-mode .main-table td {
-  border-bottom-color: #3f3f5f;
-}
-
-.dark-mode .table-row:hover {
-  background-color: rgba(125, 42, 70, 0.15);
-}
-
-.dark-mode .no-results {
+.dark-theme .no-results {
   color: #a0a0b8;
 }
 
@@ -815,17 +899,17 @@ function closeErrorModal() {
 }
 
 /* Dark mode checkbox */
-.dark-mode .checkmark {
-  background-color: #2c2c44;
-  border-color: #3f3f5f;
+.dark-theme .checkmark {
+  background-color: #2d3748;
+  border-color: #4a5568;
 }
 
-.dark-mode .checkbox-container:hover input ~ .checkmark {
-  background-color: #252538;
-  border-color: #4f4f6f;
+.dark-theme .checkbox-container:hover input ~ .checkmark {
+  background-color: #374151;
+  border-color: #6b7280;
 }
 
-.dark-mode .checkbox-container input:checked ~ .checkmark {
+.dark-theme .checkbox-container input:checked ~ .checkmark {
   background-color: #7d2a46;
   border-color: #7d2a46;
 }
@@ -861,57 +945,82 @@ function closeErrorModal() {
 }
 
 /* Dark mode status badges */
-.dark-mode .status-approved {
+.dark-theme .status-approved {
   background-color: rgba(52, 211, 153, 0.15);
   color: #4ade80;
 }
 
-.dark-mode .status-pending {
+.dark-theme .status-pending {
   background-color: rgba(248, 113, 113, 0.15);
   color: #fb7185;
 }
 
-.dark-mode .status-under {
+.dark-theme .status-under {
   background-color: rgba(245, 158, 11, 0.15);
   color: #fbbf24;
 }
 
-.dark-mode .status-rejected {
+.dark-theme .status-rejected {
   background-color: rgba(239, 68, 68, 0.15);
   color: #fb7185;
 }
 
-/* Row background colors */
+/* Row background colors with RTL support */
 .row-pending {
   background: rgba(248, 113, 113, 0.1);
+  border-left: 4px solid #f59e0b;
 }
 
 .row-approved {
   background: rgba(52, 211, 153, 0.1);
+  border-left: 4px solid #10b981;
 }
 
 .row-rejected {
   background: rgba(239, 68, 68, 0.1);
+  border-left: 4px solid #ef4444;
 }
 
 .row-review {
   background: rgba(245, 158, 11, 0.1);
+  border-left: 4px solid #f59e0b;
+}
+
+/* RTL row adjustments */
+[dir='rtl'] .row-pending {
+  border-left: none;
+  border-right: 4px solid #f59e0b;
+}
+
+[dir='rtl'] .row-approved {
+  border-left: none;
+  border-right: 4px solid #10b981;
+}
+
+[dir='rtl'] .row-rejected {
+  border-left: none;
+  border-right: 4px solid #ef4444;
+}
+
+[dir='rtl'] .row-review {
+  border-left: none;
+  border-right: 4px solid #f59e0b;
 }
 
 /* Dark mode row colors */
-.dark-mode .row-pending {
+.dark-theme .row-pending {
   background: rgba(248, 113, 113, 0.08);
 }
 
-.dark-mode .row-approved {
+.dark-theme .row-approved {
   background: rgba(52, 211, 153, 0.08);
 }
 
-.dark-mode .row-rejected {
+.dark-theme .row-rejected {
   background: rgba(239, 68, 68, 0.08);
 }
 
-.dark-mode .row-review {
+.dark-theme .row-review {
   background: rgba(245, 158, 11, 0.08);
 }
 
@@ -962,35 +1071,35 @@ function closeErrorModal() {
 }
 
 /* Dark mode icon buttons */
-.dark-mode .icon-btn {
+.dark-theme .icon-btn {
   color: #ff9ea0;
 }
 
-.dark-mode .view-btn {
+.dark-theme .view-btn {
   color: #60a5fa;
 }
 
-.dark-mode .approve-btn {
+.dark-theme .approve-btn {
   color: #4ade80;
 }
 
-.dark-mode .reject-btn {
+.dark-theme .reject-btn {
   color: #fb7185;
 }
 
-.dark-mode .icon-btn:hover {
+.dark-theme .icon-btn:hover {
   background-color: rgba(125, 42, 70, 0.2);
 }
 
-.dark-mode .view-btn:hover {
+.dark-theme .view-btn:hover {
   background-color: rgba(96, 165, 250, 0.2);
 }
 
-.dark-mode .approve-btn:hover {
+.dark-theme .approve-btn:hover {
   background-color: rgba(74, 222, 128, 0.2);
 }
 
-.dark-mode .reject-btn:hover {
+.dark-theme .reject-btn:hover {
   background-color: rgba(251, 113, 133, 0.2);
 }
 
@@ -999,7 +1108,21 @@ function closeErrorModal() {
   font-weight: 600;
 }
 
-.dark-mode .code-cell {
+.code-link {
+  color: inherit;
+  text-decoration: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.code-link:hover {
+  background: #6d1a36;
+  color: white;
+  text-decoration: none;
+}
+
+.dark-theme .code-cell {
   color: #ff9ea0;
 }
 
@@ -1010,6 +1133,11 @@ function closeErrorModal() {
   align-items: center;
   gap: 1rem;
   margin-top: 1.5rem;
+}
+
+/* RTL pagination */
+[dir='rtl'] .pagination {
+  direction: rtl;
 }
 
 .page-btn {
@@ -1038,18 +1166,18 @@ function closeErrorModal() {
 }
 
 /* Dark mode pagination */
-.dark-mode .page-btn {
-  background: #252538;
-  border-color: #3f3f5f;
+.dark-theme .page-btn {
+  background: #374151;
+  border-color: #4a5568;
   color: #e2e2e2;
 }
 
-.dark-mode .page-btn:hover:not(.disabled) {
-  background: #303048;
-  border-color: #4f4f6f;
+.dark-theme .page-btn:hover:not(.disabled) {
+  background: #4b5563;
+  border-color: #6b7280;
 }
 
-.dark-mode .page-info {
+.dark-theme .page-info {
   color: #a0a0b8;
 }
 
@@ -1088,7 +1216,7 @@ function closeErrorModal() {
   cursor: not-allowed;
 }
 
-/* Confirmation modal */
+/* Modal styles */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1104,119 +1232,201 @@ function closeErrorModal() {
 }
 
 .modal-container {
-  background-color: white;
-  width: 95%;
-  max-width: 500px;
+  background: white;
   border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
   overflow: hidden;
-  animation: slideIn 0.3s ease;
+}
+
+.dark-theme .modal-container {
+  background: #1e293b;
+  color: #e2e2e2;
 }
 
 .modal-header {
-  padding: 1.25rem;
-  border-bottom: 1px solid #e2e8f0;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* RTL modal adjustments */
+[dir='rtl'] .modal-header {
+  direction: rtl;
+}
+
+.dark-theme .modal-header {
+  border-bottom-color: #374151;
 }
 
 .modal-header h2 {
   margin: 0;
   font-size: 1.25rem;
-  color: #1a202c;
+  font-weight: 600;
 }
 
 .close-modal {
-  background: transparent;
+  background: none;
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s ease;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
 }
 
 .close-modal:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.dark-theme .close-modal:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .modal-body {
   padding: 1.5rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* RTL modal body */
+[dir='rtl'] .modal-body {
+  direction: rtl;
+  text-align: right;
 }
 
 .modal-footer {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid #e2e8f0;
   display: flex;
   justify-content: flex-end;
-  gap: 0.75rem;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* RTL modal footer */
+[dir='rtl'] .modal-footer {
+  direction: rtl;
+  justify-content: flex-start;
+}
+
+.dark-theme .modal-footer {
+  border-top-color: #374151;
 }
 
 .btn-secondary {
-  background-color: #f1f5f9;
-  color: #334155;
-  border: 1px solid #e2e8f0;
-  padding: 0.6rem 1.2rem;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  padding: 0.5rem 1rem;
   border-radius: 6px;
+  font-weight: 500;
   cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .btn-secondary:hover {
-  background-color: #e2e8f0;
+  background: #e5e7eb;
+  border-color: #9ca3af;
 }
 
-/* Dark mode modal */
-.dark-mode.modal-container {
-  background-color: #1a1a2e;
-  border: 1px solid #3f3f5f;
+.dark-theme .btn-secondary {
+  background: #374151;
+  color: #e2e2e2;
+  border-color: #4b5563;
 }
 
-.dark-mode .modal-header {
-  border-bottom-color: #3f3f5f;
+.dark-theme .btn-secondary:hover {
+  background: #4b5563;
+  border-color: #6b7280;
 }
 
-.dark-mode .modal-header h2 {
+/* Loading styles */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+}
+
+.loader {
+  border: 4px solid #f3f4f6;
+  border-top: 4px solid #6d1a36;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.dark-theme .loader {
+  border-color: #374151;
+  border-top-color: #7d2a46;
+}
+
+/* Rejection reason styles */
+.reason-container {
+  margin-top: 1rem;
+}
+
+.reason-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.dark-theme .reason-label {
   color: #e2e2e2;
 }
 
-.dark-mode .close-modal {
+.reason-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.reason-textarea:focus {
+  outline: none;
+  border-color: #6d1a36;
+  box-shadow: 0 0 0 3px rgba(109, 26, 54, 0.1);
+}
+
+.dark-theme .reason-textarea {
+  background: #374151;
+  border-color: #4b5563;
   color: #e2e2e2;
 }
 
-.dark-mode .close-modal:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+.dark-theme .reason-textarea::placeholder {
+  color: #9ca3af;
 }
 
-.dark-mode .modal-footer {
-  border-top-color: #3f3f5f;
-}
-
-.dark-mode .btn-secondary {
-  background-color: #2c2c44;
-  color: #e2e2e2;
-  border-color: #3f3f5f;
-}
-
-.dark-mode .btn-secondary:hover {
-  background-color: #3f3f5f;
+.reason-error {
+  color: #ef4444;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  animation: shake 0.3s ease-in-out;
 }
 
 /* Animations */
 .table-fade-enter-active,
 .table-fade-leave-active {
-  transition: opacity 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .table-fade-enter-from,
 .table-fade-leave-to {
   opacity: 0;
+  transform: translateY(10px);
 }
 
 @keyframes fadeIn {
@@ -1230,103 +1440,13 @@ function closeErrorModal() {
 
 @keyframes slideIn {
   from {
-    transform: translateY(-20px);
     opacity: 0;
+    transform: translateY(-10px);
   }
   to {
-    transform: translateY(0);
     opacity: 1;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
     transform: translateY(0);
-    opacity: 1;
   }
-}
-
-.table-row {
-  animation: fadeIn 0.3s ease-out forwards;
-}
-
-/* Make each row appear with delay based on its index */
-.table-row:nth-child(1) {
-  animation-delay: 0.05s;
-}
-.table-row:nth-child(2) {
-  animation-delay: 0.1s;
-}
-.table-row:nth-child(3) {
-  animation-delay: 0.15s;
-}
-.table-row:nth-child(4) {
-  animation-delay: 0.2s;
-}
-.table-row:nth-child(5) {
-  animation-delay: 0.25s;
-}
-.table-row:nth-child(6) {
-  animation-delay: 0.3s;
-}
-.table-row:nth-child(7) {
-  animation-delay: 0.35s;
-}
-.table-row:nth-child(8) {
-  animation-delay: 0.4s;
-}
-.table-row:nth-child(9) {
-  animation-delay: 0.45s;
-}
-.table-row:nth-child(10) {
-  animation-delay: 0.5s;
-}
-
-/* RTL support */
-[dir='rtl'] .search-icon {
-  left: auto;
-  right: 10px;
-}
-
-[dir='rtl'] .input-search {
-  padding: 0.6rem 2.2rem 0.6rem 0.6rem;
-}
-
-[dir='rtl'] .clear-search {
-  right: auto;
-  left: 10px;
-}
-
-[dir='rtl'] .modal-footer {
-  flex-direction: row-reverse;
-}
-
-/* Add styles for loading indicator */
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  min-height: 200px;
-}
-
-.loader {
-  border: 4px solid #f3f3f3;
-  border-radius: 50%;
-  border-top: 4px solid #6d1a36;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
-  margin-bottom: 10px;
-}
-
-.dark-mode .loader {
-  border: 4px solid #333;
-  border-top: 4px solid #7d2a46;
 }
 
 @keyframes spin {
@@ -1336,59 +1456,6 @@ function closeErrorModal() {
   100% {
     transform: rotate(360deg);
   }
-}
-
-.error-modal .modal-header {
-  border-bottom-color: #ef4444;
-}
-
-/* Rejection reason styles */
-.reason-container {
-  margin-top: 1rem;
-}
-
-.reason-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-}
-
-.reason-textarea {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  font-family: inherit;
-  font-size: 0.9rem;
-  resize: vertical;
-  transition: border-color 0.2s ease;
-}
-
-.reason-textarea:focus {
-  outline: none;
-  border-color: #6d1a36;
-  box-shadow: 0 0 0 3px rgba(109, 26, 54, 0.1);
-}
-
-.dark-mode .reason-textarea {
-  background-color: #2c2c44;
-  border-color: #3f3f5f;
-  color: #e2e2e2;
-}
-
-.dark-mode .reason-textarea::placeholder {
-  color: #8f8fa8;
-}
-
-.reason-error {
-  color: #ef4444;
-  font-size: 0.8rem;
-  margin-top: 0.5rem;
-  animation: shake 0.5s ease;
-}
-
-.dark-mode .reason-error {
-  color: #fb7185;
 }
 
 @keyframes shake {
@@ -1401,6 +1468,42 @@ function closeErrorModal() {
   }
   75% {
     transform: translateX(5px);
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .search-container {
+    width: 100%;
+  }
+
+  .input-search {
+    width: 100%;
+  }
+
+  .pagination {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .main-table {
+    font-size: 0.75rem;
+  }
+
+  .main-table th,
+  .main-table td {
+    padding: 0.5rem 0.25rem;
+  }
+
+  .action-buttons-cell {
+    flex-direction: column;
+    gap: 0.25rem;
   }
 }
 </style>

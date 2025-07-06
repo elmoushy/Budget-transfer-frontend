@@ -3,7 +3,6 @@
     <div class="page-header">
       <!-- Replaced title with error message when unbalanced -->
       <div v-if="apiSummary && !apiSummary.balanced" class="balance-error-message">
-        <div class="error-icon">!</div>
         <span class="error-text">
           {{
             isArabic
@@ -259,14 +258,14 @@
       </div>
 
       <!-- Action buttons - hidden in view-only mode -->
-      <div class="action-buttons-modern" v-if="!route.query.viewOnly">
+      <div class="action-buttons-modern" v-if="!route.query.viewOnly" :class="{ rtl: isRTL }">
         <button
           class="btn-modern btn-submit"
           @click="submitRequest"
           :disabled="!isSubmitButtonEnabled"
-          :class="{ 'btn-disabled': !isSubmitButtonEnabled }"
+          :class="{ 'btn-disabled': !isSubmitButtonEnabled, rtl: isRTL }"
         >
-          <span class="btn-icon-modern">
+          <span class="btn-icon-modern" :class="{ rtl: isRTL }">
             <svg
               width="16"
               height="16"
@@ -274,6 +273,7 @@
               fill="none"
               stroke="currentColor"
               stroke-width="2"
+              :style="{ transform: isRTL ? 'scaleX(-1)' : 'none' }"
             >
               <path d="M9 18l6-6-6-6" />
             </svg>
@@ -286,9 +286,9 @@
           class="btn-modern btn-upload"
           @click="uploadFile"
           :disabled="!isUploadButtonEnabled"
-          :class="{ 'btn-disabled': !isUploadButtonEnabled }"
+          :class="{ 'btn-disabled': !isUploadButtonEnabled, rtl: isRTL }"
         >
-          <span class="btn-icon-modern">
+          <span class="btn-icon-modern" :class="{ rtl: isRTL }">
             <svg
               width="16"
               height="16"
@@ -310,9 +310,9 @@
           class="btn-modern btn-reopen"
           @click="reopenRequest"
           :disabled="!isReopenButtonEnabled"
-          :class="{ 'btn-disabled': !isReopenButtonEnabled }"
+          :class="{ 'btn-disabled': !isReopenButtonEnabled, rtl: isRTL }"
         >
-          <span class="btn-icon-modern">
+          <span class="btn-icon-modern" :class="{ rtl: isRTL }">
             <svg
               width="16"
               height="16"
@@ -320,6 +320,7 @@
               fill="none"
               stroke="currentColor"
               stroke-width="2"
+              :style="{ transform: isRTL ? 'scaleX(-1)' : 'none' }"
             >
               <path d="M1 4v6h6" />
               <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
@@ -328,8 +329,8 @@
           <span class="btn-text">{{ isArabic ? 'إعادة فتح الطلب' : 'Re-open Request' }}</span>
         </button>
 
-        <button class="btn-modern btn-report" @click="generateReport">
-          <span class="btn-icon-modern">
+        <button class="btn-modern btn-report" @click="generateReport" :class="{ rtl: isRTL }">
+          <span class="btn-icon-modern" :class="{ rtl: isRTL }">
             <svg
               width="16"
               height="16"
@@ -368,159 +369,161 @@
     </div>
 
     <!-- Enhanced Error Details Modal -->
-    <Transition name="modal-fade" appear>
-      <div v-if="showErrorModal" class="enhanced-error-modal-overlay" @click="hideErrorModal">
-        <div class="enhanced-error-modal-backdrop"></div>
-        <Transition name="modal-slide" appear>
-          <div
-            class="enhanced-error-modal-container"
-            @click.stop
-            tabindex="-1"
-            role="dialog"
-            aria-labelledby="error-modal-title"
-            aria-describedby="error-modal-description"
-            aria-modal="true"
-          >
-            <div class="enhanced-error-modal-content">
-              <!-- Header with icon and gradient -->
-              <div class="enhanced-error-modal-header">
-                <div class="error-header-icon">
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    class="error-icon-svg"
+    <Teleport to="body">
+      <Transition name="modal-fade" appear>
+        <div v-if="showErrorModal" class="enhanced-error-modal-overlay" @click="hideErrorModal">
+          <div class="enhanced-error-modal-backdrop"></div>
+          <Transition name="modal-slide" appear>
+            <div
+              class="enhanced-error-modal-container"
+              @click.stop
+              tabindex="-1"
+              role="dialog"
+              aria-labelledby="error-modal-title"
+              aria-describedby="error-modal-description"
+              aria-modal="true"
+            >
+              <div class="enhanced-error-modal-content">
+                <!-- Header with icon and gradient -->
+                <div class="enhanced-error-modal-header">
+                  <div class="error-header-icon">
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      class="error-icon-svg"
+                    >
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="15" y1="9" x2="9" y2="15"></line>
+                      <line x1="9" y1="9" x2="15" y2="15"></line>
+                    </svg>
+                  </div>
+                  <div class="error-header-content">
+                    <h3 class="error-modal-title">
+                      {{ isArabic ? 'أخطاء التحقق من صحة البيانات' : 'Data Validation Errors' }}
+                    </h3>
+                    <p class="error-modal-subtitle">
+                      {{
+                        isArabic
+                          ? `تم العثور على ${currentErrors.length} أخطاء تحتاج إلى إصلاح`
+                          : `Found ${currentErrors.length} errors that need to be fixed`
+                      }}
+                    </p>
+                  </div>
+                  <button
+                    class="enhanced-error-modal-close"
+                    @click="hideErrorModal"
+                    :aria-label="isArabic ? 'إغلاق' : 'Close'"
                   >
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="15" y1="9" x2="9" y2="15"></line>
-                    <line x1="9" y1="9" x2="15" y2="15"></line>
-                  </svg>
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
                 </div>
-                <div class="error-header-content">
-                  <h3 class="error-modal-title">
-                    {{ isArabic ? 'أخطاء التحقق من صحة البيانات' : 'Data Validation Errors' }}
-                  </h3>
-                  <p class="error-modal-subtitle">
-                    {{
-                      isArabic
-                        ? `تم العثور على ${currentErrors.length} أخطاء تحتاج إلى إصلاح`
-                        : `Found ${currentErrors.length} errors that need to be fixed`
-                    }}
-                  </p>
-                </div>
-                <button
-                  class="enhanced-error-modal-close"
-                  @click="hideErrorModal"
-                  :aria-label="isArabic ? 'إغلاق' : 'Close'"
-                >
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
-              </div>
 
-              <!-- Enhanced Error List -->
-              <div class="enhanced-error-modal-body">
-                <div class="error-summary-stats">
-                  <div class="error-stat-item">
-                    <span class="error-stat-number">{{ currentErrors.length }}</span>
-                    <span class="error-stat-label">
-                      {{ isArabic ? 'أخطاء' : 'Errors' }}
-                    </span>
+                <!-- Enhanced Error List -->
+                <div class="enhanced-error-modal-body">
+                  <div class="error-summary-stats">
+                    <div class="error-stat-item">
+                      <span class="error-stat-number">{{ currentErrors.length }}</span>
+                      <span class="error-stat-label">
+                        {{ isArabic ? 'أخطاء' : 'Errors' }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="error-list-container">
+                    <TransitionGroup name="error-item" tag="div" class="enhanced-error-list">
+                      <div
+                        v-for="(error, errorIndex) in currentErrors"
+                        :key="`error-${errorIndex}`"
+                        class="enhanced-error-item"
+                        :style="{ animationDelay: `${errorIndex * 100}ms` }"
+                      >
+                        <div class="error-item-icon">
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                          </svg>
+                        </div>
+                        <div class="error-item-content">
+                          <span class="error-item-text">{{ error }}</span>
+                          <div class="error-item-type">
+                            {{ getErrorType(error) }}
+                          </div>
+                        </div>
+                      </div>
+                    </TransitionGroup>
                   </div>
                 </div>
 
-                <div class="error-list-container">
-                  <TransitionGroup name="error-item" tag="div" class="enhanced-error-list">
-                    <div
-                      v-for="(error, errorIndex) in currentErrors"
-                      :key="`error-${errorIndex}`"
-                      class="enhanced-error-item"
-                      :style="{ animationDelay: `${errorIndex * 100}ms` }"
+                <!-- Enhanced Footer -->
+                <div class="enhanced-error-modal-footer">
+                  <div class="error-help-text">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
                     >
-                      <div class="error-item-icon">
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                        >
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <line x1="12" y1="8" x2="12" y2="12"></line>
-                          <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                        </svg>
-                      </div>
-                      <div class="error-item-content">
-                        <span class="error-item-text">{{ error }}</span>
-                        <div class="error-item-type">
-                          {{ getErrorType(error) }}
-                        </div>
-                      </div>
-                    </div>
-                  </TransitionGroup>
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                      <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <span>
+                      {{
+                        isArabic
+                          ? 'قم بإصلاح هذه الأخطاء قبل المتابعة'
+                          : 'Please fix these errors before proceeding'
+                      }}
+                    </span>
+                  </div>
+                  <button class="enhanced-error-modal-action-btn" @click="hideErrorModal">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="M9 18l6-6-6-6" />
+                    </svg>
+                    <span>{{ isArabic ? 'فهمت' : 'Got it' }}</span>
+                  </button>
                 </div>
-              </div>
-
-              <!-- Enhanced Footer -->
-              <div class="enhanced-error-modal-footer">
-                <div class="error-help-text">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                  </svg>
-                  <span>
-                    {{
-                      isArabic
-                        ? 'قم بإصلاح هذه الأخطاء قبل المتابعة'
-                        : 'Please fix these errors before proceeding'
-                    }}
-                  </span>
-                </div>
-                <button class="enhanced-error-modal-action-btn" @click="hideErrorModal">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path d="M9 18l6-6-6-6" />
-                  </svg>
-                  <span>{{ isArabic ? 'فهمت' : 'Got it' }}</span>
-                </button>
               </div>
             </div>
-          </div>
-        </Transition>
-      </div>
-    </Transition>
+          </Transition>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, watchEffect, nextTick } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -546,13 +549,30 @@ import type {
   AccountEntity,
 } from '@/types/CostCenterTransferRequest'
 
+// Add type definitions for error handling
+interface ErrorCategory {
+  name: string
+  count: number
+  icon: string
+}
+
+interface AlertState {
+  show: boolean
+  message: string
+  type: string
+  timer: number | null
+}
+
+interface DropdownChangeEvent {
+  target: { value: string }
+}
+
 // State variables
 const transactionId = ref<number | null>(null)
 const transferData = ref<TransferItem[]>([])
 const loading = ref(true)
 const error = ref(false)
-const fileInput = ref<HTMLInputElement | null>(null)
-const activeTooltipIndex = ref<number | null>(null) // To track which tooltip is active
+const activeTooltipIndex = ref<number | null>(null)
 
 // Types are now imported
 const costCenterEntities = ref<CostCenterEntity[]>([])
@@ -565,7 +585,7 @@ const accountEntitiesLoading = ref(false)
 const accountEntitiesError = ref(false)
 
 // New ref to store the original data snapshot
-const originalData = ref([])
+const originalData = ref<TransferItem[]>([])
 
 // Add a new ref to track if changes have been made
 const changesMade = ref(false)
@@ -755,9 +775,9 @@ const getCostCenterName = (code: string | undefined) => {
   return entity ? entity.alias_default : ''
 }
 
-const updateCostCenterName = (item: TransferItem, event: unknown) => {
+const updateCostCenterName = (item: TransferItem, event: string | DropdownChangeEvent) => {
   // Handle both direct value from SearchableDropdown and event from select
-  const code = (event as any).target ? (event as any).target.value : event
+  const code = typeof event === 'string' ? event : event.target.value
   item.cost_center_code = code
   item.cost_center_name = getCostCenterName(code)
 
@@ -776,9 +796,9 @@ const getAccountName = (code: string | undefined) => {
   return account ? account.alias_default : ''
 }
 
-const updateAccountName = (item: TransferItem, event: unknown) => {
+const updateAccountName = (item: TransferItem, event: string | DropdownChangeEvent) => {
   // Handle both direct value from SearchableDropdown and event from select
-  const code = (event as any).target ? (event as any).target.value : event
+  const code = typeof event === 'string' ? event : event.target.value
   item.account_code = code
   item.account_name = getAccountName(code)
 
@@ -1000,7 +1020,9 @@ const checkForChanges = () => {
     }
 
     // Find corresponding original row with proper typing
-    const original = originalData.value.find((o: any) => o.transfer_id === current.transfer_id)
+    const original = originalData.value.find(
+      (o: TransferItem) => o.transfer_id === current.transfer_id,
+    )
     if (!original) {
       changesMade.value = true
       return
@@ -1014,10 +1036,10 @@ const checkForChanges = () => {
       'to_center',
       'encumbrance',
       'actual',
-    ]
+    ] as const
     for (const field of numericFields) {
-      const originalValue = parseFloat((original as any)[field] || 0)
-      const currentValue = parseFloat((current as any)[field] || 0)
+      const originalValue = parseFloat(String(original[field] || 0))
+      const currentValue = parseFloat(String(current[field] || 0))
       if (originalValue !== currentValue) {
         changesMade.value = true
         return
@@ -1025,7 +1047,12 @@ const checkForChanges = () => {
     }
 
     // Check string fields for changes
-    const stringFields = ['cost_center_code', 'cost_center_name', 'account_code', 'account_name']
+    const stringFields = [
+      'cost_center_code',
+      'cost_center_name',
+      'account_code',
+      'account_name',
+    ] as const
     for (const field of stringFields) {
       if (original[field] !== current[field]) {
         changesMade.value = true
@@ -1056,12 +1083,13 @@ const loadData = async () => {
     const response = await transferService.getTransferDetails(transactionId.value!)
 
     // Since ApiResponse extends T, we can access properties directly
-    if (response && (response as any).summary) {
+    if (response && (response as { summary?: ApiSummary }).summary) {
       // Store the summary data separately
-      apiSummary.value = (response as any).summary
+      const responseWithSummary = response as { summary: ApiSummary; transfers?: TransferItem[] }
+      apiSummary.value = responseWithSummary.summary
 
       // Extract status from summary
-      const summary = (response as any).summary
+      const summary = responseWithSummary.summary
       if (summary.status) {
         currentStatus.value = summary.status
       } else {
@@ -1069,7 +1097,7 @@ const loadData = async () => {
       }
 
       // Set transferData to the transfers array
-      transferData.value = (response as any).transfers || []
+      transferData.value = responseWithSummary.transfers || []
     } else {
       // Fallback to treating response as transfers array
       transferData.value = Array.isArray(response) ? response : []
@@ -1101,20 +1129,15 @@ const hideTooltip = () => {
   activeTooltipIndex.value = null
 }
 
-const formatNumber = (value: any) => {
+const formatNumber = (value: number | string | null | undefined): string | null => {
   if (value === null || value === undefined) return null
   return new Intl.NumberFormat(isArabic.value ? 'ar-SA' : 'en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(value)
+  }).format(Number(value))
 }
 
-const alertState = ref<{
-  show: boolean
-  message: string
-  type: string
-  timer: number | null
-}>({
+const alertState = ref<AlertState>({
   show: false,
   message: '',
   type: 'success', // 'success' or 'error'
@@ -1146,7 +1169,7 @@ const submitRequest = async () => {
     setTimeout(() => {
       router.push('/')
     }, 1500)
-  } catch (error) {
+  } catch {
     showAlert(isArabic.value ? 'فشل في تقديم الطلب' : 'Failed to submit request', 'error')
   }
 }
@@ -1156,7 +1179,7 @@ const reopenRequest = async () => {
     await transferService.reopenTransferRequest(transactionId.value!)
     showAlert(isArabic.value ? 'تم إعادة فتح الطلب بنجاح' : 'Request reopened successfully')
     await loadData()
-  } catch (error) {
+  } catch {
     showAlert(isArabic.value ? 'فشل في إعادة فتح الطلب' : 'Failed to reopen request', 'error')
   }
 }
@@ -1264,7 +1287,7 @@ const handleUploadSuccess = () => {
 }
 
 // Enhanced error modal methods
-const getErrorType = (error: string) => {
+const getErrorType = (error: string): string => {
   if (error.toLowerCase().includes('required') || error.toLowerCase().includes('مطلوب')) {
     return isArabic.value ? 'حقل مطلوب' : 'Required Field'
   } else if (error.toLowerCase().includes('invalid') || error.toLowerCase().includes('غير صحيح')) {
@@ -1277,27 +1300,8 @@ const getErrorType = (error: string) => {
   return isArabic.value ? 'خطأ عام' : 'General Error'
 }
 
-const getErrorPriority = (error: string) => {
-  if (error.toLowerCase().includes('required') || error.toLowerCase().includes('budget')) {
-    return 'high-priority'
-  } else if (error.toLowerCase().includes('format') || error.toLowerCase().includes('invalid')) {
-    return 'medium-priority'
-  }
-  return 'low-priority'
-}
-
-const getErrorPriorityText = (error: string) => {
-  const priority = getErrorPriority(error)
-  if (priority === 'high-priority') {
-    return isArabic.value ? 'عالي' : 'High'
-  } else if (priority === 'medium-priority') {
-    return isArabic.value ? 'متوسط' : 'Medium'
-  }
-  return isArabic.value ? 'منخفض' : 'Low'
-}
-
-const errorCategories = computed(() => {
-  const categories = {}
+const errorCategories = computed((): ErrorCategory[] => {
+  const categories: Record<string, ErrorCategory> = {}
 
   currentErrors.value.forEach((error) => {
     const type = getErrorType(error)
@@ -1325,7 +1329,7 @@ const errorCategories = computed(() => {
 })
 
 // Add these new methods after the existing methods in the script setup section
-const fetchPivotFundDetails = async (item: any) => {
+const fetchPivotFundDetails = async (item: TransferItem) => {
   // Only fetch if both cost center and account codes are set
   if (!item.cost_center_code || !item.account_code) {
     return
@@ -1355,9 +1359,9 @@ const fetchPivotFundDetails = async (item: any) => {
 
       // Mark that changes have been made
       checkForChanges()
-    } else if (response && response.data) {
+    } else if (response && (response as { data?: Record<string, unknown> }).data) {
       // Update financial fields with retrieved data
-      const data = response.data as any
+      const data = (response as { data: Record<string, unknown> }).data
 
       // Update numeric values using safe conversion mapping API fields to component fields
       item.actual = toSafeNumber(data.actual)
@@ -1373,7 +1377,7 @@ const fetchPivotFundDetails = async (item: any) => {
     }
   } catch (error: unknown) {
     // Check if the error is a 404 (Not Found)
-    const err = error as any
+    const err = error as { response?: { status?: number } }
     if (err.response && err.response.status === 404) {
       // Alert the user with the specific IDs that failed
       alert(
@@ -1423,6 +1427,169 @@ const showReportModal = ref(false)
   background-color: #444;
   border-color: #555;
   color: #aaa;
+}
+
+/* Remove red borders/outlines from buttons */
+.btn-modern,
+.btn-header-create,
+.btn-retry,
+.btn-delete-row,
+.btn-add-row-modern {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.btn-modern:focus,
+.btn-header-create:focus,
+.btn-retry:focus,
+.btn-delete-row:focus,
+.btn-add-row-modern:focus {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.btn-modern:active,
+.btn-header-create:active,
+.btn-retry:active,
+.btn-delete-row:active,
+.btn-add-row-modern:active {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove any border-right specifically */
+.btn-modern::after,
+.btn-header-create::after,
+.btn-retry::after,
+.btn-delete-row::after,
+.btn-add-row-modern::after {
+  border-right: none !important;
+}
+
+/* Comprehensive removal of pseudo-element red lines */
+.btn-modern::before,
+.btn-modern::after,
+.btn-header-create::before,
+.btn-header-create::after,
+.btn-retry::before,
+.btn-retry::after,
+.btn-delete-row::before,
+.btn-delete-row::after,
+.btn-add-row-modern::before,
+.btn-add-row-modern::after {
+  content: none !important;
+  border: none !important;
+  background: none !important;
+}
+
+/* Force remove all borders from btn-icon-modern */
+.btn-icon-modern {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border-top: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+  border-left: none !important;
+  border-inline: none !important;
+  border-block: none !important;
+  border-inline-start: none !important;
+  border-inline-end: none !important;
+  border-block-start: none !important;
+  border-block-end: none !important;
+}
+
+.btn-icon-modern:focus,
+.btn-icon-modern:active,
+.btn-icon-modern:hover {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border-top: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+  border-left: none !important;
+  border-inline: none !important;
+  border-block: none !important;
+  border-inline-start: none !important;
+  border-inline-end: none !important;
+  border-block-start: none !important;
+  border-block-end: none !important;
+}
+
+.btn-icon-modern::before,
+.btn-icon-modern::after {
+  content: none !important;
+  border: none !important;
+  background: none !important;
+  border-top: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+  border-left: none !important;
+}
+
+/* Remove any logical border on RTL */
+.rtl .btn-modern,
+.rtl .btn-header-create,
+.rtl .btn-retry,
+.rtl .btn-delete-row,
+.rtl .btn-add-row-modern {
+  border-inline-start: none !important;
+}
+
+/* Force remove all borders from action-buttons-modern */
+.action-buttons-modern {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border-top: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+  border-left: none !important;
+  border-inline: none !important;
+  border-block: none !important;
+  border-inline-start: none !important;
+  border-inline-end: none !important;
+  border-block-start: none !important;
+  border-block-end: none !important;
+}
+
+.action-buttons-modern:focus,
+.action-buttons-modern:active,
+.action-buttons-modern:hover {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border-top: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+  border-left: none !important;
+  border-inline: none !important;
+  border-block: none !important;
+  border-inline-start: none !important;
+  border-inline-end: none !important;
+  border-block-start: none !important;
+  border-block-end: none !important;
+}
+
+.action-buttons-modern::before,
+.action-buttons-modern::after {
+  content: none !important;
+  border: none !important;
+  background: none !important;
+  border-top: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+  border-left: none !important;
+}
+
+/* RTL specific border removal for action-buttons-modern */
+.rtl .action-buttons-modern {
+  border-inline-start: none !important;
+  border-inline-end: none !important;
 }
 
 /* New style for API data display */
@@ -1608,4 +1775,50 @@ const showReportModal = ref(false)
   background-color: #5e35b1;
   transform: translateY(-2px);
 }
+
+/* RTL styles */
+.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+.rtl .btn-icon-modern {
+  margin-right: 8px;
+  margin-left: 0;
+}
+
+.rtl .btn-text {
+  margin-right: 0;
+  margin-left: 8px;
+}
+
+.rtl .action-buttons-modern {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.rtl .dropdown-cell {
+  text-align: right;
+}
+
+.rtl .number-cell {
+  text-align: left;
+}
+
+.rtl .transfer-table {
+  direction: rtl;
+}
+
+.rtl .transfer-table th,
+.rtl .transfer-table td {
+  text-align: right;
+}
+
+.rtl .transfer-table .action-column {
+  text-align: center;
+}
+
+/* End RTL styles */
 </style>

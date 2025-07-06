@@ -44,19 +44,19 @@ const routes = [
   {
     path: '/contracts-pending-approval',
     name: 'ContractsPendingApproval',
-    component: () => import('@/views/ContractsPendingApproval.vue'),
+    component: () => import('@/views/UnifiedPendingApproval.vue'),
     meta: { requiresAuth: true },
   },
   {
     path: '/settlements-pending-approval',
     name: 'SettlementsPendingApproval',
-    component: () => import('@/views/SettlementsPendingApproval.vue'),
+    component: () => import('@/views/UnifiedPendingApproval.vue'),
     meta: { requiresAuth: true },
   },
   {
     path: '/transfers-pending-approval',
     name: 'EnhancementsPendingApproval',
-    component: () => import('@/views/TransfersPendingApproval.vue'),
+    component: () => import('@/views/UnifiedPendingApproval.vue'),
     meta: { requiresAuth: true },
   },
   {

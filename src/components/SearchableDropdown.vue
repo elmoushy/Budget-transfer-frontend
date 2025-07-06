@@ -30,8 +30,10 @@
     <Teleport to="body" v-if="isOpen">
       <Transition name="dropdown">
         <div
+          v-if="isOpen"
           ref="dropdownPanel"
           class="dropdown-panel-portal"
+          :class="{ 'dark-mode': isDarkMode }"
           :style="{
             position: 'absolute',
             top: panelPosition.top + 'px',
@@ -207,7 +209,7 @@ const calculatePosition = () => {
 
   panelPosition.value = {
     top: rect.bottom + scrollY + 8,
-    left: rect.left + scrollX,
+    left: rect.left + scrollX - 70, // Move 40px to the left
     width: rect.width,
   }
 }
@@ -536,14 +538,14 @@ onUnmounted(() => {
 
 /* Dark mode styles */
 .dark-mode .dropdown-trigger {
-  background: linear-gradient(145deg, #374151, #4b5563);
-  border-color: #4b5563;
+  background: linear-gradient(145deg, #1f2937, #374151) !important;
+  border-color: #374151;
   color: #f9fafb;
 }
 
 .dark-mode .dropdown-trigger:hover {
   border-color: #60a5fa;
-  box-shadow: 0 4px 16px rgba(96, 165, 250, 0.15);
+  box-shadow: 0 4px 16px rgba(96, 165, 250, 0.25);
 }
 
 .dark-mode .value-text {
@@ -551,51 +553,90 @@ onUnmounted(() => {
 }
 
 .dark-mode .placeholder-text {
-  color: #9ca3af;
+  color: #6b7280;
 }
 
-.dark-mode .dropdown-panel-portal {
-  background: #374151;
-  border-color: #4b5563;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+.dropdown-panel-portal.dark-mode {
+  background: #1f2937 !important;
+  border-color: #374151 !important;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8) !important;
 }
 
-.dark-mode .dropdown-panel-portal .search-container {
-  background: linear-gradient(145deg, #4b5563, #374151);
-  border-bottom-color: #4b5563;
+.dropdown-panel-portal.dark-mode .search-container {
+  background: linear-gradient(145deg, #1f2937, #374151) !important;
+  border-bottom-color: #374151 !important;
 }
 
-.dark-mode .dropdown-panel-portal .search-input {
-  background: #4b5563;
-  border-color: #6b7280;
-  color: #f9fafb;
+.dropdown-panel-portal.dark-mode .search-input {
+  background: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f9fafb !important;
 }
 
-.dark-mode .dropdown-panel-portal .search-input:focus {
-  border-color: #60a5fa;
-  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+.dropdown-panel-portal.dark-mode .search-input::placeholder {
+  color: #6b7280 !important;
 }
 
-.dark-mode .dropdown-panel-portal .option-item {
-  color: #f9fafb;
-  border-bottom-color: #4b5563;
+.dropdown-panel-portal.dark-mode .search-input:focus {
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2) !important;
+  background: #4b5563 !important;
 }
 
-.dark-mode .dropdown-panel-portal .option-item:hover {
-  background: linear-gradient(145deg, #4b5563, #6b7280);
+.dropdown-panel-portal.dark-mode .search-icon {
+  color: #6b7280 !important;
 }
 
-.dark-mode .dropdown-panel-portal .option-selected {
-  background: linear-gradient(145deg, #1e3a8a, #3730a3) !important;
-  color: #93c5fd;
+.dropdown-panel-portal.dark-mode .clear-button {
+  color: #6b7280 !important;
 }
 
-.dark-mode .dropdown-panel-portal .option-label {
-  color: #9ca3af;
+.dropdown-panel-portal.dark-mode .clear-button:hover {
+  background: #374151 !important;
+  color: #9ca3af !important;
 }
 
-.dark-mode .dropdown-panel-portal .no-results {
-  color: #9ca3af;
+.dropdown-panel-portal.dark-mode .options-container {
+  background: #1f2937 !important;
+  scrollbar-color: #4b5563 #1f2937 !important;
+}
+
+.dropdown-panel-portal.dark-mode .options-container::-webkit-scrollbar-track {
+  background: #1f2937 !important;
+}
+
+.dropdown-panel-portal.dark-mode .options-container::-webkit-scrollbar-thumb {
+  background: #4b5563 !important;
+}
+
+.dropdown-panel-portal.dark-mode .options-container::-webkit-scrollbar-thumb:hover {
+  background: #6b7280 !important;
+}
+
+.dropdown-panel-portal.dark-mode .option-item {
+  color: #f9fafb !important;
+  border-bottom-color: #374151 !important;
+}
+
+.dropdown-panel-portal.dark-mode .option-item:hover {
+  background: linear-gradient(145deg, #374151, #4b5563) !important;
+}
+
+.dropdown-panel-portal.dark-mode .option-selected {
+  background: linear-gradient(145deg, #1e40af, #2563eb) !important;
+  color: #dbeafe !important;
+}
+
+.dropdown-panel-portal.dark-mode .option-label {
+  color: #6b7280 !important;
+}
+
+.dropdown-panel-portal.dark-mode .selected-indicator {
+  color: #dbeafe !important;
+}
+
+.dropdown-panel-portal.dark-mode .no-results {
+  color: #6b7280 !important;
 }
 
 /* RTL styles */
@@ -633,8 +674,8 @@ onUnmounted(() => {
 }
 
 .dark-mode.disabled .dropdown-trigger {
-  background: #4b5563;
-  border-color: #6b7280;
-  color: #9ca3af;
+  background: #374151;
+  border-color: #4b5563;
+  color: #6b7280;
 }
 </style>

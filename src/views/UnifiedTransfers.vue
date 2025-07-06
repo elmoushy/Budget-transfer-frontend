@@ -930,7 +930,7 @@ watch(
 }
 
 .unified-page.dark-theme {
-  background: linear-gradient(135deg, #18131a 0%, #241726 50%, #18131a 100%);
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   color: #f8e9f0;
 }
 
