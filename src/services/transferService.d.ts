@@ -16,6 +16,11 @@ export interface ApiSummary {
   status?: string
   total?: number
   count?: number
+  balanced?: boolean
+  from_sum?: number
+  to_sum?: number
+  diff?: number
+  transaction_id?: number
   [key: string]: unknown
 }
 
@@ -104,19 +109,26 @@ declare const transferService: {
   fetchTransfers(searchQuery?: string, page?: number): Promise<ApiResponse>
   deleteTransfer(transferId: number): Promise<DeleteResponse>
   getTransfers(transactionId: number): Promise<ApiResponse>
+  getTransferDetails(transactionId: number): Promise<ApiResponse>
   fetchTransferDetails(transactionId: number): Promise<ApiResponse>
   approveTransferRequest(transactionId: number): Promise<ApiResponse>
   rejectTransferRequest(transactionId: number, rejectionReason: string): Promise<ApiResponse>
   reopenTransferRequest(transactionId: number): Promise<ApiResponse>
   generateReport(transactionId: number): Promise<BlobResponse>
+  createTransfer(transferData: TransferRequestData[]): Promise<ApiResponse>
   createTransferRequests(transferData: TransferRequestData[]): Promise<ApiResponse>
-  updateTransferRequestsLevel(transactionId: number, levelData: UpdateLevelData): Promise<ApiResponse>
+  submitTransferRequest(transactionId: number): Promise<ApiResponse>
+  updateTransferRequestsLevel(
+    transactionId: number,
+    levelData: UpdateLevelData,
+  ): Promise<ApiResponse>
   fetchTransfersFlow(searchQuery?: string, page?: number): Promise<ApiResponse>
   deleteTransferRequest(transactionId: number): Promise<ApiResponse>
   fetchAccountsEntities(): Promise<ApiResponse>
   fetchCostCenterDetailsByEntity(entityId: number): Promise<ApiResponse>
   fetchAccountByEntityAndCostCenter(entityId: number, costCenterId: number): Promise<ApiResponse>
   createBudgetTransferRequest(requestData: BudgetTransferRequestData): Promise<ApiResponse>
+  getPivotFundDetails(entityId: string | number, accountId: string | number): Promise<ApiResponse>
   fetchPivotFundsDetail(entityId: number, accountId: number): Promise<ApiResponse>
   getRejectionReports(transactionId: number): Promise<RejectionReport[]>
 }
