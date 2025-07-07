@@ -1,0 +1,1 @@
+import{Z as t}from"./index-Dm8_8feR.js";const i=t("navigation",{state:()=>({sourceComponent:null,navigationParams:{}}),actions:{setNavigationSource(a,o={}){this.sourceComponent=a,this.navigationParams=o},clearNavigationSource(){this.sourceComponent=null,this.navigationParams={}}}});export{i as u};
