@@ -13,23 +13,22 @@
     {
       "link": "/",
       "title": "Transfers",
-      "description": "This is the main page for viewing all transfer operations related to Fund Adjustment Requests (FAR). You can also use this page to create or update FAR transfers. Additionally, it allows you to track ERP workflows and accept budget transfer approvals associated with FAR codes."
+      "description": "This is the main page for viewing all transfer operations related to Fund Adjustment Requests (FAR) modifications It. You can also use this page to create or update FAR transfers. Additionally, it allows you to track ERP workflows and accept budget transfer approvals associated with FAR codes."
     },
     {
       "link": "/enhancements",
       "title": "Enhancements",
-      "description": "Manage and track budget enhancement requests and modifications to existing transfers"
+      "description": "This is the main page for viewing all transfer operations related to Fund Adjustment Department (FAD) modifications It. You can also use this page to create or update FAD transfers. Additionally, it allows you to track ERP workflows and accept budget transfer approvals associated with FAD codes."
     },
     {
       "link": "/settlements",
       "title": "Settlements",
-      "description": "Handle financial settlements and contract-related transactions (also accessible via /contracts)"
+      "description": "This is the main page for viewing all transfer operations related to Additional Fund Requests (AFR) modifications It. You can also use this page to create or update AFR transfers. Additionally, it allows you to track ERP workflows and accept budget transfer approvals associated with AFR codes."
     },
     {
       "link": "/contracts/:id",
       "title": "Contract Details",
       "description": "View detailed information about a specific contract including terms, status, and transaction history",
-      "parameters": ["id"]
     },
     {
       "link": "/contracts-pending-approval",
