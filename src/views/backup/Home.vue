@@ -768,7 +768,7 @@ async function fetchData() {
   try {
     const data = await transferService.fetchTransfers(searchQuery.value, currentPage.value)
 
-    apiData.value = data
+    apiData.value = data as ApiResponse<TransferData>
     displayedRows.value = (data.results || []) as TransferData[]
     totalCount.value = data.count || 0
     hasNextPage.value = !!data.next

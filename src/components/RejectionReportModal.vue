@@ -54,7 +54,9 @@
                     >{{ isArabic ? 'تقرير رفض' : 'Rejection Report' }} #{{ index + 1 }}</span
                   >
                 </div>
-                <div class="report-date">{{ formatDate(report.created_at) }}</div>
+                <div class="report-date">
+                  {{ formatDate(report.created_at as string | null | undefined) }}
+                </div>
               </div>
 
               <div class="report-content">

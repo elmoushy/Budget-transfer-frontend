@@ -36,6 +36,7 @@ declare module '@/services/apiService' {
   interface UpdateLevelData {
     name?: string
     description?: string
+    level_order?: number
   }
 
   interface ApiService {

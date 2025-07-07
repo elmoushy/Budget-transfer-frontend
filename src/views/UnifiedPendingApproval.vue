@@ -580,7 +580,66 @@ function prevPage() {
   }
 }
 
+function goToFirstPage() {
+  currentPage.value = 1
+  loadTransfers()
+}
+
+function goToLastPage() {
+  currentPage.value = totalPages.value
+  loadTransfers()
+}
+
+function goToPage(page: number) {
+  if (page >= 1 && page <= totalPages.value && page !== -1) {
+    currentPage.value = page
+    loadTransfers()
+  }
+}
+
 const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage))
+
+const visiblePages = computed(() => {
+  const pages: number[] = []
+  const total = totalPages.value
+  const current = currentPage.value
+
+  if (total <= 7) {
+    // Show all pages if total is 7 or less
+    for (let i = 1; i <= total; i++) {
+      pages.push(i)
+    }
+  } else {
+    // Always show first page
+    pages.push(1)
+
+    if (current <= 4) {
+      // Near beginning
+      for (let i = 2; i <= 5; i++) {
+        pages.push(i)
+      }
+      pages.push(-1) // ellipsis
+      pages.push(total)
+    } else if (current >= total - 3) {
+      // Near end
+      pages.push(-1) // ellipsis
+      for (let i = total - 4; i <= total; i++) {
+        pages.push(i)
+      }
+    } else {
+      // Middle
+      pages.push(-1) // ellipsis
+      for (let i = current - 1; i <= current + 1; i++) {
+        pages.push(i)
+      }
+      pages.push(-1) // ellipsis
+      pages.push(total)
+    }
+  }
+
+  return pages
+})
+
 const paginatedRows = computed(() => rows.value)
 
 // ───────────────────────────────────────────────────────────── Row Actions

@@ -1,5 +1,5 @@
 // Type declaration file for contractService
-import { ApiResponse } from '@/services/transferService'
+import { ApiResponse } from '@/services/TransferService'
 
 export interface ContractData {
   transaction_id: number

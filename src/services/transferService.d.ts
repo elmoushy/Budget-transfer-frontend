@@ -1,92 +1,95 @@
-// Type declaration file for transferService
-export const PAGE_SIZE: number
+// Type definitions for TransferService
+
+export interface ApiResponse<T = unknown> {
+  success: boolean
+  data?: T
+  message?: string
+  results?: T[]
+  summary?: ApiSummary
+  transfers?: TransferData[]
+  count?: number
+  next?: string
+  previous?: string
+}
+
+export interface ApiSummary {
+  status?: string
+  total?: number
+  count?: number
+  [key: string]: unknown
+}
 
 export interface TransferData {
   transaction_id: number
-  transaction_date: string
-  amount: number
   status: string
-  requested_by: string
-  user_id: number
-  request_date: string
-  notes: string
-  description_x: string
   code: string
+  request_date: string
+  requested_by: string
+  transaction_date: string
+  amount?: number
+  description?: string
   attachment_count?: number
-  // Allow additional properties with defined types
-  to_center?: number | null
-  from_center?: number | null
-  approved_budget?: number | null
-  available_budget?: number | null
-  encumbrance?: number | null
-  actual?: number | null
-  cost_center_code?: string
-  cost_center_name?: string
-  account_code?: string
-  account_name?: string
+  type?: string
+  user_id?: number
+  notes?: string
+  description_x?: string
+  [key: string]: unknown
 }
 
-export interface ApiResponse<T = unknown> {
-  results?: T[]
-  count?: number
-  next?: string | null
-  previous?: string | null
-  data?: T
-  // Add index signature for flexibility
+export interface FlowData {
+  transaction_id: number
+  status: string
+  code: string
+  request_date: string
+  requested_by: string
+  transaction_date: string
+  amount?: number
+  description?: string
+  attachment_count?: number
+  type?: string
+  user_id?: number
+  notes?: string
+  description_x?: string
+  [key: string]: unknown
+}
+
+export interface RowData {
+  transaction_id: number
+  status: string
+  code: string
+  request_date: string
+  requested_by: string
+  transaction_date: string
+  amount?: number
+  description?: string
   [key: string]: unknown
 }
 
 export interface RejectionReport {
   id: number
   transaction_id: number
-  reason: string
-  reason_text?: string
-  date?: string
+  rejection_reason: string
+  rejected_by: string
+  rejection_date: string
   created_at?: string
-  user_name: string
-  user_id: number
+  reason_text?: string
   'rejected by'?: string
-  [key: string]: unknown // For backward compatibility
+  [key: string]: unknown
 }
 
-export interface Attachment {
-  id: number
-  file: string
-  name: string
+export interface UpdateLevelData {
+  level_name: string
+  level_order?: number
+  [key: string]: unknown
 }
+
+export declare const PAGE_SIZE: number
 
 declare const transferService: {
-  fetchTransfers(searchQuery?: string, page?: number): Promise<ApiResponse<TransferData>>
-  getTransferById(id: number): Promise<ApiResponse<TransferData>>
-  createTransfer(
-    data: Partial<TransferData>[] | Partial<TransferData>,
-  ): Promise<ApiResponse<TransferData>>
-  updateTransfer(id: number, data: Partial<TransferData>): Promise<ApiResponse<TransferData>>
-  getAttachments(id: number): Promise<ApiResponse<Attachment>>
-  uploadAttachments(id: number, files: File[]): Promise<ApiResponse<{ message: string }>>
-  deleteAttachment(id: number): Promise<ApiResponse<void>>
-  deleteTransfer(transferId: number): Promise<ApiResponse<void>>
-  getTransferDetails(transactionId: number): Promise<
-    ApiResponse<{
-      summary: { transaction_id: number; balanced: boolean }
-      transfers: TransferData[]
-    }>
-  >
-  submitTransferRequest(transactionId: number): Promise<ApiResponse<{ message: string }>>
-  reopenTransferRequest(transactionId: number): Promise<ApiResponse<{ message: string }>>
-  generateReport(transactionId: number): Promise<Blob>
+  fetchTransfers(searchQuery?: string, page?: number): Promise<ApiResponse>
+  getTransfers(transactionId: number): Promise<ApiResponse>
   getRejectionReports(transactionId: number): Promise<RejectionReport[]>
-  getPivotFundDetails(
-    costCenterCode: string,
-    accountCode: string,
-  ): Promise<
-    ApiResponse<{
-      approved_budget: number | null
-      available_budget: number | null
-      actual: number | null
-      encumbrance: number | null
-    }>
-  >
+  [key: string]: (...args: unknown[]) => Promise<unknown>
 }
 
 export default transferService

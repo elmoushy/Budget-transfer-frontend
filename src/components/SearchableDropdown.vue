@@ -1,195 +1,150 @@
 <template>
   <div
     class="searchable-dropdown"
-    :class="{ 'dark-mode': isDarkMode, rtl: isRTL, disabled: disabled }"
+    :class="{
+      'dark-mode': isDarkMode,
+      rtl: isRtl,
+      disabled: disabled,
+    }"
   >
     <div
-      ref="dropdownTrigger"
       class="dropdown-trigger"
       @click="toggleDropdown"
-      :class="{ 'dropdown-open': isOpen }"
+      :class="{
+        active: isOpen,
+        disabled: disabled,
+      }"
     >
-      <div class="selected-value">
-        <span v-if="displayValue" class="value-text">{{ displayValue }}</span>
-        <span v-else class="placeholder-text">{{ placeholder }}</span>
-      </div>
-      <div class="dropdown-icon" :class="{ 'icon-rotated': isOpen }">
-        <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
-          <path
-            d="M1 1.5L6 6.5L11 1.5"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </div>
+      <span v-if="selectedOption" class="value-text">
+        {{ selectedOption.label }}
+      </span>
+      <span v-else class="placeholder-text">
+        {{ placeholder || 'Select option...' }}
+      </span>
+      <svg
+        class="dropdown-icon"
+        :class="{ rotated: isOpen }"
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <polyline points="6,9 12,15 18,9"></polyline>
+      </svg>
     </div>
 
-    <!-- Portal the dropdown to document body to escape table stacking context -->
-    <Teleport to="body" v-if="isOpen">
-      <Transition name="dropdown">
-        <div
-          v-if="isOpen"
-          ref="dropdownPanel"
-          class="dropdown-panel-portal"
-          :class="{ 'dark-mode': isDarkMode }"
-          :style="{
-            position: 'absolute',
-            top: panelPosition.top + 'px',
-            left: panelPosition.left + 'px',
-            width: panelPosition.width + 'px',
-            zIndex: 999999,
-          }"
-        >
-          <div class="search-container">
-            <div class="search-input-wrapper">
-              <svg class="search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path
-                  d="M7.33333 12.6667C10.2789 12.6667 12.6667 10.2789 12.6667 7.33333C12.6667 4.38781 10.2789 2 7.33333 2C4.38781 2 2 4.38781 2 7.33333C2 10.2789 4.38781 12.6667 7.33333 12.6667Z"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-                <path
-                  d="M14 14L11.1 11.1"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-              <input
-                ref="searchInput"
-                v-model="searchQuery"
-                type="text"
-                class="search-input"
-                :placeholder="searchPlaceholder"
-                @input="onSearchInput"
-              />
-              <button v-if="searchQuery" @click="clearSearch" class="clear-button">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path
-                    d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                  />
-                </svg>
-              </button>
-            </div>
+    <!-- Dropdown Panel Portal -->
+    <Teleport to="body">
+      <div v-if="isOpen" class="dropdown-panel-portal" :style="panelStyles">
+        <div class="dropdown-panel">
+          <div v-if="searchPlaceholder" class="search-container">
+            <input
+              ref="searchInput"
+              v-model="searchQuery"
+              type="text"
+              class="search-input"
+              :placeholder="searchPlaceholder"
+              @keydown.esc="closeDropdown"
+              @keydown.enter.prevent="selectFirstOption"
+              @keydown.arrow-down.prevent="navigateDown"
+              @keydown.arrow-up.prevent="navigateUp"
+            />
           </div>
 
           <div class="options-container">
-            <div v-if="filteredOptions.length === 0" class="no-results">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" />
-                <path d="M8 12h8M12 8v8" stroke="currentColor" stroke-width="1.5" />
-              </svg>
-              <span>{{ noResultsText }}</span>
-            </div>
-
             <div
-              v-for="option in filteredOptions"
+              v-for="(option, index) in filteredOptions"
               :key="option.value"
               class="option-item"
-              :class="{ 'option-selected': option.value === modelValue }"
+              :class="{
+                selected: option.value === modelValue,
+                highlighted: index === highlightedIndex,
+              }"
               @click="selectOption(option)"
+              @mouseenter="highlightedIndex = index"
             >
-              <div class="option-content">
-                <div class="option-value">{{ option.value }}</div>
-                <div v-if="option.label !== option.value" class="option-label">
-                  {{ option.label }}
-                </div>
-              </div>
-              <div v-if="option.value === modelValue" class="selected-indicator">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path
-                    d="M13.5 4.5L6 12L2.5 8.5"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              </div>
+              {{ option.label }}
+            </div>
+
+            <div v-if="filteredOptions.length === 0" class="no-results">
+              {{ noResultsText || 'No results found' }}
             </div>
           </div>
         </div>
-      </Transition>
+      </div>
     </Teleport>
 
-    <div v-if="isOpen" class="dropdown-overlay" @click="closeDropdown"></div>
+    <!-- Backdrop -->
+    <div v-if="isOpen" class="dropdown-backdrop" @click="closeDropdown"></div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 
-const props = defineProps({
-  modelValue: {
-    type: [String, Number],
-    default: '',
-  },
-  options: {
-    type: Array,
-    required: true,
-  },
-  placeholder: {
-    type: String,
-    default: 'Select an option',
-  },
-  searchPlaceholder: {
-    type: String,
-    default: 'Search...',
-  },
-  noResultsText: {
-    type: String,
-    default: 'No results found',
-  },
-  disabled: {
-    type: Boolean,
-    default: false,
-  },
-  isDarkMode: {
-    type: Boolean,
-    default: false,
-  },
-  isRTL: {
-    type: Boolean,
-    default: false,
-  },
+interface DropdownOption {
+  value: string | number
+  label: string
+}
+
+interface Props {
+  modelValue?: string | number
+  options?: DropdownOption[]
+  placeholder?: string
+  disabled?: boolean
+  isDarkMode?: boolean
+  isRtl?: boolean
+  searchPlaceholder?: string
+  noResultsText?: string
+}
+
+interface Emits {
+  (e: 'update:modelValue', value: string | number): void
+  (e: 'change', value: string | number): void
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  options: () => [],
+  placeholder: 'Select option...',
+  disabled: false,
+  isDarkMode: false,
+  isRtl: false,
+  searchPlaceholder: 'Search...',
+  noResultsText: 'No results found',
 })
 
-const emit = defineEmits(['update:modelValue', 'change'])
+const emit = defineEmits<Emits>()
 
+// Reactive state
 const isOpen = ref(false)
 const searchQuery = ref('')
-const searchInput = ref(null)
-const dropdownTrigger = ref(null)
-const dropdownPanel = ref(null)
+const highlightedIndex = ref(-1)
+const searchInput = ref<HTMLInputElement>()
+const panelStyles = ref<Record<string, string>>({})
 
-// Add new reactive variables for positioning
-const panelPosition = ref({ top: 0, left: 0, width: 0 })
-
-const displayValue = computed(() => {
-  if (!props.modelValue) return ''
-  const option = props.options.find((opt) => opt.value === props.modelValue)
-  return option ? option.value : props.modelValue
+// Computed properties
+const selectedOption = computed(() => {
+  return props.options.find((option) => option.value === props.modelValue)
 })
 
 const filteredOptions = computed(() => {
-  if (!searchQuery.value) return props.options
+  if (!searchQuery.value) {
+    return props.options
+  }
 
-  const query = searchQuery.value.toLowerCase()
   return props.options.filter(
     (option) =>
-      option.value.toString().toLowerCase().includes(query) ||
-      (option.label && option.label.toLowerCase().includes(query)),
+      option.label.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      option.value.toString().toLowerCase().includes(searchQuery.value.toLowerCase()),
   )
 })
 
+// Methods
 const toggleDropdown = () => {
   if (props.disabled) return
 
@@ -200,24 +155,19 @@ const toggleDropdown = () => {
   }
 }
 
-const calculatePosition = () => {
-  if (!dropdownTrigger.value) return
-
-  const rect = dropdownTrigger.value.getBoundingClientRect()
-  const scrollY = window.scrollY || document.documentElement.scrollTop
-  const scrollX = window.scrollX || document.documentElement.scrollLeft
-
-  panelPosition.value = {
-    top: rect.bottom + scrollY + 8,
-    left: rect.left + scrollX - 70, // Move 40px to the left
-    width: rect.width,
-  }
-}
-
 const openDropdown = async () => {
+  if (props.disabled) return
+
   isOpen.value = true
+  searchQuery.value = ''
+  highlightedIndex.value = -1
+
   await nextTick()
-  calculatePosition()
+
+  // Calculate panel position
+  calculatePanelPosition()
+
+  // Focus search input if available
   if (searchInput.value) {
     searchInput.value.focus()
   }
@@ -226,55 +176,97 @@ const openDropdown = async () => {
 const closeDropdown = () => {
   isOpen.value = false
   searchQuery.value = ''
+  highlightedIndex.value = -1
 }
 
-const selectOption = (option) => {
+const selectOption = (option: DropdownOption) => {
   emit('update:modelValue', option.value)
   emit('change', option.value)
   closeDropdown()
 }
 
-const onSearchInput = () => {
-  // Search functionality is handled by computed filteredOptions
-}
-
-const clearSearch = () => {
-  searchQuery.value = ''
-  if (searchInput.value) {
-    searchInput.value.focus()
+const selectFirstOption = () => {
+  if (filteredOptions.value.length > 0) {
+    selectOption(filteredOptions.value[0])
   }
 }
 
-// Close dropdown when clicking outside
-const handleClickOutside = (event) => {
-  if (!event.target.closest('.searchable-dropdown')) {
+const navigateDown = () => {
+  if (highlightedIndex.value < filteredOptions.value.length - 1) {
+    highlightedIndex.value++
+  }
+}
+
+const navigateUp = () => {
+  if (highlightedIndex.value > 0) {
+    highlightedIndex.value--
+  }
+}
+
+const calculatePanelPosition = () => {
+  const trigger = document.querySelector('.dropdown-trigger') as HTMLElement
+  if (!trigger) return
+
+  const rect = trigger.getBoundingClientRect()
+  const panelHeight = Math.min(250, filteredOptions.value.length * 40 + 60) // Approximate height
+  const spaceBelow = window.innerHeight - rect.bottom
+  const spaceAbove = rect.top
+
+  // Position panel below trigger by default, above if not enough space
+  const showBelow = spaceBelow >= panelHeight || spaceBelow >= spaceAbove
+
+  panelStyles.value = {
+    position: 'fixed',
+    left: `${rect.left}px`,
+    top: showBelow ? `${rect.bottom + 2}px` : `${rect.top - panelHeight - 2}px`,
+    width: `${rect.width}px`,
+    zIndex: '999999',
+    maxHeight: '250px',
+  }
+}
+
+// Handle clicks outside
+const handleClickOutside = (event: Event) => {
+  const target = event.target as HTMLElement
+  if (!target.closest('.searchable-dropdown') && !target.closest('.dropdown-panel-portal')) {
     closeDropdown()
   }
 }
 
-// Recalculate position on scroll and resize
-const handlePositionUpdate = () => {
+// Handle scroll to reposition panel
+const handleScroll = () => {
   if (isOpen.value) {
-    calculatePosition()
+    calculatePanelPosition()
   }
 }
 
-watch(isOpen, (newValue) => {
-  if (newValue) {
-    document.addEventListener('click', handleClickOutside)
-  } else {
-    document.removeEventListener('click', handleClickOutside)
+// Handle resize to reposition panel
+const handleResize = () => {
+  if (isOpen.value) {
+    calculatePanelPosition()
   }
-})
+}
 
+// Lifecycle
 onMounted(() => {
-  window.addEventListener('scroll', handlePositionUpdate, true)
-  window.addEventListener('resize', handlePositionUpdate)
+  document.addEventListener('click', handleClickOutside)
+  window.addEventListener('scroll', handleScroll, true)
+  window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', handlePositionUpdate, true)
-  window.removeEventListener('resize', handlePositionUpdate)
+  document.removeEventListener('click', handleClickOutside)
+  window.removeEventListener('scroll', handleScroll, true)
+  window.removeEventListener('resize', handleResize)
+})
+
+// Watch for external changes to recalculate position
+watch(isOpen, (newValue) => {
+  if (newValue) {
+    nextTick(() => {
+      calculatePanelPosition()
+    })
+  }
 })
 </script>
 
@@ -282,400 +274,232 @@ onUnmounted(() => {
 .searchable-dropdown {
   position: relative;
   width: 100%;
-  isolation: isolate;
-  contain: layout style;
 }
 
 .dropdown-trigger {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  background: linear-gradient(145deg, #ffffff, #f8f9fa);
-  border: 2px solid #e9ecef;
-  border-radius: 12px;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: white;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  position: relative;
-  overflow: hidden;
+  transition: all 0.2s ease;
+  min-height: 38px;
+  font-size: 14px;
 }
 
-.dropdown-trigger::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
-  transition: left 0.5s;
+.dropdown-trigger:hover:not(.disabled) {
+  border-color: #9ca3af;
 }
 
-.dropdown-trigger:hover::before {
-  left: 100%;
-}
-
-.dropdown-trigger:hover {
+.dropdown-trigger.active {
   border-color: #3b82f6;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
-  transform: translateY(-1px);
+  box-shadow: 0 0 0 1px #3b82f6;
 }
 
-.dropdown-open {
-  border-color: #3b82f6 !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
-}
-
-.selected-value {
-  flex: 1;
-  text-align: left;
+.dropdown-trigger.disabled {
+  background-color: #f9fafb;
+  border-color: #e5e7eb;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .value-text {
-  color: #1f2937;
-  font-weight: 500;
-  font-size: 14px;
+  color: #111827;
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .placeholder-text {
   color: #9ca3af;
-  font-size: 14px;
+  flex: 1;
+  text-align: left;
 }
 
 .dropdown-icon {
+  margin-left: 8px;
   color: #6b7280;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  align-items: center;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
 }
 
-.icon-rotated {
+.dropdown-icon.rotated {
   transform: rotate(180deg);
 }
 
 .dropdown-panel-portal {
-  background: #ffffff;
-  border: 2px solid #e9ecef;
-  border-radius: 16px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-  overflow: hidden;
-  backdrop-filter: blur(10px);
-  min-height: 300px;
-  max-height: 400px;
-  transform-origin: top center;
+  position: fixed;
+  z-index: 999999;
 }
 
-/* Copy all dropdown panel styles to portal version */
-.dropdown-panel-portal .search-container {
-  padding: 16px;
-  border-bottom: 1px solid #f3f4f6;
-  background: linear-gradient(145deg, #f8f9fa, #ffffff);
-  flex-shrink: 0;
-}
-
-.dropdown-panel-portal .search-input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.dropdown-panel-portal .search-icon {
-  position: absolute;
-  left: 12px;
-  color: #9ca3af;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.dropdown-panel-portal .search-input {
-  width: 100%;
-  padding: 12px 16px 12px 40px;
-  border: 2px solid #e9ecef;
-  border-radius: 10px;
-  font-size: 14px;
-  background: #ffffff;
-  transition: all 0.3s ease;
-  outline: none;
-}
-
-.dropdown-panel-portal .search-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.dropdown-panel-portal .clear-button {
-  position: absolute;
-  right: 8px;
-  padding: 4px;
-  background: none;
-  border: none;
-  color: #9ca3af;
-  cursor: pointer;
+.dropdown-panel {
+  background: white;
+  border: 1px solid #d1d5db;
   border-radius: 6px;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
-.dropdown-panel-portal .clear-button:hover {
-  background: #f3f4f6;
-  color: #6b7280;
+.search-container {
+  padding: 8px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.dropdown-panel-portal .options-container {
-  max-height: 280px;
-  min-height: 200px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #d1d5db #f9fafb;
-  flex: 1;
-}
-
-.dropdown-panel-portal .options-container::-webkit-scrollbar {
-  width: 6px;
-}
-
-.dropdown-panel-portal .options-container::-webkit-scrollbar-track {
-  background: #f9fafb;
-}
-
-.dropdown-panel-portal .options-container::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 3px;
-}
-
-.dropdown-panel-portal .options-container::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
-}
-
-.dropdown-panel-portal .option-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border-bottom: 1px solid #f9fafb;
-}
-
-.dropdown-panel-portal .option-item:hover {
-  background: linear-gradient(145deg, #f8f9fa, #e9ecef);
-  transform: translateX(4px);
-}
-
-.dropdown-panel-portal .option-selected {
-  background: linear-gradient(145deg, #eff6ff, #dbeafe) !important;
-  color: #1d4ed8;
-  font-weight: 500;
-}
-
-.dropdown-panel-portal .option-content {
-  flex: 1;
-}
-
-.dropdown-panel-portal .option-value {
+.search-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
   font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 2px;
+  outline: none;
+  transition: border-color 0.2s ease;
 }
 
-.dropdown-panel-portal .option-label {
-  font-size: 12px;
-  color: #6b7280;
+.search-input:focus {
+  border-color: #3b82f6;
 }
 
-.dropdown-panel-portal .selected-indicator {
-  color: #1d4ed8;
-  display: flex;
-  align-items: center;
+.options-container {
+  max-height: 200px;
+  overflow-y: auto;
 }
 
-.dropdown-panel-portal .no-results {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 32px 16px;
-  color: #9ca3af;
+.option-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.option-item:hover,
+.option-item.highlighted {
+  background-color: #f3f4f6;
+}
+
+.option-item.selected {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.option-item.selected:hover {
+  background-color: #2563eb;
+}
+
+.no-results {
+  padding: 12px;
   text-align: center;
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 14px;
 }
 
-.dropdown-panel-portal .no-results svg {
-  margin-bottom: 8px;
-  opacity: 0.5;
-}
-
-.dropdown-overlay {
+.dropdown-backdrop {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 999998;
-  background: transparent;
-}
-
-/* Dropdown animation */
-.dropdown-enter-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.dropdown-leave-active {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.dropdown-enter-from {
-  opacity: 0;
-  transform: translateY(-8px) scale(0.95);
-}
-
-.dropdown-leave-to {
-  opacity: 0;
-  transform: translateY(-4px) scale(0.98);
 }
 
 /* Dark mode styles */
-.dark-mode .dropdown-trigger {
-  background: linear-gradient(145deg, #1f2937, #374151) !important;
+.searchable-dropdown.dark-mode .dropdown-trigger {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+.searchable-dropdown.dark-mode .dropdown-trigger:hover:not(.disabled) {
+  border-color: #6b7280;
+}
+
+.searchable-dropdown.dark-mode .dropdown-trigger.disabled {
+  background-color: #1f2937;
   border-color: #374151;
+}
+
+.searchable-dropdown.dark-mode .value-text {
   color: #f9fafb;
 }
 
-.dark-mode .dropdown-trigger:hover {
-  border-color: #60a5fa;
-  box-shadow: 0 4px 16px rgba(96, 165, 250, 0.25);
+.searchable-dropdown.dark-mode .placeholder-text {
+  color: #9ca3af;
 }
 
-.dark-mode .value-text {
+.searchable-dropdown.dark-mode .dropdown-icon {
+  color: #9ca3af;
+}
+
+.searchable-dropdown.dark-mode .dropdown-panel {
+  background-color: #374151;
+  border-color: #4b5563;
+}
+
+.searchable-dropdown.dark-mode .search-container {
+  border-color: #4b5563;
+}
+
+.searchable-dropdown.dark-mode .search-input {
+  background-color: #1f2937;
+  border-color: #4b5563;
   color: #f9fafb;
 }
 
-.dark-mode .placeholder-text {
-  color: #6b7280;
+.searchable-dropdown.dark-mode .search-input:focus {
+  border-color: #3b82f6;
 }
 
-.dropdown-panel-portal.dark-mode {
-  background: #1f2937 !important;
-  border-color: #374151 !important;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8) !important;
+.searchable-dropdown.dark-mode .option-item {
+  color: #f9fafb;
 }
 
-.dropdown-panel-portal.dark-mode .search-container {
-  background: linear-gradient(145deg, #1f2937, #374151) !important;
-  border-bottom-color: #374151 !important;
+.searchable-dropdown.dark-mode .option-item:hover,
+.searchable-dropdown.dark-mode .option-item.highlighted {
+  background-color: #4b5563;
 }
 
-.dropdown-panel-portal.dark-mode .search-input {
-  background: #374151 !important;
-  border-color: #4b5563 !important;
-  color: #f9fafb !important;
+.searchable-dropdown.dark-mode .option-item.selected {
+  background-color: #3b82f6;
+  color: white;
 }
 
-.dropdown-panel-portal.dark-mode .search-input::placeholder {
-  color: #6b7280 !important;
+.searchable-dropdown.dark-mode .no-results {
+  color: #9ca3af;
 }
 
-.dropdown-panel-portal.dark-mode .search-input:focus {
-  border-color: #60a5fa !important;
-  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2) !important;
-  background: #4b5563 !important;
+/* RTL support */
+.searchable-dropdown.rtl .value-text,
+.searchable-dropdown.rtl .placeholder-text {
+  text-align: right;
 }
 
-.dropdown-panel-portal.dark-mode .search-icon {
-  color: #6b7280 !important;
+.searchable-dropdown.rtl .dropdown-icon {
+  margin-left: 0;
+  margin-right: 8px;
 }
 
-.dropdown-panel-portal.dark-mode .clear-button {
-  color: #6b7280 !important;
-}
-
-.dropdown-panel-portal.dark-mode .clear-button:hover {
-  background: #374151 !important;
-  color: #9ca3af !important;
-}
-
-.dropdown-panel-portal.dark-mode .options-container {
-  background: #1f2937 !important;
-  scrollbar-color: #4b5563 #1f2937 !important;
-}
-
-.dropdown-panel-portal.dark-mode .options-container::-webkit-scrollbar-track {
-  background: #1f2937 !important;
-}
-
-.dropdown-panel-portal.dark-mode .options-container::-webkit-scrollbar-thumb {
-  background: #4b5563 !important;
-}
-
-.dropdown-panel-portal.dark-mode .options-container::-webkit-scrollbar-thumb:hover {
-  background: #6b7280 !important;
-}
-
-.dropdown-panel-portal.dark-mode .option-item {
-  color: #f9fafb !important;
-  border-bottom-color: #374151 !important;
-}
-
-.dropdown-panel-portal.dark-mode .option-item:hover {
-  background: linear-gradient(145deg, #374151, #4b5563) !important;
-}
-
-.dropdown-panel-portal.dark-mode .option-selected {
-  background: linear-gradient(145deg, #1e40af, #2563eb) !important;
-  color: #dbeafe !important;
-}
-
-.dropdown-panel-portal.dark-mode .option-label {
-  color: #6b7280 !important;
-}
-
-.dropdown-panel-portal.dark-mode .selected-indicator {
-  color: #dbeafe !important;
-}
-
-.dropdown-panel-portal.dark-mode .no-results {
-  color: #6b7280 !important;
-}
-
-/* RTL styles */
-.rtl .dropdown-panel-portal .search-icon {
-  left: auto;
-  right: 12px;
-}
-
-.rtl .dropdown-panel-portal .search-input {
-  padding: 12px 40px 12px 16px;
-}
-
-.rtl .dropdown-panel-portal .clear-button {
-  right: auto;
-  left: 8px;
-}
-
-.rtl .dropdown-panel-portal .option-item:hover {
-  transform: translateX(-4px);
+.searchable-dropdown.rtl .option-item {
+  text-align: right;
 }
 
 /* Disabled state */
-.disabled .dropdown-trigger {
-  background: #f3f4f6;
-  border-color: #d1d5db;
-  color: #9ca3af;
+.searchable-dropdown.disabled .dropdown-trigger {
+  background-color: #f9fafb;
+  border-color: #e5e7eb;
   cursor: not-allowed;
   opacity: 0.6;
 }
 
-.disabled .dropdown-trigger:hover {
-  transform: none;
-  border-color: #d1d5db;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.dark-mode.disabled .dropdown-trigger {
-  background: #374151;
-  border-color: #4b5563;
-  color: #6b7280;
+.searchable-dropdown.dark-mode.disabled .dropdown-trigger {
+  background-color: #1f2937;
+  border-color: #374151;
 }
 </style>

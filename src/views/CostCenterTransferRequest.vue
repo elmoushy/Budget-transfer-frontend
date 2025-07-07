@@ -564,7 +564,7 @@ interface AlertState {
 }
 
 interface DropdownChangeEvent {
-  target: { value: string }
+  target: { value: string | number }
 }
 
 // State variables
@@ -777,7 +777,7 @@ const getCostCenterName = (code: string | undefined) => {
 
 const updateCostCenterName = (item: TransferItem, event: string | DropdownChangeEvent) => {
   // Handle both direct value from SearchableDropdown and event from select
-  const code = typeof event === 'string' ? event : event.target.value
+  const code = typeof event === 'string' ? event : String(event.target.value)
   item.cost_center_code = code
   item.cost_center_name = getCostCenterName(code)
 
@@ -798,7 +798,7 @@ const getAccountName = (code: string | undefined) => {
 
 const updateAccountName = (item: TransferItem, event: string | DropdownChangeEvent) => {
   // Handle both direct value from SearchableDropdown and event from select
-  const code = typeof event === 'string' ? event : event.target.value
+  const code = typeof event === 'string' ? event : String(event.target.value)
   item.account_code = code
   item.account_name = getAccountName(code)
 
@@ -1090,7 +1090,7 @@ const loadData = async () => {
 
       // Extract status from summary
       const summary = responseWithSummary.summary
-      if (summary.status) {
+      if (summary?.status) {
         currentStatus.value = summary.status
       } else {
         currentStatus.value = 'not yet sent for approval' // Default

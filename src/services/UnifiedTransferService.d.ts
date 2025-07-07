@@ -18,6 +18,7 @@ export interface TransferData {
   available_budget?: number | null
   encumbrance?: number | null
   actual?: number | null
+  [key: string]: unknown
 }
 
 export interface ApiResponse<T> {

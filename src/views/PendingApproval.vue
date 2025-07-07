@@ -408,7 +408,7 @@ async function loadTransfers() {
       routeConfig.value.code,
     )
 
-    rows.value = response.results || []
+    rows.value = (response.results || []) as unknown as RowData[]
     totalItems.value = response.count || 0
   } catch (error) {
     console.error('Error loading transfers:', error)

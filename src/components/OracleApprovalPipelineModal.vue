@@ -151,6 +151,10 @@ function closeModal() {
   animation: pulse 2s infinite;
 }
 
+.dark-mode .waiting-icon {
+  animation: pulse-dark 2s infinite;
+}
+
 .waiting-message {
   font-size: 1.4rem;
   font-weight: 500;
@@ -237,7 +241,7 @@ function closeModal() {
   }
 }
 
-.dark-mode @keyframes pulse {
+@keyframes pulse-dark {
   0% {
     box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
   }

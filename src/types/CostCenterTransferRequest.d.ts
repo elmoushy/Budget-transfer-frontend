@@ -32,6 +32,7 @@ export interface ApiSummary {
   to_sum: number
   diff: number
   transaction_id?: number
+  status?: string
 }
 
 export interface CostCenterEntity {
