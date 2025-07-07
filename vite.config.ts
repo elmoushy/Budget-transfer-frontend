@@ -6,6 +6,14 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue(), vueDevTools()],
+  server: {
+    host: '0.0.0.0', // Allow external connections
+    port: 5173,
+    hmr: {
+      port: 5173,
+      clientPort: 5173, // This ensures the client connects to the correct port
+    },
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

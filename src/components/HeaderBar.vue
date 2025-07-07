@@ -41,19 +41,13 @@
       </div>
 
       <div class="notification-container">
-        <button class="icon bell" @click="toggleNotifications">
+        <button ref="notificationButtonRef" class="icon bell" @click="toggleNotifications">
           <BellIcon />
           <span v-if="hasUnreadNotifications" class="badge"></span>
           <span v-if="newNotificationToast" class="notification-toast">
             {{ isArabic ? 'لديك إشعارات جديدة' : 'You have new notifications' }}
           </span>
         </button>
-        <NotificationsPanel
-          v-if="showNotifications"
-          :is-active="showNotifications"
-          @close="showNotifications = false"
-          @update:hasUnread="updateNotificationStatus"
-        />
       </div>
       <!-- Logout Button -->
       <button class="icon logout" @click="logout">
@@ -61,6 +55,17 @@
       </button>
     </div>
   </header>
+
+  <!-- Portal the notifications panel to body to avoid z-index issues -->
+  <Teleport to="body">
+    <NotificationsPanel
+      v-if="showNotifications"
+      :is-active="showNotifications"
+      :notification-button-ref="notificationButtonRef"
+      @close="showNotifications = false"
+      @update:hasUnread="updateNotificationStatus"
+    />
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -78,6 +83,7 @@ const router = useRouter()
 
 const isDarkMode = ref(false)
 const isArabic = ref(false)
+const notificationButtonRef = ref<HTMLElement | null>(null)
 
 // Notifications
 const showNotifications = ref(false)
@@ -189,7 +195,7 @@ function toggleNotifications() {
     0 2px 8px rgba(138, 42, 68, 0.05);
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 150;
   border-bottom: 1px solid rgba(228, 201, 214, 0.3);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
@@ -385,7 +391,6 @@ function toggleNotifications() {
 
 .notification-container {
   position: relative;
-  z-index: 200;
 }
 
 .bell {
@@ -434,7 +439,7 @@ function toggleNotifications() {
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   white-space: nowrap;
   pointer-events: none;
-  z-index: 300;
+  z-index: 400;
   animation: toast-slide-in 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(12px);

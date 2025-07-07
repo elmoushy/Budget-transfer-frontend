@@ -13,37 +13,32 @@
     {
       "link": "/",
       "title": "Transfers",
-      "description": "This is the main page for viewing all transfer operations related to Fund Adjustment Requests (FAR) modifications It. You can also use this page to create or update FAR transfers. Additionally, it allows you to track ERP workflows and accept budget transfer approvals associated with FAR codes."
+      "description": "This is the main page for viewing all transfer operations related to Fund Adjustment Requests (FAR) modifications It. You can also use this page to create or update FAR transfers. Additionally, it allows you to track ERP workflows and accept budget transfer approvals associated with FAR codes. also View detailed information about a specific contract including terms, status, and transaction history with FAR codes."
     },
     {
       "link": "/enhancements",
       "title": "Enhancements",
-      "description": "This is the main page for viewing all transfer operations related to Fund Adjustment Department (FAD) modifications It. You can also use this page to create or update FAD transfers. Additionally, it allows you to track ERP workflows and accept budget transfer approvals associated with FAD codes."
+      "description": "This is the main page for viewing all transfer operations related to Fund Adjustment Department (FAD) modifications It. You can also use this page to create or update FAD transfers. Additionally, it allows you to track ERP workflows and accept budget transfer approvals associated with FAD codes.  also View detailed information about a specific contract including terms, status, and transaction history with FAD codes."
     },
     {
       "link": "/settlements",
       "title": "Settlements",
-      "description": "This is the main page for viewing all transfer operations related to Additional Fund Requests (AFR) modifications It. You can also use this page to create or update AFR transfers. Additionally, it allows you to track ERP workflows and accept budget transfer approvals associated with AFR codes."
-    },
-    {
-      "link": "/contracts/:id",
-      "title": "Contract Details",
-      "description": "View detailed information about a specific contract including terms, status, and transaction history",
+      "description": "This is the main page for viewing all transfer operations related to Additional Fund Requests (AFR) modifications It. You can also use this page to create or update AFR transfers. Additionally, it allows you to track ERP workflows and accept budget transfer approvals associated with AFR codes. also View detailed information about a specific contract including terms, status, and transaction history with AFR codes."
     },
     {
       "link": "/contracts-pending-approval",
       "title": "Contracts Pending Approval",
-      "description": "Review and approve or reject pending contract requests awaiting authorization"
+      "description": "Review and approve or reject pending contract requests for Fund Adjustment Requests (FAR) "
     },
     {
       "link": "/settlements-pending-approval",
       "title": "Settlements Pending Approval",
-      "description": "Manage settlement requests that require approval before processing"
+      "description": "Review and approve or reject pending contract requests for Fund Adjustment Department (FAD) "
     },
     {
       "link": "/transfers-pending-approval",
       "title": "Enhancements Pending Approval",
-      "description": "Review and approve enhancement requests for budget transfers"
+      "description": "Review and approve or reject pending contract requests for Additional Fund Requests (AFR)"
     },
     {
       "link": "/cost-center-transfer/:id",

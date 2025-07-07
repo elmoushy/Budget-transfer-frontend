@@ -7,6 +7,7 @@
       'dark-theme': isDarkMode,
       rtl: isArabic,
     }"
+    :style="positionStyle"
   >
     <div class="panel-header">
       <h3>{{ isArabic ? 'الإشعارات' : 'Notifications' }}</h3>
@@ -62,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, type PropType } from 'vue'
 import { useThemeStore } from '@/stores/themeStore'
 import { useRouter } from 'vue-router'
 import {
@@ -83,6 +84,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  notificationButtonRef: {
+    type: Object as PropType<HTMLElement | null>,
+    default: null,
+  },
 })
 
 const emit = defineEmits(['close', 'update:hasUnread'])
@@ -97,13 +102,79 @@ const notifications = ref<Notification[]>([])
 const isLoading = ref(false)
 const hasNewNotifications = ref(false)
 
+// Positioning data
+const panelPosition = ref({ top: 0, right: 0 })
+
+// Computed positioning style
+const positionStyle = computed(() => {
+  if (!props.notificationButtonRef) {
+    return {
+      position: 'fixed' as const,
+      top: '64px',
+      right: '20px',
+      zIndex: 9999,
+    }
+  }
+
+  return {
+    position: 'fixed' as const,
+    top: `${panelPosition.value.top}px`,
+    right: `${panelPosition.value.right}px`,
+    zIndex: 9999,
+  }
+})
+
+// Update position based on button location
+function updatePosition() {
+  if (props.notificationButtonRef) {
+    const buttonRect = props.notificationButtonRef.getBoundingClientRect()
+    const viewportWidth = window.innerWidth
+
+    // Handle RTL layout
+    if (isArabic.value) {
+      panelPosition.value = {
+        top: buttonRect.bottom + 8, // 8px gap below button
+        right: viewportWidth - buttonRect.left - 380, // Position relative to left edge for RTL
+      }
+    } else {
+      panelPosition.value = {
+        top: buttonRect.bottom + 8, // 8px gap below button
+        right: viewportWidth - buttonRect.right, // Position relative to right edge for LTR
+      }
+    }
+  }
+}
+
 // Fetch notifications on mount
 onMounted(() => {
   fetchUnreadNotifications()
+  updatePosition()
+
+  // Listen for window resize to update position
+  window.addEventListener('resize', updatePosition)
+  window.addEventListener('scroll', updatePosition)
 })
 
 // Clean up on unmount
-onUnmounted(() => {})
+onUnmounted(() => {
+  window.removeEventListener('resize', updatePosition)
+  window.removeEventListener('scroll', updatePosition)
+})
+
+// Watch for prop changes to update position
+watch(
+  () => props.isActive,
+  (newValue) => {
+    if (newValue) {
+      // Small delay to ensure the element is rendered
+      setTimeout(updatePosition, 10)
+    }
+  },
+)
+
+watch(isArabic, () => {
+  updatePosition()
+})
 
 // Fetch unread notifications
 async function fetchUnreadNotifications() {
@@ -281,9 +352,7 @@ function closePanel() {
 
 <style scoped>
 .notifications-panel {
-  position: absolute;
-  top: 64px;
-  right: 0;
+  /* Position and size will be set via inline styles */
   width: 380px;
   max-height: 500px;
   background: rgba(255, 255, 255, 0.95);
@@ -297,15 +366,12 @@ function closePanel() {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  z-index: 200;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   transform-origin: top right;
   animation: panel-appear 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .rtl.notifications-panel {
-  right: auto;
-  left: 20px;
   transform-origin: top left;
 }
 
