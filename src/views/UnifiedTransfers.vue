@@ -1846,6 +1846,19 @@ watch(
   text-decoration: none;
 }
 
+/* Dark theme styles for code link */
+.dark-theme .code-link {
+  color: #ffffff;
+  background: rgba(109, 26, 54, 0.1);
+  border: 1px solid rgba(109, 26, 54, 0.3);
+}
+
+.dark-theme .code-link:hover {
+  background: #6d1a36;
+  color: white;
+  border-color: #6d1a36;
+}
+
 /* Description Button */
 .description-btn {
   padding: 0.5rem;
