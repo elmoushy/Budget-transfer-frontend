@@ -448,9 +448,52 @@ const routeConfig = computed(() => {
 
 // ───────────────────────────────────────────────────────────── Computed Properties
 const pageClass = computed(() => routeConfig.value.cssClass)
-const pageTitle = computed(() => routeConfig.value.title)
-const pageSubtitle = computed(() => routeConfig.value.subtitle)
-const searchPlaceholder = computed(() => routeConfig.value.searchPlaceholder)
+const pageTitle = computed(() => {
+  if (isArabic.value) {
+    switch (route.name) {
+      case 'Home':
+        return 'المناقلات'
+      case 'Enhancements':
+        return 'التعزيزات'
+      case 'Settlements':
+        return 'التسويات'
+      default:
+        return 'المناقلات'
+    }
+  }
+  return routeConfig.value.title
+})
+
+const pageSubtitle = computed(() => {
+  if (isArabic.value) {
+    switch (route.name) {
+      case 'Home':
+        return 'طلبات تعديل الميزانية'
+      case 'Enhancements':
+        return 'طلبات الأموال الإضافية'
+      case 'Settlements':
+        return 'قسم تعديل الأموال'
+      default:
+        return 'طلبات تعديل الميزانية'
+    }
+  }
+  return routeConfig.value.subtitle
+})
+const searchPlaceholder = computed(() => {
+  if (isArabic.value) {
+    switch (route.name) {
+      case 'Home':
+        return 'البحث في المناقلات...'
+      case 'Enhancements':
+        return 'البحث في التعزيزات...'
+      case 'Settlements':
+        return 'البحث في التسويات...'
+      default:
+        return 'البحث في المناقلات...'
+    }
+  }
+  return routeConfig.value.searchPlaceholder
+})
 const showRejectionColumn = computed(() => routeConfig.value.showRejectionColumn)
 const newRequestModalComponent = computed(() => routeConfig.value.newRequestComponent)
 const editModalComponent = computed(() => routeConfig.value.editComponent)
@@ -460,15 +503,13 @@ const isArabic = computed(() => themeStore.language === 'ar')
 
 const newRequestButtonText = computed(() => (isArabic.value ? 'طلب جديد' : 'New Request'))
 const newRequestButtonTitle = computed(() =>
-  isArabic.value
-    ? `إنشاء ${routeConfig.value.title} جديد`
-    : `Create New ${routeConfig.value.title}`,
+  isArabic.value ? `إنشاء ${pageTitle.value} جديد` : `Create New ${routeConfig.value.title}`,
 )
 const loadingText = computed(() => (isArabic.value ? 'جاري التحميل...' : 'Loading...'))
 const emptyStateTitle = computed(() => (isArabic.value ? 'لا توجد بيانات' : 'No Data Available'))
 const emptyStateMessage = computed(() =>
   isArabic.value
-    ? `لا توجد ${routeConfig.value.title} متاحة`
+    ? `لا توجد ${pageTitle.value} متاحة`
     : `No ${routeConfig.value.title.toLowerCase()} available`,
 )
 const deleteModalTitle = computed(() => (isArabic.value ? 'تأكيد الحذف' : 'Confirm Delete'))
@@ -1444,10 +1485,15 @@ watch(
 /* Additional RTL typography and spacing */
 [dir='rtl'] .page-title {
   text-align: right;
+  font-family: 'Segoe UI', Tahoma, Arial, 'Noto Sans Arabic', 'Arial Unicode MS', sans-serif;
+  letter-spacing: 0;
+  line-height: 1.2;
 }
 
 [dir='rtl'] .page-subtitle {
   text-align: right;
+  font-family: 'Segoe UI', Tahoma, Arial, 'Noto Sans Arabic', 'Arial Unicode MS', sans-serif;
+  letter-spacing: 0;
 }
 
 [dir='rtl'] .header-left {
