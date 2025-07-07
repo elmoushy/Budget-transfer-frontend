@@ -8,6 +8,7 @@
     }"
   >
     <div
+      ref="dropdownTrigger"
       class="dropdown-trigger"
       @click="toggleDropdown"
       :class="{
@@ -125,6 +126,7 @@ const isOpen = ref(false)
 const searchQuery = ref('')
 const highlightedIndex = ref(-1)
 const searchInput = ref<HTMLInputElement>()
+const dropdownTrigger = ref<HTMLElement>()
 const panelStyles = ref<Record<string, string>>({})
 
 // Computed properties
@@ -204,10 +206,9 @@ const navigateUp = () => {
 }
 
 const calculatePanelPosition = () => {
-  const trigger = document.querySelector('.dropdown-trigger') as HTMLElement
-  if (!trigger) return
+  if (!dropdownTrigger.value) return
 
-  const rect = trigger.getBoundingClientRect()
+  const rect = dropdownTrigger.value.getBoundingClientRect()
   const panelHeight = Math.min(250, filteredOptions.value.length * 40 + 60) // Approximate height
   const spaceBelow = window.innerHeight - rect.bottom
   const spaceAbove = rect.top
