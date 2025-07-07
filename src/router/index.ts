@@ -29,10 +29,9 @@ const routes = [
   },
   {
     path: '/settlements',
-    name: 'Settlements', // This must match the name used in NavigationMenu.vue
-    component: () => import('@/views/UnifiedTransfers.vue'), // Now uses the unified component
+    name: 'Settlements',
+    component: () => import('@/views/UnifiedTransfers.vue'),
     meta: { requiresAuth: true },
-    // Add alias for better consistency with component name
     alias: '/contracts',
   },
   {

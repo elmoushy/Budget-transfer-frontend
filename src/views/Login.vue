@@ -353,38 +353,6 @@ function animateBackgroundSpheres() {
   border-bottom: 1px solid rgba(225, 75, 106, 0.2);
 }
 
-.logo-section::before {
-  content: '$';
-  position: absolute;
-  top: 10px;
-  right: 20px;
-  font-size: 24px;
-  color: rgba(225, 75, 106, 0.3);
-  font-weight: bold;
-  animation: float 3s ease-in-out infinite;
-}
-
-.logo-section::after {
-  content: '€';
-  position: absolute;
-  bottom: 15px;
-  left: 25px;
-  font-size: 20px;
-  color: rgba(138, 42, 68, 0.3);
-  font-weight: bold;
-  animation: float 4s ease-in-out infinite reverse;
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
 .dark-mode .logo-section {
   background: linear-gradient(135deg, #2d1b32 0%, #241726 100%);
 }
@@ -423,19 +391,6 @@ function animateBackgroundSpheres() {
 
 .dark-mode .form-container {
   background: linear-gradient(135deg, rgba(36, 23, 38, 0.8), rgba(45, 27, 50, 0.6));
-}
-
-.form-container::before {
-  content: '';
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 40px;
-  height: 40px;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="%23e14b6a" viewBox="0 0 24 24"><path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1L13.5 2.5L16.17 5.17L10.59 10.75C10.21 11.13 10.21 11.75 10.59 12.13L11.83 13.37L5.12 20.08C4.73 20.47 4.73 21.1 5.12 21.49C5.51 21.88 6.14 21.88 6.53 21.49L13.24 14.78L14.48 16.02C14.86 16.4 15.48 16.4 15.86 16.02L21.41 10.47L19 8.06L21 9Z"/></svg>')
-    no-repeat center;
-  background-size: contain;
-  opacity: 0.1;
 }
 
 .form-title {
@@ -686,40 +641,6 @@ function animateBackgroundSpheres() {
   background-size: 50px 50px;
   pointer-events: none;
   z-index: -1;
-}
-
-/* Floating money symbols */
-.login-page::after {
-  content: '💰';
-  position: absolute;
-  top: 15%;
-  right: 10%;
-  font-size: 2rem;
-  opacity: 0.1;
-  animation: float 6s ease-in-out infinite;
-  z-index: 1;
-}
-
-/* Additional money transfer effects */
-.form-container::after {
-  content: '→';
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  font-size: 20px;
-  color: rgba(225, 75, 106, 0.3);
-  font-weight: bold;
-  animation: slide 3s ease-in-out infinite;
-}
-
-@keyframes slide {
-  0%,
-  100% {
-    transform: translateX(0px);
-  }
-  50% {
-    transform: translateX(10px);
-  }
 }
 
 /* Responsive adjustments */

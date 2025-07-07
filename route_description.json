@@ -1,0 +1,133 @@
+{
+  "pages": [
+    {
+      "link": "/login",
+      "title": "Login",
+      "description": "User authentication page where users can sign in to access the budget transfer system"
+    },
+    {
+      "link": "/dashboard",
+      "title": "Dashboard",
+      "description": "Main overview page showing key metrics, recent activities, and quick access to budget transfer operations"
+    },
+    {
+      "link": "/",
+      "title": "Transfers",
+      "description": "This is the main page for viewing all transfer operations related to Fund Adjustment Requests (FAR). You can also use this page to create or update FAR transfers. Additionally, it allows you to track ERP workflows and accept budget transfer approvals associated with FAR codes."
+    },
+    {
+      "link": "/enhancements",
+      "title": "Enhancements",
+      "description": "Manage and track budget enhancement requests and modifications to existing transfers"
+    },
+    {
+      "link": "/settlements",
+      "title": "Settlements",
+      "description": "Handle financial settlements and contract-related transactions (also accessible via /contracts)"
+    },
+    {
+      "link": "/contracts/:id",
+      "title": "Contract Details",
+      "description": "View detailed information about a specific contract including terms, status, and transaction history",
+      "parameters": ["id"]
+    },
+    {
+      "link": "/contracts-pending-approval",
+      "title": "Contracts Pending Approval",
+      "description": "Review and approve or reject pending contract requests awaiting authorization"
+    },
+    {
+      "link": "/settlements-pending-approval",
+      "title": "Settlements Pending Approval",
+      "description": "Manage settlement requests that require approval before processing"
+    },
+    {
+      "link": "/transfers-pending-approval",
+      "title": "Enhancements Pending Approval",
+      "description": "Review and approve enhancement requests for budget transfers"
+    },
+    {
+      "link": "/cost-center-transfer/:id",
+      "title": "Cost Center Transfer Request",
+      "description": "Create or view specific cost center transfer requests with detailed budget allocation information",
+      "parameters": ["id"]
+    },
+    {
+      "link": "/notifications",
+      "title": "Notifications",
+      "description": "View system notifications, alerts, and updates related to your transfers and approvals"
+    },
+    {
+      "link": "/admin/user-management",
+      "title": "User Management",
+      "description": "Administrative interface for managing user accounts, roles, and permissions (Admin only)",
+      "requiresAdmin": true,
+      "category": "admin"
+    },
+    {
+      "link": "/admin/account-entity-management",
+      "title": "Account Entity Management",
+      "description": "Manage organizational accounts and entity structures for budget allocation (Admin only)",
+      "requiresAdmin": true,
+      "category": "admin"
+    },
+    {
+      "link": "/admin/accounts-entity-view",
+      "title": "Accounts Entity View",
+      "description": "Comprehensive view of all account entities and their relationships within the organization (Admin only)",
+      "requiresAdmin": true,
+      "category": "admin"
+    }
+  ],
+  "navigationGuards": {
+    "authentication": "All routes except login require user authentication",
+    "authorization": "Admin routes require admin role privileges",
+    "redirects": {
+      "unauthenticated": "Redirected to /login",
+      "authenticated_to_login": "Redirected to /dashboard",
+      "unauthorized_admin": "Redirected to /dashboard",
+      "404": "Redirected to home page (/)"
+    }
+  },
+  "routeCategories": {
+    "public": ["Login"],
+    "main": ["Dashboard", "Home - Unified Transfers", "Enhancements", "Settlements"],
+    "details": ["Contract Details", "Cost Center Transfer Request"],
+    "approvals": [
+      "Contracts Pending Approval",
+      "Settlements Pending Approval",
+      "Enhancements Pending Approval"
+    ],
+    "notifications": ["Notifications"],
+    "admin": ["User Management", "Account Entity Management", "Accounts Entity View"]
+  }
+}
+      "requiresAuth": true,
+      "requiresAdmin": true,
+      "component": "Accounts_Entity_view.vue",
+      "category": "admin"
+    }
+  ],
+  "navigationGuards": {
+    "authentication": "All routes except login require user authentication",
+    "authorization": "Admin routes require admin role privileges",
+    "redirects": {
+      "unauthenticated": "Redirected to /login",
+      "authenticated_to_login": "Redirected to /dashboard",
+      "unauthorized_admin": "Redirected to /dashboard",
+      "404": "Redirected to home page (/)"
+    }
+  },
+  "routeCategories": {
+    "public": ["Login"],
+    "main": ["Dashboard", "Home - Unified Transfers", "Enhancements", "Settlements"],
+    "details": ["Contract Details", "Cost Center Transfer Request"],
+    "approvals": [
+      "Contracts Pending Approval",
+      "Settlements Pending Approval",
+      "Enhancements Pending Approval"
+    ],
+    "notifications": ["Notifications"],
+    "admin": ["User Management", "Account Entity Management", "Accounts Entity View"]
+  }
+}
