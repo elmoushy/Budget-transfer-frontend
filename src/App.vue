@@ -41,7 +41,6 @@ const isDarkMode = computed(() => themeStore.darkMode)
 </template>
 
 <style>
-/* global resets already in main.css */
 /* Define theme variables */
 :root {
   /* Base colors */
@@ -49,13 +48,13 @@ const isDarkMode = computed(() => themeStore.darkMode)
   --color-bg-dark: #111122;
   --color-text-dark: #333;
   --color-text-light: #f0f0f0;
-  
+
   /* Accent colors */
   --accent-color: #8a2a44;
   --accent-color-rgb: 138, 42, 68;
   --accent-color-dark: #5a1c2e;
   --accent-color-dark-rgb: 90, 28, 46;
-  
+
   /* UI Colors */
   --heading-color: #333;
   --text-color: #444;
@@ -66,23 +65,23 @@ const isDarkMode = computed(() => themeStore.darkMode)
   --hover-bg: rgba(138, 42, 68, 0.03);
   --shadow-color: rgba(0, 0, 0, 0.08);
   --btn-text: #fff;
-  
+
   /* Fonts */
   --font-primary: 'Inter', 'Tajawal', sans-serif;
   --font-heading: 'Space Grotesk', 'Inter', 'Tajawal', sans-serif;
-  
+
   /* Animations */
   --transition-fast: 0.2s ease;
   --transition-normal: 0.3s ease;
   --transition-slow: 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  
+
   /* Special effects */
   --glass-opacity-light: 0.9;
   --glass-opacity-dark: 0.7;
   --glass-blur: 10px;
   --glass-border-light: rgba(255, 255, 255, 0.1);
   --glass-border-dark: rgba(255, 255, 255, 0.05);
-  
+
   /* Shadows */
   --shadow-light: 0 8px 30px rgba(0, 0, 0, 0.08);
   --shadow-dark: 0 8px 30px rgba(0, 0, 0, 0.3);
@@ -96,7 +95,7 @@ const isDarkMode = computed(() => themeStore.darkMode)
   --accent-color-rgb: 168, 51, 83;
   --accent-color-dark: #7a293d;
   --accent-color-dark-rgb: 122, 41, 61;
-  
+
   --heading-color: #f0f0f0;
   --text-color: #ddd;
   --text-color-rgb: 221, 221, 221;
@@ -106,7 +105,7 @@ const isDarkMode = computed(() => themeStore.darkMode)
   --hover-bg: rgba(168, 51, 83, 0.15);
   --shadow-color: rgba(0, 0, 0, 0.3);
   --btn-text: #fff;
-  
+
   --glass-border-light: rgba(255, 255, 255, 0.1);
   --glass-border-dark: rgba(255, 255, 255, 0.05);
   --shadow-glow-primary: 0 0 15px rgba(168, 51, 83, 0.3);
