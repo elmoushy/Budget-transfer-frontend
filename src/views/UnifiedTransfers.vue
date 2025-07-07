@@ -217,13 +217,13 @@
       <div class="pagination-info">
         <span class="pagination-text">{{ paginationText }}</span>
         <div class="items-per-page">
-          <span>Items per page:</span>
+          <!-- <span>Items per page:</span>
           <select class="page-size-select" v-model="pageSize" @change="handlePageSizeChange">
             <option value="6">6</option>
             <option value="12">12</option>
             <option value="24">24</option>
             <option value="50">50</option>
-          </select>
+          </select> -->
         </div>
       </div>
       <div class="pagination-controls">

@@ -20,6 +20,16 @@
       </h1> -->
     </div>
 
+    <!-- middle section with tanfeez logo -->
+    <div class="middle">
+      <img
+        src="@/assets/img/tanfeez.png"
+        alt="Tanfeez Logo"
+        class="tanfeez-logo"
+        style="width: 220px; height: auto"
+      />
+    </div>
+
     <!-- action icons -->
     <div class="actions">
       <!-- Language Toggle -->
@@ -879,5 +889,101 @@ input:checked + .slider:before {
   outline: 2px solid rgba(225, 75, 106, 0.5);
   outline-offset: 2px;
   border-radius: 12px;
+}
+
+/* Middle section with tanfeez logo */
+.middle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: rgba(255, 246, 250, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(228, 201, 214, 0.2);
+  box-shadow:
+    0 4px 16px rgba(138, 42, 68, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  z-index: 2;
+}
+
+.header.dark-theme .middle {
+  background: rgba(36, 23, 38, 0.4);
+  border: 1px solid rgba(81, 32, 60, 0.3);
+  box-shadow:
+    0 4px 16px rgba(167, 56, 92, 0.12),
+    inset 0 1px 0 rgba(248, 233, 240, 0.1);
+}
+
+.middle:hover {
+  background: rgba(255, 246, 250, 0.5);
+  border-color: rgba(225, 75, 106, 0.3);
+  box-shadow:
+    0 6px 20px rgba(138, 42, 68, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transform: translate(-50%, -50%) translateY(-2px);
+}
+
+.header.dark-theme .middle:hover {
+  background: rgba(36, 23, 38, 0.6);
+  border-color: rgba(225, 75, 106, 0.4);
+  box-shadow:
+    0 6px 20px rgba(167, 56, 92, 0.18),
+    inset 0 1px 0 rgba(248, 233, 240, 0.15);
+}
+
+.tanfeez-logo {
+  height: 40px;
+  width: auto;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Light mode - apply black filter and slightly darken the logo */
+.header:not(.dark-theme) .tanfeez-logo {
+  filter: brightness(0) invert(0) contrast(1.2) saturate(1.1)
+    drop-shadow(0 2px 8px rgba(138, 42, 68, 0.15));
+}
+
+/* Dark mode - brighten and adjust colors without black filter */
+.header.dark-theme .tanfeez-logo {
+  filter: brightness(1.3) contrast(1.1) saturate(0.9) hue-rotate(10deg)
+    drop-shadow(0 2px 12px rgba(225, 75, 106, 0.3));
+}
+
+.tanfeez-logo:hover {
+  transform: scale(1.05);
+}
+
+.header:not(.dark-theme) .tanfeez-logo:hover {
+  filter: brightness(0) invert(0) contrast(1.3) saturate(1.3)
+    drop-shadow(0 4px 12px rgba(138, 42, 68, 0.25));
+}
+
+.header.dark-theme .tanfeez-logo:hover {
+  filter: brightness(1.4) contrast(1.2) saturate(1) hue-rotate(15deg)
+    drop-shadow(0 4px 16px rgba(225, 75, 106, 0.4));
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  .middle {
+    display: none;
+  }
+}
+
+@media (max-width: 1024px) {
+  .tanfeez-logo {
+    height: 32px;
+  }
+
+  .middle {
+    padding: 6px 12px;
+  }
 }
 </style>
