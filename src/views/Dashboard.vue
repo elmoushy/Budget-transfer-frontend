@@ -136,7 +136,7 @@
       <div class="transfer-types-grid">
         <div class="transfer-type-card">
           <div class="transfer-type-icon far">
-            <i class="fas fa-file-invoice-dollar"></i>
+            <i class="fas fa-money-bill-transfer"></i>
           </div>
           <div class="transfer-type-content">
             <h4>{{ translations.farTransfers }}</h4>
@@ -151,7 +151,7 @@
 
         <div class="transfer-type-card">
           <div class="transfer-type-icon afr">
-            <i class="fas fa-file-contract"></i>
+            <i class="fas fa-handshake"></i>
           </div>
           <div class="transfer-type-content">
             <h4>{{ translations.afrTransfers }}</h4>
@@ -166,7 +166,7 @@
 
         <div class="transfer-type-card">
           <div class="transfer-type-icon fad">
-            <i class="fas fa-file-signature"></i>
+            <i class="fas fa-credit-card"></i>
           </div>
           <div class="transfer-type-content">
             <h4>{{ translations.fadTransfers }}</h4>
@@ -1645,18 +1645,96 @@ export default {
   box-shadow: 0 15px 35px rgba(167, 56, 92, 0.25);
 }
 
+.transfer-type-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1.25rem;
+  color: white;
+  font-size: 1.5rem;
+  position: relative;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.transfer-type-icon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  padding: 2px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: xor;
+  -webkit-mask-composite: xor;
+}
+
+.transfer-type-icon i {
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.transfer-type-card:hover .transfer-type-icon {
+  transform: scale(1.05) rotate(5deg);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
 .transfer-type-icon.far {
   background: linear-gradient(135deg, #e14b6a, #8a2a44);
+  box-shadow: 0 4px 15px rgba(225, 75, 106, 0.3);
 }
 
 .transfer-type-icon.afr {
   background: linear-gradient(135deg, #d946ef, #8a2a44);
+  box-shadow: 0 4px 15px rgba(217, 70, 239, 0.3);
 }
 
 .transfer-type-icon.fad {
   background: linear-gradient(135deg, #c084fc, #d946ef);
+  box-shadow: 0 4px 15px rgba(192, 132, 252, 0.3);
 }
 
+/* Dark mode enhancements for transfer type icons */
+.dark-mode .transfer-type-icon {
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.3),
+    0 0 15px rgba(225, 75, 106, 0.2);
+}
+
+.dark-mode .transfer-type-icon::before {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
+}
+
+.dark-mode .transfer-type-icon.far {
+  box-shadow:
+    0 4px 20px rgba(225, 75, 106, 0.4),
+    0 0 20px rgba(225, 75, 106, 0.3);
+}
+
+.dark-mode .transfer-type-icon.afr {
+  box-shadow:
+    0 4px 20px rgba(217, 70, 239, 0.4),
+    0 0 20px rgba(217, 70, 239, 0.3);
+}
+
+.dark-mode .transfer-type-icon.fad {
+  box-shadow:
+    0 4px 20px rgba(192, 132, 252, 0.4),
+    0 0 20px rgba(192, 132, 252, 0.3);
+}
+
+.dark-mode .transfer-type-card:hover .transfer-type-icon {
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.4),
+    0 0 25px rgba(225, 75, 106, 0.4);
+}
 .transfer-type-content {
   flex: 1;
 }
