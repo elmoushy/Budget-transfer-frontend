@@ -36,6 +36,8 @@ export interface AccountsEntitiesEndpoints {
   ACCOUNT_DELETE: string
   ACCOUNT_ENTITY_LIMIT_LIST: string
   ACCOUNT_ENTITY_LIMIT_UPDATE: string
+  MAIN_ROUTES: string
+  MAIN_CURRENCIES: string
 }
 
 export interface EndpointsType {

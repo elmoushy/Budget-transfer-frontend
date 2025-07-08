@@ -660,6 +660,25 @@ export default {
         throw error
       }
     },
+
+    /**
+     * Get main routes names
+     * @returns {Promise} Main routes data
+     */
+    getMainRoutes: async () => {
+      try {
+        const response = await axios.get(
+          `${API_BASE_URL}${ENDPOINTS.ACCOUNTS_ENTITIES.MAIN_ROUTES}`,
+          {
+            headers: getAuthHeaders(),
+          },
+        )
+        return response.data
+      } catch (error) {
+        console.error('Error fetching main routes:', error)
+        throw error
+      }
+    },
   },
 
   /**

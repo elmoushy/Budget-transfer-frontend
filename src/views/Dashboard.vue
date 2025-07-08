@@ -474,7 +474,6 @@ import Chart from 'chart.js/auto'
 import { useThemeStore } from '@/stores/themeStore'
 import { useDashboardService } from '@/services/dashboardService'
 import type {
-  DashboardData,
   CostCenterTotal,
   AccountCodeTotal,
   CostCenterAccountCombo,
@@ -484,7 +483,8 @@ export default {
   name: 'DashboardView',
   setup() {
     /* ────── API DATA FETCHING ────── */
-    const { dashboardData, isLoading, error, fetchDashboardData } = useDashboardService()
+    const { dashboardData, currencyData, isLoading, error, fetchDashboardData } =
+      useDashboardService()
     const previousTotalTransfers = ref(0)
     const timeFilter = ref('month')
 
@@ -1093,12 +1093,22 @@ export default {
     }
 
     const formatCurrency = (amount: number) => {
-      return new Intl.NumberFormat(isRTL.value ? 'ar-SA' : 'en-US', {
-        style: 'currency',
-        currency: 'USD',
+      // Use dynamic currency icon if available, fallback to USD
+      const currencyIcon = currencyData.value?.icon || '$'
+
+      // For RTL languages and if we have Arabic currency, format differently
+      if (isRTL.value && currencyData.value?.icon) {
+        // For Arabic currencies, show amount first then currency
+        return `${amount.toLocaleString('ar-SA')} ${currencyIcon}`
+      }
+
+      // For other currencies, use standard formatting but with dynamic currency
+      const formattedAmount = new Intl.NumberFormat(isRTL.value ? 'ar-SA' : 'en-US', {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
       }).format(amount)
+
+      return `${formattedAmount} ${currencyIcon}`
     }
 
     const getNetFlowClass = (amount: number) => {
@@ -1215,7 +1225,7 @@ export default {
       }
     }
 
-    const getConnectionStyle = (connection: any) => {
+    const getConnectionStyle = (connection: { angle: number; strength: number }) => {
       return {
         transform: `rotate(${connection.angle}deg)`,
         width: `${connection.strength * 2}px`,
@@ -1232,6 +1242,7 @@ export default {
 
       // Dashboard API data
       dashboardData,
+      currencyData,
       isLoading,
       error,
       previousTotalTransfers,
@@ -2763,6 +2774,45 @@ td.negative {
   100% {
     transform: scale(0.9);
     opacity: 0.2;
+  }
+}
+
+/* ───── CURRENCY FORMATTING ───── */
+.currency-value {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.5px;
+}
+
+/* RTL Currency Support */
+.dashboard.rtl .currency-value {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Arabic Currency Icon Styling */
+.currency-icon {
+  font-weight: 600;
+  margin-inline-start: 0.25rem;
+}
+
+.dashboard.rtl .currency-icon {
+  margin-inline-start: 0;
+  margin-inline-end: 0.25rem;
+}
+
+/* Loading state for currency */
+.currency-loading {
+  background: linear-gradient(90deg, transparent, rgba(225, 75, 106, 0.1), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
   }
 }
 </style>

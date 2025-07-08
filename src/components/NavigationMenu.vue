@@ -2,8 +2,17 @@
 <template>
   <nav class="navigation-menu" :class="{ 'dark-theme': isDarkMode }">
     <div class="container">
+      <!-- Loading indicator -->
+      <div v-if="isLoading" class="loading-indicator">
+        <div class="loading-dots">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+      </div>
+
       <!-- links -->
-      <ul class="nav-links">
+      <ul v-else class="nav-links">
         <li
           v-for="item in menuItems"
           :key="item.label"
@@ -47,10 +56,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
+import apiService from '@/services/apiService'
 
 // Define interfaces for menu items
 interface MenuItem {
@@ -63,11 +73,21 @@ interface DropdownItem {
   dropdownItems: MenuItem[]
 }
 
+interface RouteData {
+  id: number
+  english_name: string
+  arabic_name: string
+}
+
 const route = useRoute()
 const themeStore = useThemeStore()
 const authStore = useAuthStore()
 const currentRoute = computed(() => route.name)
 const dropdownOpen = ref(false)
+
+// Reactive state for routes data - simplified, no caching
+const routesData = ref<RouteData[]>([])
+const isLoading = ref(true)
 
 // Check if user is an admin
 const isAdminUser = computed(() => {
@@ -80,47 +100,104 @@ const dropdownItem = ref<DropdownItem | null>(null)
 const isDarkMode = computed(() => themeStore.darkMode)
 const isArabic = computed(() => themeStore.language === 'ar')
 
-// Define admin menu items in both languages
-const adminMenuItemsData = {
-  ar: [
-    { label: 'إدارة المستخدمين', route: 'UserManagement' },
-    { label: 'إدارة الحسابات والكيانات', route: 'AccountEntityManagement' },
-    { label: 'الحسابات والكيانات', route: 'AccountsEntityView' },
-  ],
-  en: [
-    { label: 'User Management', route: 'UserManagement' },
-    { label: 'Account-Entity Management', route: 'AccountEntityManagement' },
-    { label: 'Accounts & Entities', route: 'AccountsEntityView' },
-  ],
+// Mapping between route IDs and Vue Router route names
+const routeIdToRouteName: Record<number, string> = {
+  2: 'Dashboard',
+  3: 'Home',
+  4: 'Settlements',
+  5: 'Enhancements',
+  6: 'EnhancementsPendingApproval',
+  7: 'ContractsPendingApproval',
+  8: 'SettlementsPendingApproval',
+  9: 'UserManagement',
+  10: 'AccountEntityManagement',
+  11: 'AccountsEntityView',
+  12: 'Controller',
 }
 
-// Define menu items in both languages
-const menuItemsData = {
-  ar: [
-    { label: 'لوحة القيادة', route: 'Dashboard' },
-    { label: 'المناقلات', route: 'Home' },
-    { label: 'التسويه', route: 'Settlements' },
-    { label: 'التعزيزات', route: 'Enhancements' },
-    { label: 'التعزيزات قيد الاعتماد', route: 'EnhancementsPendingApproval' },
-    { label: 'العقود قيد الاعتماد', route: 'ContractsPendingApproval' },
-    { label: 'التسويات قيد الاعتماد', route: 'SettlementsPendingApproval' },
-  ],
-  en: [
-    { label: 'Dashboard', route: 'Dashboard' },
-    { label: 'Transfers', route: 'Home' },
-    { label: 'Fund Adjustment Department', route: 'Settlements' },
-    { label: 'Additional Fund Request', route: 'Enhancements' },
-    { label: 'Pending Transfers', route: 'EnhancementsPendingApproval' },
-    { label: 'Pending Fund Adjustment', route: 'ContractsPendingApproval' },
-    { label: 'Pending Additional Fund', route: 'SettlementsPendingApproval' },
-  ],
+// Mapping for admin routes (these should only show for admin users)
+const adminRouteIds = [9, 10, 11, 12] // User Management, Account-Entity Management, Accounts & Entities, Controller
+
+// Simple function to fetch routes data from API - no caching
+const fetchRoutesData = async () => {
+  try {
+    isLoading.value = true
+    console.log('Fetching fresh route data from API...')
+
+    const response = await apiService.accountEntities.getMainRoutes()
+    if (response.data && Array.isArray(response.data)) {
+      routesData.value = response.data
+      console.log('Route data updated:', response.data)
+    } else {
+      throw new Error('Invalid response format')
+    }
+  } catch (error) {
+    console.error('Error fetching routes data:', error)
+
+    // Fallback to static data only if API fails completely
+    routesData.value = [
+      { id: 2, english_name: 'Dashboard', arabic_name: 'لوحة القيادة' },
+      { id: 3, english_name: 'Transfer', arabic_name: 'المناقلات' },
+      { id: 4, english_name: 'Fund Adjustment Department', arabic_name: 'التسويه' },
+      { id: 5, english_name: 'Additional Fund Request', arabic_name: 'التعزيزات' },
+      { id: 6, english_name: 'Pending Transfers', arabic_name: 'التعزيزات قيد الاعتماد' },
+      { id: 7, english_name: 'Pending Fund Adjustment', arabic_name: 'العقود قيد الاعتماد' },
+      { id: 8, english_name: 'Pending Additional Fund', arabic_name: 'التسويات قيد الاعتماد' },
+      { id: 9, english_name: 'User Management', arabic_name: 'إدارة المستخدمين' },
+      {
+        id: 10,
+        english_name: 'Account-Entity Management',
+        arabic_name: 'إدارة الحسابات والكيانات',
+      },
+      { id: 11, english_name: 'Accounts & Entities', arabic_name: 'الحسابات والكيانات' },
+      { id: 12, english_name: 'Control', arabic_name: 'التحكم' },
+    ]
+  } finally {
+    isLoading.value = false
+  }
 }
 
-// Create computed properties for menu items
-const menuItems = computed(() => (isArabic.value ? menuItemsData.ar : menuItemsData.en))
-const adminMenuItems = computed(() =>
-  isArabic.value ? adminMenuItemsData.ar : adminMenuItemsData.en,
-)
+// Create computed properties for menu items based on fetched data
+const menuItems = computed(() => {
+  if (isLoading.value || !routesData.value.length) {
+    return []
+  }
+
+  return routesData.value
+    .filter((route) => {
+      // Exclude admin routes from regular menu
+      return !adminRouteIds.includes(route.id) && routeIdToRouteName[route.id]
+    })
+    .sort((a, b) => a.id - b.id) // Sort by ID to maintain consistent order
+    .map((route) => ({
+      label: isArabic.value ? route.arabic_name : route.english_name,
+      route: routeIdToRouteName[route.id],
+    }))
+    .filter((item) => item.route) // Ensure we have a valid route
+})
+
+const adminMenuItems = computed(() => {
+  if (isLoading.value || !routesData.value.length) {
+    return []
+  }
+
+  return routesData.value
+    .filter((route) => {
+      // Only include admin routes
+      return adminRouteIds.includes(route.id) && routeIdToRouteName[route.id]
+    })
+    .sort((a, b) => a.id - b.id) // Sort by ID to maintain consistent order
+    .map((route) => ({
+      label: isArabic.value ? route.arabic_name : route.english_name,
+      route: routeIdToRouteName[route.id],
+    }))
+    .filter((item) => item.route) // Ensure we have a valid route
+})
+
+// Fetch data only on component mount (page refresh)
+onMounted(() => {
+  fetchRoutesData()
+})
 </script>
 
 <style scoped>
@@ -667,5 +744,57 @@ const adminMenuItems = computed(() =>
   transition-property: color, background-color, border-color, box-shadow, transform;
   transition-duration: 0.4s;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Loading indicator styles */
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  width: 100%;
+}
+
+.loading-dots {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #e14b6a, #8a2a44);
+  animation: loading-pulse 1.4s ease-in-out infinite both;
+}
+
+.navigation-menu.dark-theme .dot {
+  background: linear-gradient(90deg, #e14b6a, #a7385c);
+}
+
+.dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0s;
+}
+
+@keyframes loading-pulse {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
 }
 </style>

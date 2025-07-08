@@ -89,6 +89,12 @@ const routes = [
     component: () => import('@/views/Accounts_Entity_view.vue'),
     meta: { requiresAuth: true, requiresAdmin: true },
   },
+  {
+    path: '/admin/controller',
+    name: 'Controller',
+    component: () => import('@/views/ControllerPage.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true },
+  },
   // Catch-all route for 404
   {
     path: '/:pathMatch(.*)*',
