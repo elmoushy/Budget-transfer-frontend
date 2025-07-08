@@ -677,28 +677,16 @@ export default {
 
     /* ────── CHART INSTANCES ────── */
     let transferFlowInstance: Chart | null = null
-    let pendingLevelsInstance: Chart | null = null
-    let costCenterInstance: Chart | null = null
 
     const chartsReady = ref<boolean>(false)
 
     // Fix chart canvas references
     const transferFlowChart = ref<HTMLCanvasElement | null>(null)
-    const pendingLevelsChart = ref<HTMLCanvasElement | null>(null)
-    const costCenterChart = ref<HTMLCanvasElement | null>(null)
 
     const destroyCharts = () => {
       if (transferFlowInstance) {
         transferFlowInstance.destroy()
         transferFlowInstance = null
-      }
-      if (pendingLevelsInstance) {
-        pendingLevelsInstance.destroy()
-        pendingLevelsInstance = null
-      }
-      if (costCenterInstance) {
-        costCenterInstance.destroy()
-        costCenterInstance = null
       }
     }
 
@@ -728,26 +716,6 @@ export default {
     const baseOptions = computed(() => getChartOptions(isDarkMode.value))
 
     const transferFlowOpts = computed(() => baseOptions.value)
-
-    const pendingLevelsOpts = computed(() => ({
-      ...baseOptions.value,
-      plugins: {
-        legend: {
-          display: false,
-        },
-      },
-      indexAxis: 'y' as const,
-    }))
-
-    const costCenterOpts = computed(() => ({
-      ...baseOptions.value,
-      plugins: {
-        legend: {
-          position: 'right' as const,
-          labels: { color: isDarkMode.value ? '#e2e2e2' : '#1e293b' },
-        },
-      },
-    }))
 
     const generateTransferFlowData = () => {
       // This would ideally be generated from the actual data
@@ -809,87 +777,6 @@ export default {
       }
     }
 
-    const generatePendingLevelsData = () => {
-      if (!dashboardData.value?.pending_transfers) {
-        return {
-          labels: [],
-          datasets: [],
-        }
-      }
-
-      const { Level1, Level2, Level3, Level4 } = dashboardData.value.pending_transfers
-
-      return {
-        labels: [
-          translations.value.level1,
-          translations.value.level2,
-          translations.value.level3,
-          translations.value.level4,
-        ],
-        datasets: [
-          {
-            label: translations.value.pendingTransfers,
-            data: [Level1, Level2, Level3, Level4],
-            backgroundColor: [
-              'rgba(245,158,11,0.8)', // orange
-              'rgba(59,130,246,0.8)', // blue
-              'rgba(232,121,249,0.8)', // pink
-              'rgba(16,185,129,0.8)', // green
-            ],
-            borderColor: isDarkMode.value ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.8)',
-            borderWidth: 1,
-          },
-        ],
-      }
-    }
-
-    const generateCostCenterData = () => {
-      if (!dashboardData.value?.filtered_combinations) {
-        return {
-          labels: [],
-          datasets: [],
-        }
-      }
-
-      // Get unique cost centers
-      const costCenters = Array.from(
-        new Set(dashboardData.value.filtered_combinations.map((item) => item.cost_center_code_str)),
-      )
-
-      // Calculate totals for each cost center
-      const costCenterOutgoing = costCenters.map((center) => {
-        const items =
-          dashboardData.value?.filtered_combinations.filter(
-            (item) => item.cost_center_code_str === center,
-          ) || []
-        return items.reduce((sum, item) => sum + item.total_from_center, 0)
-      })
-
-      const costCenterIncoming = costCenters.map((center) => {
-        const items =
-          dashboardData.value?.filtered_combinations.filter(
-            (item) => item.cost_center_code_str === center,
-          ) || []
-        return items.reduce((sum, item) => sum + item.total_to_center, 0)
-      })
-
-      return {
-        labels: costCenters,
-        datasets: [
-          {
-            label: translations.value.outgoing,
-            data: costCenterOutgoing,
-            backgroundColor: '#ef4444', // red
-          },
-          {
-            label: translations.value.incoming,
-            data: costCenterIncoming,
-            backgroundColor: '#10b981', // green
-          },
-        ],
-      }
-    }
-
     const createCharts = async () => {
       // Wait for next tick to ensure DOM is updated
       await nextTick()
@@ -899,8 +786,6 @@ export default {
 
       console.log('Creating charts...')
       console.log('transferFlowChart.value:', transferFlowChart.value)
-      console.log('pendingLevelsChart.value:', pendingLevelsChart.value)
-      console.log('costCenterChart.value:', costCenterChart.value)
       console.log('dashboardData.value:', dashboardData.value)
 
       // Transfer Flow Chart
@@ -919,42 +804,6 @@ export default {
         }
       } else {
         console.error('Transfer flow chart canvas element not found')
-      }
-
-      // Pending Levels Chart
-      if (pendingLevelsChart.value && dashboardData.value) {
-        const ctx = pendingLevelsChart.value.getContext('2d')
-        if (ctx) {
-          console.log('Creating pending levels chart...')
-          pendingLevelsInstance = new Chart(ctx, {
-            type: 'bar',
-            data: generatePendingLevelsData(),
-            options: pendingLevelsOpts.value,
-          })
-          console.log('Pending levels chart created successfully')
-        } else {
-          console.error('Could not get 2D context for pending levels chart')
-        }
-      } else {
-        console.error('Pending levels chart canvas element not found or no dashboard data')
-      }
-
-      // Cost Center Chart
-      if (costCenterChart.value && dashboardData.value) {
-        const ctx = costCenterChart.value.getContext('2d')
-        if (ctx) {
-          console.log('Creating cost center chart...')
-          costCenterInstance = new Chart(ctx, {
-            type: 'bar',
-            data: generateCostCenterData(),
-            options: costCenterOpts.value,
-          })
-          console.log('Cost center chart created successfully')
-        } else {
-          console.error('Could not get 2D context for cost center chart')
-        }
-      } else {
-        console.error('Cost center chart canvas element not found or no dashboard data')
       }
     }
 
@@ -1008,23 +857,14 @@ export default {
         console.log('Attempting to create charts after timeout...')
         console.log('Canvas elements:', {
           transferFlow: transferFlowChart.value,
-          pendingLevels: pendingLevelsChart.value,
-          costCenter: costCenterChart.value,
         })
 
-        if (
-          dashboardData.value &&
-          transferFlowChart.value &&
-          pendingLevelsChart.value &&
-          costCenterChart.value
-        ) {
+        if (dashboardData.value && transferFlowChart.value) {
           await createCharts()
         } else {
           console.error('Chart creation failed - missing elements or data:', {
             dashboardData: !!dashboardData.value,
             transferFlowChart: !!transferFlowChart.value,
-            pendingLevelsChart: !!pendingLevelsChart.value,
-            costCenterChart: !!costCenterChart.value,
           })
         }
       }, 500)
@@ -1254,8 +1094,6 @@ export default {
 
       // Chart refs - Fixed references
       transferFlowChart,
-      pendingLevelsChart,
-      costCenterChart,
 
       // Helper methods
       refreshDashboard,
