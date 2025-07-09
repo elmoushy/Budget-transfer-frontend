@@ -1065,8 +1065,9 @@ onMounted(() => {
 /* Items Grid */
 .items-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 1.5rem;
+  max-width: 100%;
 }
 
 .item-card {
@@ -1077,6 +1078,12 @@ onMounted(() => {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  min-height: 140px;
+  max-width: 400px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .controller-page.dark-theme .item-card {
@@ -1363,6 +1370,12 @@ onMounted(() => {
 
   .items-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .item-card {
+    max-width: 100%;
+    min-height: 120px;
   }
 
   .modal-content {
@@ -1372,6 +1385,35 @@ onMounted(() => {
 
   .modal-actions {
     flex-direction: column;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .items-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+
+  .item-card {
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 1025px) {
+  .items-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  .item-card {
+    max-width: 380px;
+  }
+}
+
+@media (min-width: 1400px) {
+  .items-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
   }
 }
 
