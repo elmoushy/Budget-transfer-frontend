@@ -11,52 +11,83 @@
         </div>
       </div>
 
-      <!-- links -->
-      <ul v-else class="nav-links">
-        <li
-          v-for="item in menuItems"
-          :key="item.label"
-          :class="{ active: currentRoute === item.route }"
+      <!-- Desktop scroll controls -->
+      <div v-else class="nav-container">
+        <!-- Left scroll button -->
+        <button
+          v-if="showScrollButtons && canScrollLeft"
+          @click="scrollLeft"
+          class="scroll-button scroll-left"
+          :class="{ 'dark-theme': isDarkMode }"
+          aria-label="Scroll left"
         >
-          <router-link :to="{ name: item.route }">
-            {{ item.label }}
-          </router-link>
-        </li>
+          <i class="fas fa-chevron-left"></i>
+        </button>
 
-        <!-- Admin links shown directly if user is admin -->
-        <template v-if="isAdminUser">
+        <!-- Navigation links -->
+        <ul
+          ref="navLinksRef"
+          class="nav-links"
+          @scroll="updateScrollButtons"
+          @keydown="handleKeyNavigation"
+          tabindex="0"
+        >
           <li
-            v-for="adminItem in adminMenuItems"
-            :key="adminItem.route"
-            :class="{ active: currentRoute === adminItem.route }"
+            v-for="item in menuItems"
+            :key="item.label"
+            :class="{ active: currentRoute === item.route }"
           >
-            <router-link :to="{ name: adminItem.route }">
-              {{ adminItem.label }}
+            <router-link :to="{ name: item.route }">
+              {{ item.label }}
             </router-link>
           </li>
-        </template>
 
-        <!-- example dropdown (optional) -->
-        <li class="dropdown" v-if="dropdownItem">
-          <div @click="dropdownOpen = !dropdownOpen" class="dropdown-toggle">
-            {{ dropdownItem.label }}
-            <i class="fas fa-chevron-down"></i>
-          </div>
-          <ul v-if="dropdownOpen" class="dropdown-menu">
-            <li v-for="sub in dropdownItem.dropdownItems" :key="sub.label">
-              <router-link :to="{ name: sub.route }">
-                {{ sub.label }}
+          <!-- Admin links shown directly if user is admin -->
+          <template v-if="isAdminUser">
+            <li
+              v-for="adminItem in adminMenuItems"
+              :key="adminItem.route"
+              :class="{ active: currentRoute === adminItem.route }"
+            >
+              <router-link :to="{ name: adminItem.route }">
+                {{ adminItem.label }}
               </router-link>
             </li>
-          </ul>
-        </li>
-      </ul>
+          </template>
+
+          <!-- example dropdown (optional) -->
+          <li class="dropdown" v-if="dropdownItem">
+            <div @click="dropdownOpen = !dropdownOpen" class="dropdown-toggle">
+              {{ dropdownItem.label }}
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <ul v-if="dropdownOpen" class="dropdown-menu">
+              <li v-for="sub in dropdownItem.dropdownItems" :key="sub.label">
+                <router-link :to="{ name: sub.route }">
+                  {{ sub.label }}
+                </router-link>
+              </li>
+            </ul>
+          </li>
+        </ul>
+
+        <!-- Right scroll button -->
+        <button
+          v-if="showScrollButtons && canScrollRight"
+          @click="scrollRight"
+          class="scroll-button scroll-right"
+          :class="{ 'dark-theme': isDarkMode }"
+          aria-label="Scroll right"
+        >
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
     </div>
   </nav>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -97,8 +128,82 @@ const isAdminUser = computed(() => {
 // Define dropdownItem with proper typing
 const dropdownItem = ref<DropdownItem | null>(null)
 
+// Scroll functionality for desktop
+const navLinksRef = ref<HTMLUListElement | null>(null)
+const showScrollButtons = ref(false)
+const canScrollLeft = ref(false)
+const canScrollRight = ref(false)
+
 const isDarkMode = computed(() => themeStore.darkMode)
 const isArabic = computed(() => themeStore.language === 'ar')
+
+// Scroll functions
+const scrollLeft = () => {
+  if (navLinksRef.value) {
+    navLinksRef.value.scrollBy({
+      left: -200,
+      behavior: 'smooth',
+    })
+  }
+}
+
+const scrollRight = () => {
+  if (navLinksRef.value) {
+    navLinksRef.value.scrollBy({
+      left: 200,
+      behavior: 'smooth',
+    })
+  }
+}
+
+const updateScrollButtons = () => {
+  if (navLinksRef.value) {
+    const element = navLinksRef.value
+    const scrollLeft = element.scrollLeft
+    const scrollWidth = element.scrollWidth
+    const clientWidth = element.clientWidth
+
+    canScrollLeft.value = scrollLeft > 0
+    canScrollRight.value = scrollLeft < scrollWidth - clientWidth
+    showScrollButtons.value = scrollWidth > clientWidth
+  }
+}
+
+// Check scroll on resize and mount
+const checkScrollNeeded = () => {
+  setTimeout(() => {
+    updateScrollButtons()
+  }, 100)
+}
+
+// Scroll to active item on route change
+const scrollToActiveItem = () => {
+  if (navLinksRef.value) {
+    const activeItem = navLinksRef.value.querySelector('li.active')
+    if (activeItem) {
+      activeItem.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center',
+      })
+    }
+  }
+}
+
+// Handle keyboard navigation for accessibility
+const handleKeyNavigation = (event: KeyboardEvent) => {
+  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+    event.preventDefault()
+    const scrollAmount = 200
+    if (navLinksRef.value) {
+      if (event.key === 'ArrowLeft') {
+        navLinksRef.value.scrollBy({ left: -scrollAmount, behavior: 'smooth' })
+      } else {
+        navLinksRef.value.scrollBy({ left: scrollAmount, behavior: 'smooth' })
+      }
+    }
+  }
+}
 
 // Mapping between route IDs and Vue Router route names
 const routeIdToRouteName: Record<number, string> = {
@@ -197,6 +302,28 @@ const adminMenuItems = computed(() => {
 // Fetch data only on component mount (page refresh)
 onMounted(() => {
   fetchRoutesData()
+
+  // Add window resize listener to check scroll buttons
+  window.addEventListener('resize', checkScrollNeeded)
+
+  // Initial check after mounting
+  setTimeout(() => {
+    checkScrollNeeded()
+  }, 100)
+})
+
+// Watch for changes in menu items to update scroll buttons
+watch([menuItems, adminMenuItems], () => {
+  nextTick(() => {
+    checkScrollNeeded()
+  })
+})
+
+// Watch for route changes to scroll to active item
+watch(currentRoute, () => {
+  nextTick(() => {
+    scrollToActiveItem()
+  })
 })
 </script>
 
@@ -301,6 +428,132 @@ onMounted(() => {
   justify-content: flex-start;
 }
 
+/* Navigation container with scroll buttons */
+.nav-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  position: relative;
+  gap: 8px;
+}
+
+/* Scroll buttons */
+.scroll-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 246, 250, 0.8);
+  color: #8a2a44;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
+  flex-shrink: 0;
+  box-shadow:
+    0 4px 12px rgba(138, 42, 68, 0.15),
+    0 2px 6px rgba(138, 42, 68, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(228, 201, 214, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.scroll-button.dark-theme {
+  background: rgba(36, 23, 38, 0.8);
+  color: #e14b6a;
+  box-shadow:
+    0 4px 12px rgba(167, 56, 92, 0.25),
+    0 2px 6px rgba(167, 56, 92, 0.15),
+    inset 0 1px 0 rgba(248, 233, 240, 0.1);
+  border: 1px solid rgba(81, 32, 60, 0.5);
+}
+
+.scroll-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(225, 75, 106, 0.2), transparent);
+  transition: left 0.4s ease-in-out;
+}
+
+.scroll-button.dark-theme::before {
+  background: linear-gradient(90deg, transparent, rgba(225, 75, 106, 0.3), transparent);
+}
+
+.scroll-button:hover {
+  background: rgba(225, 75, 106, 0.15);
+  color: #6d1a36;
+  transform: translateY(-2px) scale(1.05);
+  box-shadow:
+    0 6px 16px rgba(138, 42, 68, 0.25),
+    0 3px 8px rgba(138, 42, 68, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border-color: #e14b6a;
+}
+
+.scroll-button.dark-theme:hover {
+  background: rgba(225, 75, 106, 0.25);
+  color: #f8e9f0;
+  box-shadow:
+    0 6px 16px rgba(167, 56, 92, 0.35),
+    0 3px 8px rgba(167, 56, 92, 0.25),
+    inset 0 1px 0 rgba(248, 233, 240, 0.15);
+  border-color: #e14b6a;
+}
+
+.scroll-button:hover::before {
+  left: 0;
+}
+
+.scroll-button:active {
+  transform: translateY(0) scale(0.98);
+  transition: transform 0.1s ease-in-out;
+}
+
+.scroll-button i {
+  font-size: 16px;
+  font-weight: 600;
+  filter: drop-shadow(0 0 2px rgba(138, 42, 68, 0.3));
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scroll-button.dark-theme i {
+  filter: drop-shadow(0 0 2px rgba(225, 75, 106, 0.5));
+}
+
+.scroll-button:hover i {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 4px rgba(225, 75, 106, 0.5));
+}
+
+.scroll-button.dark-theme:hover i {
+  filter: drop-shadow(0 0 4px rgba(225, 75, 106, 0.7));
+}
+
+/* Animation for scroll buttons appearing */
+.scroll-button {
+  animation: scrollButtonFadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes scrollButtonFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
 .nav-links {
   display: flex;
   list-style: none;
@@ -308,11 +561,21 @@ onMounted(() => {
   padding: 0 8px;
   flex-wrap: nowrap;
   overflow-x: auto;
-  width: 100%;
+  flex: 1;
   scrollbar-width: none;
   -ms-overflow-style: none;
   gap: 6px;
   align-items: center;
+  scroll-behavior: smooth;
+  max-width: calc(100% - 96px); /* Account for scroll buttons when visible */
+  outline: none;
+}
+
+.nav-links:focus {
+  box-shadow:
+    inset 0 0 0 2px rgba(225, 75, 106, 0.5),
+    0 0 0 4px rgba(225, 75, 106, 0.2);
+  border-radius: 12px;
 }
 
 .nav-links::-webkit-scrollbar {
@@ -686,6 +949,31 @@ onMounted(() => {
 
   .dropdown-toggle {
     padding: 0.7rem 0.9rem;
+  }
+
+  /* Adjust scroll buttons for mobile */
+  .scroll-button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .scroll-button i {
+    font-size: 14px;
+  }
+
+  .nav-links {
+    max-width: calc(100% - 80px); /* Smaller buttons on mobile */
+  }
+}
+
+/* Hide scroll buttons on very small screens where touch scrolling is preferred */
+@media (max-width: 480px) {
+  .scroll-button {
+    display: none;
+  }
+
+  .nav-links {
+    max-width: 100%;
   }
 }
 

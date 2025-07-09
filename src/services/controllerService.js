@@ -36,7 +36,7 @@ export default {
    */
   async listCurrencies() {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/accounts-entities/main-currencies/`, {
+      const response = await axios.get(`${API_BASE_URL}/api/admin_panel/main-currencies/`, {
         headers: getAuthHeaders(),
       })
       // Return the data array from the nested response structure
@@ -55,7 +55,7 @@ export default {
   async createCurrency(currencyData) {
     try {
       const response = await axios.post(
-        `${API_BASE_URL}/api/accounts-entities/main-currencies/create/`,
+        `${API_BASE_URL}/api/admin_panel/main-currencies/create/`,
         currencyData,
         { headers: getAuthHeaders() },
       )
@@ -74,10 +74,9 @@ export default {
    */
   async getCurrency(id) {
     try {
-      const response = await axios.get(
-        `${API_BASE_URL}/api/accounts-entities/main-currencies/${id}/`,
-        { headers: getAuthHeaders() },
-      )
+      const response = await axios.get(`${API_BASE_URL}/api/admin_panel/main-currencies/${id}/`, {
+        headers: getAuthHeaders(),
+      })
       // Return the currency data from the nested response structure
       return response.data.data
     } catch (error) {
@@ -95,7 +94,7 @@ export default {
   async updateCurrency(id, currencyData) {
     try {
       const response = await axios.put(
-        `${API_BASE_URL}/api/accounts-entities/main-currencies/${id}/update/`,
+        `${API_BASE_URL}/api/admin_panel/main-currencies/${id}/update/`,
         currencyData,
         { headers: getAuthHeaders() },
       )
@@ -114,7 +113,7 @@ export default {
    */
   async deleteCurrency(id) {
     try {
-      await axios.delete(`${API_BASE_URL}/api/accounts-entities/main-currencies/${id}/delete/`, {
+      await axios.delete(`${API_BASE_URL}/api/admin_panel/main-currencies/${id}/delete/`, {
         headers: getAuthHeaders(),
       })
     } catch (error) {
@@ -131,7 +130,7 @@ export default {
    */
   async listRoutes() {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/accounts-entities/main-routes/`, {
+      const response = await axios.get(`${API_BASE_URL}/api/admin_panel/main-routes/`, {
         headers: getAuthHeaders(),
       })
       // Return the routes data from the nested response structure
@@ -150,7 +149,7 @@ export default {
   async createRoute(routeData) {
     try {
       const response = await axios.post(
-        `${API_BASE_URL}/api/accounts-entities/main-routes/create/`,
+        `${API_BASE_URL}/api/admin_panel/main-routes/create/`,
         routeData,
         { headers: getAuthHeaders() },
       )
@@ -169,7 +168,7 @@ export default {
    */
   async getRoute(id) {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/accounts-entities/main-routes/${id}/`, {
+      const response = await axios.get(`${API_BASE_URL}/api/admin_panel/main-routes/${id}/`, {
         headers: getAuthHeaders(),
       })
       // Return the route data from the nested response structure
@@ -189,7 +188,7 @@ export default {
   async updateRoute(id, routeData) {
     try {
       const response = await axios.put(
-        `${API_BASE_URL}/api/accounts-entities/main-routes/${id}/update/`,
+        `${API_BASE_URL}/api/admin_panel/main-routes/${id}/update/`,
         routeData,
         { headers: getAuthHeaders() },
       )
@@ -208,7 +207,7 @@ export default {
    */
   async deleteRoute(id) {
     try {
-      await axios.delete(`${API_BASE_URL}/api/accounts-entities/main-routes/${id}/delete/`, {
+      await axios.delete(`${API_BASE_URL}/api/admin_panel/main-routes/${id}/delete/`, {
         headers: getAuthHeaders(),
       })
     } catch (error) {

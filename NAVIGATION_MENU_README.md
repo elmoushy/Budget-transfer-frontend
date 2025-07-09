@@ -72,7 +72,7 @@ The component works automatically - fetches fresh data on every page load:
 ### API Endpoint
 
 ```
-GET /api/accounts-entities/main-routes/
+GET /api/admin_panel/main-routes/
 Authorization: Bearer {token}
 ```
 
@@ -119,7 +119,7 @@ The following route names have been updated in your database:
 ### Route Names Not Updating
 
 1. Check browser console for API errors
-2. Verify the `/api/accounts-entities/main-routes/` endpoint is accessible
+2. Verify the `/api/admin_panel/main-routes/` endpoint is accessible
 3. Ensure route IDs in database match the component mapping
 4. Try a force refresh: `navMenu.value.forceRefresh()`
 

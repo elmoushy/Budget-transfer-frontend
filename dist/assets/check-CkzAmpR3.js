@@ -1,4 +1,4 @@
-import{c}from"./index-eOXnglc7.js";/**
+import{c}from"./index-CKvNapc3.js";/**
  * @license lucide-vue-next v0.503.0 - ISC
  *
  * This source code is licensed under the ISC license.

@@ -47,8 +47,8 @@ export const ENDPOINTS = {
     ACCOUNT_DELETE: '/api/accounts-entities/accounts/:id/delete/',
     ACCOUNT_ENTITY_LIMIT_LIST: '/api/accounts-entities/account-entity-limit/list',
     ACCOUNT_ENTITY_LIMIT_UPDATE: '/api/accounts-entities/account-entity-limit/update/',
-    MAIN_ROUTES: '/api/accounts-entities/main-routes/',
-    MAIN_CURRENCIES: '/api/accounts-entities/main-currencies/',
+    MAIN_ROUTES: '/api/admin_panel/main-routes/',
+    MAIN_CURRENCIES: '/api/admin_panel/main-currencies/',
   },
 }
 
