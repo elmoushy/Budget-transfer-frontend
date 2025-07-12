@@ -18,6 +18,12 @@
         </Transition>
       </RouterView>
     </main>
+
+    <!-- Footer - Only show when authenticated -->
+    <FooterBar v-if="isAuthenticated" />
+
+    <!-- ChatBot Component - Always visible when authenticated -->
+    <ChatBot v-if="isAuthenticated" />
   </div>
 </template>
 
@@ -25,6 +31,8 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import HeaderBar from '@/components/HeaderBar.vue'
 import NavigationMenu from '@/components/NavigationMenu.vue'
+import FooterBar from '@/components/FooterBar.vue'
+import ChatBot from '@/components/ChatBot.vue'
 import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
 import MagneticSectionSnap from '@/utils/magneticSectionSnap'

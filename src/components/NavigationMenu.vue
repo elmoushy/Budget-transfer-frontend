@@ -93,6 +93,82 @@ import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
 import apiService from '@/services/apiService'
 
+// Robot animation state
+const robotState = ref<'sleeping' | 'waking' | 'awake'>('sleeping')
+const robotButton = ref<HTMLButtonElement | null>(null)
+
+// Robot animation function
+const wakeUpRobot = async () => {
+  if (robotState.value !== 'sleeping') return
+
+  // Start waking animation
+  robotState.value = 'waking'
+
+  // Create floating robot clone for animation
+  const robotElement = robotButton.value
+  if (!robotElement) return
+
+  const robotRect = robotElement.getBoundingClientRect()
+
+  // Create animated clone
+  const robotClone = robotElement.cloneNode(true) as HTMLElement
+  robotClone.style.position = 'fixed'
+  robotClone.style.top = `${robotRect.top}px`
+  robotClone.style.left = `${robotRect.left}px`
+  robotClone.style.width = `${robotRect.width}px`
+  robotClone.style.height = `${robotRect.height}px`
+  robotClone.style.zIndex = '10000'
+  robotClone.style.pointerEvents = 'none'
+  robotClone.classList.add('robot-floating')
+
+  document.body.appendChild(robotClone)
+
+  // Wait a moment for waking animation
+  await new Promise((resolve) => setTimeout(resolve, 500))
+
+  robotState.value = 'awake'
+
+  // Find where the chatbot toggle button should appear
+  // Since the button might be hidden, we'll animate to the chatbot container position
+  const chatbotContainer = document.querySelector('.chatbot-container') as HTMLElement
+  if (chatbotContainer) {
+    // Get the expected position where the toggle button would appear
+    const containerRect = chatbotContainer.getBoundingClientRect()
+
+    // Animate robot gliding down to chatbot position
+    robotClone.style.transition = 'all 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+    robotClone.style.top = `${containerRect.top}px`
+    robotClone.style.left = `${containerRect.left}px`
+    robotClone.style.transform = 'scale(1.1)'
+
+    // After gliding, simulate tap and trigger chatbot
+    setTimeout(() => {
+      // Add tap animation
+      robotClone.style.transform = 'scale(0.9)'
+
+      setTimeout(() => {
+        // Trigger chatbot open by dispatching a custom event
+        const chatEvent = new CustomEvent('robot-open-chat', { bubbles: true })
+        document.dispatchEvent(chatEvent)
+
+        // Clean up
+        robotClone.remove()
+
+        // Reset robot state after animation
+        setTimeout(() => {
+          robotState.value = 'sleeping'
+        }, 2000)
+      }, 200)
+    }, 1200)
+  } else {
+    // Fallback if chatbot not found - just clean up
+    robotClone.remove()
+    setTimeout(() => {
+      robotState.value = 'sleeping'
+    }, 1000)
+  }
+}
+
 // Define interfaces for menu items
 interface MenuItem {
   label: string
@@ -1083,6 +1159,243 @@ watch(currentRoute, () => {
   40% {
     transform: scale(1.2);
     opacity: 1;
+  }
+}
+
+/* Robot container and button styles */
+.robot-container {
+  margin-left: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.sleeping-robot {
+  position: relative;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.sleeping-robot:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.sleeping-robot.dark-theme {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+}
+
+.sleeping-robot.dark-theme:hover {
+  box-shadow: 0 8px 25px rgba(79, 70, 229, 0.5);
+}
+
+.robot-icon {
+  position: relative;
+  z-index: 2;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.robot-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sleeping-robot:hover .robot-glow {
+  opacity: 1;
+}
+
+/* Robot states */
+.sleeping-robot.sleeping .robot-svg {
+  animation: gentle-bob 3s ease-in-out infinite;
+}
+
+.sleeping-robot.waking .robot-svg {
+  animation: wake-up 0.5s ease-out;
+}
+
+.sleeping-robot.awake .robot-svg {
+  animation: excited-bounce 0.6s ease-out;
+}
+
+/* Robot SVG animations */
+.robot-svg {
+  transition: all 0.3s ease;
+}
+
+.sleeping .robot-svg .left-eye,
+.sleeping .robot-svg .right-eye {
+  animation: blink 4s ease-in-out infinite;
+}
+
+.sleeping .robot-svg .left-pupil,
+.sleeping .robot-svg .right-pupil {
+  transform: translateY(1px);
+  opacity: 0.3;
+}
+
+.waking .robot-svg .left-pupil,
+.waking .robot-svg .right-pupil {
+  animation: eyes-open 0.5s ease-out;
+}
+
+.awake .robot-svg .antenna {
+  animation: antenna-wiggle 0.3s ease-in-out 2;
+}
+
+/* Sleep indicators animation */
+.sleep-indicators text {
+  animation: float-up 2s ease-in-out infinite;
+}
+
+.sleep-indicators text:nth-child(2) {
+  animation-delay: 0.3s;
+}
+
+.sleep-indicators text:nth-child(3) {
+  animation-delay: 0.6s;
+}
+
+/* Floating robot for animation */
+.robot-floating {
+  transform-origin: center;
+  filter: drop-shadow(0 4px 20px rgba(102, 126, 234, 0.6));
+}
+
+/* Keyframe animations */
+@keyframes gentle-bob {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes wake-up {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  30% {
+    transform: scale(1.1) rotate(-5deg);
+  }
+  60% {
+    transform: scale(1.05) rotate(5deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes excited-bounce {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.15);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  75% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes blink {
+  0%,
+  90%,
+  100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.1);
+  }
+}
+
+@keyframes eyes-open {
+  0% {
+    transform: translateY(1px);
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes antenna-wiggle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-10deg);
+  }
+  75% {
+    transform: rotate(10deg);
+  }
+}
+
+@keyframes float-up {
+  0% {
+    opacity: 0.7;
+    transform: translateY(0px);
+  }
+  50% {
+    opacity: 0.3;
+    transform: translateY(-8px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+}
+
+/* RTL support for robot */
+[dir='rtl'] .robot-container {
+  margin-left: 0;
+  margin-right: 16px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .robot-container {
+    margin-left: 8px;
+  }
+
+  [dir='rtl'] .robot-container {
+    margin-left: 0;
+    margin-right: 8px;
+  }
+
+  .sleeping-robot {
+    width: 40px;
+    height: 40px;
+  }
+
+  .robot-icon svg {
+    width: 24px;
+    height: 24px;
   }
 }
 </style>

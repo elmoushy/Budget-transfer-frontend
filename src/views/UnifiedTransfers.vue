@@ -788,13 +788,13 @@ function goToPage(page: number) {
   }
 }
 
-function handlePageSizeChange(event: Event) {
-  const target = event.target as HTMLSelectElement
-  const newPageSize = parseInt(target.value)
-  pageSize.value = newPageSize
-  currentPage.value = 1 // Reset to first page
-  fetchData()
-}
+// function handlePageSizeChange(event: Event) {
+//   const target = event.target as HTMLSelectElement
+//   const newPageSize = parseInt(target.value)
+//   pageSize.value = newPageSize
+//   currentPage.value = 1 // Reset to first page
+//   fetchData()
+// }
 
 // ───────────────────────────────────────────────────────────── Row Actions
 function viewDesc(row: TransferData) {
