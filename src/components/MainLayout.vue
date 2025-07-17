@@ -23,7 +23,9 @@
     <FooterBar v-if="isAuthenticated" />
 
     <!-- ChatBot Component - Always visible when authenticated -->
-    <ChatBot v-if="isAuthenticated" />
+    <Teleport to="body">
+      <ChatBot v-if="isAuthenticated" />
+    </Teleport>
   </div>
 </template>
 

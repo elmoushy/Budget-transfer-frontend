@@ -164,7 +164,7 @@ const robotTriggered = ref(false) // Track if robot triggered the chat
 const chatbotContainer = ref<HTMLElement | null>(null)
 const isDragging = ref(false)
 const dragStart = ref({ x: 0, y: 0 })
-const chatbotPosition = ref({ x: 14, y: 40 }) // Initial position (right: 24px, bottom: 200px - above footer)
+const chatbotPosition = ref({ x: 10, y: 15 })
 const containerBounds = ref({ width: 0, height: 0 })
 
 interface Message {
@@ -329,7 +329,7 @@ const updateContainerBounds = () => {
 // Calculate footer height to position chatbot above it
 const getFooterHeight = (): number => {
   const footer = document.querySelector('footer')
-  return footer ? footer.offsetHeight + 24 : 200 // Add 24px margin above footer
+  return footer ? footer.offsetHeight + 24 : 0 // Add 24px margin above footer, fallback is 0
 }
 
 // Update chatbot position to be above footer
@@ -369,7 +369,7 @@ const sendMessage = async () => {
 
   try {
     // Send request to backend
-    const response = await fetch('http://localhost:8000/chatbot/public', {
+    const response = await fetch('http://localhost:8080/chatbot/public', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_input: userMessage.text }),
@@ -465,13 +465,6 @@ const scrollToBottom = () => {
 onMounted(() => {
   // Initialize container bounds
   updateContainerBounds()
-
-  // Wait for DOM to be fully rendered, then adjust chatbot position for footer
-  nextTick(() => {
-    setTimeout(() => {
-      updateChatbotPositionForFooter()
-    }, 100) // Small delay to ensure footer is rendered
-  })
 
   // Update bounds on window resize
   window.addEventListener('resize', updateContainerBounds)
