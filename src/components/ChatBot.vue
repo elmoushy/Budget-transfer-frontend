@@ -17,7 +17,7 @@
         :class="{ 'dark-theme': isDarkMode, dragging: isDragging }"
         aria-label="Open Chat"
       >
-        <div class="chat-icon">
+        <!-- <div class="chat-icon">
           <svg
             width="24"
             height="24"
@@ -33,9 +33,10 @@
             <circle cx="12" cy="9" r="1.5" fill="currentColor" />
             <circle cx="17" cy="9" r="1.5" fill="currentColor" />
           </svg>
-        </div>
+        </div> -->
+        <img src="@/assets/img/chatbot image.png" alt="Chat Icon" class="chat-icon-img" />
         <div class="pulse-ring"></div>
-        <div class="notification-badge" v-if="hasNewMessage"></div>
+        <!-- <div class="notification-badge" v-if="hasNewMessage"></div> -->
       </button>
     </Transition>
 
@@ -89,7 +90,30 @@
             :class="{ 'user-message': message.isUser, 'bot-message': !message.isUser }"
           >
             <div class="message-content">
-              <div class="message-text">{{ message.text }}</div>
+              <!-- SQL Details Button (only for bot messages with SQL data) -->
+              <div v-if="!message.isUser && message.sqlData" class="sql-details-button-container">
+                <button
+                  @click="openSqlModal(message.sqlData)"
+                  class="sql-details-button"
+                  :class="{ 'dark-theme': isDarkMode }"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M3 3H21C21.5523 3 22 3.44772 22 4V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V4C2 3.44772 2.44772 3 3 3ZM20 5H4V19H20V5ZM6 7H18V9H6V7ZM6 11H18V13H6V11ZM6 15H12V17H6V15Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                  {{ isArabic ? 'تفاصيل SQL' : 'SQL Details' }}
+                </button>
+              </div>
+
+              <div class="message-text">{{ message.id === 1 ? initialMessage : message.text }}</div>
               <div class="message-time">{{ formatTime(message.timestamp) }}</div>
             </div>
           </div>
@@ -136,11 +160,55 @@
         </div>
       </div>
     </Transition>
+
+    <!-- SQL Details Modal -->
+    <Transition name="modal-fade">
+      <div v-if="showSqlModal" class="sql-modal-overlay" @click="closeSqlModal">
+        <div
+          class="sql-modal-container"
+          @click.stop
+          :class="{ 'dark-theme': isDarkMode, rtl: isArabic }"
+        >
+          <!-- Modal Header -->
+          <div class="sql-modal-header">
+            <h2 class="sql-modal-title">
+              {{ isArabic ? 'تفاصيل البيانات' : 'SQL Data Details' }}
+            </h2>
+            <button @click="closeSqlModal" class="sql-modal-close-button" aria-label="Close Modal">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Modal Content -->
+          <div class="sql-modal-content">
+            <div class="sql-table-container" v-html="currentSqlData"></div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="sql-modal-footer">
+            <button @click="closeSqlModal" class="sql-modal-close-btn">
+              {{ isArabic ? 'إغلاق' : 'Close' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { useThemeStore } from '@/stores/themeStore'
 import { useRouter } from 'vue-router'
 
@@ -160,6 +228,10 @@ const messagesContainer = ref<HTMLElement | null>(null)
 const showToggle = ref(true) // Initially show toggle button for robot animation
 const robotTriggered = ref(false) // Track if robot triggered the chat
 
+// SQL Modal state
+const showSqlModal = ref(false)
+const currentSqlData = ref('')
+
 // Draggable functionality
 const chatbotContainer = ref<HTMLElement | null>(null)
 const isDragging = ref(false)
@@ -172,18 +244,31 @@ interface Message {
   text: string
   isUser: boolean
   timestamp: Date
+  sqlData?: string // HTML table data from SQLBuilderAgent
 }
 
 const messages = ref<Message[]>([
   {
     id: 1,
-    text: isArabic.value
-      ? 'مرحباً! أنا مساعد تنفيذ. كيف يمكنني مساعدتك اليوم؟'
-      : "Hello! I'm Tanfeez Assistant. How can I help you today?",
+    text: '',
     isUser: false,
     timestamp: new Date(),
   },
 ])
+
+// Computed property for the initial message
+const initialMessage = computed(() =>
+  isArabic.value
+    ? 'مرحباً! أنا مساعد تنفيذ. كيف يمكنني مساعدتك اليوم؟'
+    : "Hello! I'm Tanfeez Assistant. How can I help you today?",
+)
+
+// Watch for language changes and update the initial message
+watch(isArabic, () => {
+  if (messages.value.length > 0 && messages.value[0].id === 1) {
+    messages.value[0].text = initialMessage.value
+  }
+})
 
 const toggleChat = () => {
   isOpen.value = !isOpen.value
@@ -202,9 +287,18 @@ const startDrag = (event: MouseEvent | TouchEvent) => {
   const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX
   const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY
 
-  // Convert current position (right, bottom) to screen coordinates (left, top)
-  const currentScreenX = containerBounds.value.width - chatbotPosition.value.x - 60
-  const currentScreenY = containerBounds.value.height - chatbotPosition.value.y - 60
+  let currentScreenX: number
+  let currentScreenY: number
+
+  if (isArabic.value) {
+    // RTL mode: position is from left
+    currentScreenX = chatbotPosition.value.x
+    currentScreenY = containerBounds.value.height - chatbotPosition.value.y - 80
+  } else {
+    // LTR mode: position is from right
+    currentScreenX = containerBounds.value.width - chatbotPosition.value.x - 80
+    currentScreenY = containerBounds.value.height - chatbotPosition.value.y - 80
+  }
 
   dragStart.value = {
     x: clientX - currentScreenX,
@@ -226,9 +320,18 @@ const handleDrag = (event: MouseEvent | TouchEvent) => {
   const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX
   const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY
 
-  // Convert current position to screen coordinates for movement detection
-  const currentScreenX = containerBounds.value.width - chatbotPosition.value.x - 60
-  const currentScreenY = containerBounds.value.height - chatbotPosition.value.y - 60
+  let currentScreenX: number
+  let currentScreenY: number
+
+  if (isArabic.value) {
+    // RTL mode: position is from left
+    currentScreenX = chatbotPosition.value.x
+    currentScreenY = containerBounds.value.height - chatbotPosition.value.y - 80
+  } else {
+    // LTR mode: position is from right
+    currentScreenX = containerBounds.value.width - chatbotPosition.value.x - 80
+    currentScreenY = containerBounds.value.height - chatbotPosition.value.y - 80
+  }
 
   // Start dragging if we've moved more than 5 pixels
   const moved =
@@ -246,18 +349,25 @@ const handleDrag = (event: MouseEvent | TouchEvent) => {
   let newScreenY = clientY - dragStart.value.y
 
   // Constrain to viewport bounds
-  const maxScreenX = containerBounds.value.width - 60 // 60px is the button width
-  const maxScreenY = containerBounds.value.height - 60 // 60px is the button height
+  const maxScreenX = containerBounds.value.width - 80 // 80px is the button width
+  const maxScreenY = containerBounds.value.height - 80 // 80px is the button height
 
   newScreenX = Math.max(0, Math.min(newScreenX, maxScreenX))
   newScreenY = Math.max(0, Math.min(newScreenY, maxScreenY))
 
-  // Convert back to right/bottom coordinates
-  const newX = containerBounds.value.width - newScreenX - 60
-  const newY = containerBounds.value.height - newScreenY - 60
+  if (isArabic.value) {
+    // RTL mode: store as left position
+    const newX = newScreenX
+    const newY = containerBounds.value.height - newScreenY - 80
+    chatbotPosition.value = { x: newX, y: newY }
+  } else {
+    // LTR mode: convert back to right/bottom coordinates
+    const newX = containerBounds.value.width - newScreenX - 80
+    const newY = containerBounds.value.height - newScreenY - 80
+    chatbotPosition.value = { x: newX, y: newY }
+  }
 
-  chatbotPosition.value = { x: newX, y: newY }
-
+  console.log(`Dragging to: ${chatbotPosition.value.x}, ${chatbotPosition.value.y}`)
   event.preventDefault()
 }
 
@@ -298,22 +408,42 @@ const snapToEdges = () => {
   let newX = x
   let newY = y
 
-  // Convert to screen coordinates for easier calculation
-  const screenX = width - x - 60
-  const screenY = height - y - 60
+  if (isArabic.value) {
+    // RTL mode: x is left position
+    const screenX = x
+    const screenY = height - y - 60
 
-  // Snap to left or right edge
-  if (screenX < snapThreshold) {
-    newX = width - 24 - 60 // Snap to left edge (24px margin)
-  } else if (screenX > width - 60 - snapThreshold) {
-    newX = 24 // Snap to right edge (24px margin)
-  }
+    // Snap to left or right edge
+    if (screenX < snapThreshold) {
+      newX = 21 // Snap to left edge (21px margin for RTL)
+    } else if (screenX > width - 80 - snapThreshold) {
+      newX = width - 80 - 24 // Snap to right edge (24px margin)
+    }
 
-  // Snap to top or bottom edge
-  if (screenY < snapThreshold) {
-    newY = height - 24 - 60 // Snap to top edge (24px margin)
-  } else if (screenY > height - 60 - snapThreshold) {
-    newY = 24 // Snap to bottom edge (24px margin)
+    // Snap to top or bottom edge
+    if (screenY < snapThreshold) {
+      newY = height - 24 - 80 // Snap to top edge (24px margin)
+    } else if (screenY > height - 80 - snapThreshold) {
+      newY = 24 // Snap to bottom edge (24px margin)
+    }
+  } else {
+    // LTR mode: x is right position
+    const screenX = width - x - 60
+    const screenY = height - y - 60
+
+    // Snap to left or right edge
+    if (screenX < snapThreshold) {
+      newX = width - 24 - 80 // Snap to left edge (24px margin)
+    } else if (screenX > width - 80 - snapThreshold) {
+      newX = 24 // Snap to right edge (24px margin)
+    }
+
+    // Snap to top or bottom edge
+    if (screenY < snapThreshold) {
+      newY = height - 24 - 80 // Snap to top edge (24px margin)
+    } else if (screenY > height - 80 - snapThreshold) {
+      newY = 24 // Snap to bottom edge (24px margin)
+    }
   }
 
   chatbotPosition.value = { x: newX, y: newY }
@@ -326,27 +456,24 @@ const updateContainerBounds = () => {
   }
 }
 
-// Calculate footer height to position chatbot above it
-const getFooterHeight = (): number => {
-  const footer = document.querySelector('footer')
-  return footer ? footer.offsetHeight + 24 : 0 // Add 24px margin above footer, fallback is 0
-}
-
-// Update chatbot position to be above footer
-const updateChatbotPositionForFooter = () => {
-  const footerHeight = getFooterHeight()
-  // Only update if current position is too low (closer to bottom than footer height)
-  if (chatbotPosition.value.y < footerHeight) {
-    chatbotPosition.value.y = footerHeight
-  }
-}
-
 // Computed styles for positioning
-const chatbotStyles = computed(() => ({
-  right: `${chatbotPosition.value.x}px`,
-  bottom: `${chatbotPosition.value.y}px`,
-  transition: isDragging.value ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-}))
+const chatbotStyles = computed(() => {
+  if (isArabic.value) {
+    // RTL mode: use left positioning
+    return {
+      left: `${chatbotPosition.value.x}px`,
+      bottom: `${chatbotPosition.value.y}px`,
+      transition: isDragging.value ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    }
+  } else {
+    // LTR mode: use right positioning
+    return {
+      right: `${chatbotPosition.value.x}px`,
+      bottom: `${chatbotPosition.value.y}px`,
+      transition: isDragging.value ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    }
+  }
+})
 
 const sendMessage = async () => {
   if (!newMessage.value.trim() || isTyping.value) return
@@ -368,8 +495,9 @@ const sendMessage = async () => {
   isTyping.value = true
 
   try {
-    // Send request to backend
-    const response = await fetch('http://localhost:8080/chatbot/public', {
+    // Send request to backend using environment variable
+    const apiUrl = import.meta.env.VITE_API_CHATBOT_URL || 'http://localhost:8080'
+    const response = await fetch(`${apiUrl}/chatbot/public`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_input: userMessage.text }),
@@ -377,12 +505,17 @@ const sendMessage = async () => {
     const data = await response.json()
     let botText = ''
     let pageToNavigate = null
+    let sqlData = null
+
     if (data && data.status === 'success' && data.response) {
       if (data.response.GeneralQAAgent) {
         botText = data.response.GeneralQAAgent
       }
       if (data.response.PageNavigatorAgent) {
         pageToNavigate = data.response.PageNavigatorAgent
+      }
+      if (data.response.SQLBuilderAgent) {
+        sqlData = data.response.SQLBuilderAgent
       }
     } else {
       botText = isArabic.value
@@ -397,6 +530,7 @@ const sendMessage = async () => {
         text: botText,
         isUser: false,
         timestamp: new Date(),
+        sqlData: sqlData || undefined,
       })
     }
 
@@ -408,7 +542,8 @@ const sendMessage = async () => {
         router.push(pageToNavigate)
       }
     }
-  } catch (err) {
+  } catch (error) {
+    console.error('Chat error:', error)
     messages.value.push({
       id: Date.now() + 2,
       text: isArabic.value ? 'تعذر الاتصال بالخادم.' : 'Failed to connect to the server.',
@@ -423,30 +558,15 @@ const sendMessage = async () => {
   }
 }
 
-const getBotResponse = (userInput: string): string => {
-  const input = userInput.toLowerCase()
+// SQL Modal functions
+const openSqlModal = (sqlData: string) => {
+  currentSqlData.value = sqlData
+  showSqlModal.value = true
+}
 
-  if (isArabic.value) {
-    if (input.includes('مساعدة') || input.includes('help')) {
-      return 'يمكنني مساعدتك في: إدارة التحويلات، معلومات الحسابات، تتبع الطلبات، والاستفسارات العامة.'
-    } else if (input.includes('تحويل') || input.includes('transfer')) {
-      return 'لإجراء تحويل جديد، توجه إلى قسم "التحويلات" في القائمة الرئيسية.'
-    } else if (input.includes('حساب') || input.includes('account')) {
-      return 'يمكنك عرض معلومات حسابك من خلال قسم "إدارة الحسابات".'
-    } else {
-      return 'شكراً لك على رسالتك. كيف يمكنني مساعدتك أكثر؟'
-    }
-  } else {
-    if (input.includes('help')) {
-      return 'I can assist you with: Transfer management, account information, request tracking, and general inquiries.'
-    } else if (input.includes('transfer')) {
-      return 'To create a new transfer, navigate to the "Transfers" section in the main menu.'
-    } else if (input.includes('account')) {
-      return 'You can view your account information through the "Account Management" section.'
-    } else {
-      return 'Thank you for your message. How can I assist you further?'
-    }
-  }
+const closeSqlModal = () => {
+  showSqlModal.value = false
+  currentSqlData.value = ''
 }
 
 const formatTime = (date: Date): string => {
@@ -465,6 +585,16 @@ const scrollToBottom = () => {
 onMounted(() => {
   // Initialize container bounds
   updateContainerBounds()
+
+  // Set initial position based on language
+  if (isArabic.value) {
+    chatbotPosition.value = { x: 21, y: 15 } // Default RTL position
+  } else {
+    chatbotPosition.value = { x: 10, y: 15 } // Default LTR position
+  }
+
+  // Set initial message based on language
+  messages.value[0].text = initialMessage.value
 
   // Update bounds on window resize
   window.addEventListener('resize', updateContainerBounds)
@@ -510,8 +640,8 @@ onUnmounted(() => {
 
 /* Chatbot Toggle Button */
 .chatbot-toggle {
-  width: 60px;
-  height: 60px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   background: linear-gradient(135deg, #8a2a44, #e14b6a);
   border: none;
@@ -570,7 +700,21 @@ onUnmounted(() => {
   transition: transform 0.3s ease;
 }
 
+.chat-icon-img {
+  width: 72px;
+  height: 60px;
+  position: relative;
+  z-index: 1004;
+  transition: transform 0.3s ease;
+  border-radius: 2px;
+  object-fit: cover;
+}
+
 .chatbot-toggle:hover .chat-icon {
+  transform: scale(1.1);
+}
+
+.chatbot-toggle:hover .chat-icon-img {
   transform: scale(1.1);
 }
 
@@ -950,13 +1094,18 @@ onUnmounted(() => {
   }
 
   .chatbot-toggle {
-    width: 50px;
-    height: 50px;
+    width: 70px;
+    height: 70px;
   }
 
   .chat-icon svg {
     width: 20px;
     height: 20px;
+  }
+
+  .chat-icon-img {
+    width: 62px;
+    height: 52px;
   }
 }
 
@@ -980,5 +1129,281 @@ onUnmounted(() => {
       0 16px 50px rgba(225, 75, 106, 0.7),
       inset 0 1px 0 rgba(255, 255, 255, 0.4);
   }
+}
+
+/* SQL Details Button */
+.sql-details-button-container {
+  margin-bottom: 8px;
+}
+
+.sql-details-button {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.sql-details-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.sql-details-button.dark-theme {
+  background: linear-gradient(135deg, #1e40af, #1d4ed8);
+  box-shadow: 0 2px 4px rgba(30, 64, 175, 0.3);
+}
+
+.sql-details-button.dark-theme:hover {
+  box-shadow: 0 4px 8px rgba(30, 64, 175, 0.4);
+}
+
+/* SQL Modal */
+.sql-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.sql-modal-container {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  width: 90%;
+  max-width: 900px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sql-modal-container.dark-theme {
+  background: rgba(30, 41, 59, 0.98);
+  border: 1px solid rgba(71, 85, 105, 0.3);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.sql-modal-header {
+  background: linear-gradient(135deg, #8a2a44, #e14b6a);
+  color: white;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 16px 16px 0 0;
+}
+
+.sql-modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.sql-modal-close-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: white;
+}
+
+.sql-modal-close-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.sql-modal-content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  background: rgba(248, 250, 252, 0.8);
+}
+
+.sql-modal-container.dark-theme .sql-modal-content {
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.sql-table-container {
+  overflow-x: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.sql-table-container table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.sql-modal-container.dark-theme .sql-table-container table {
+  background: rgba(71, 85, 105, 0.8);
+}
+
+.sql-table-container table th,
+.sql-table-container table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+}
+
+.sql-modal-container.dark-theme .sql-table-container table th,
+.sql-modal-container.dark-theme .sql-table-container table td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+}
+
+.sql-table-container table th {
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  font-weight: 600;
+  color: #374151;
+}
+
+.sql-modal-container.dark-theme .sql-table-container table th {
+  background: linear-gradient(135deg, #475569, #64748b);
+  color: #f1f5f9;
+}
+
+.sql-table-container table tr:hover {
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.sql-modal-container.dark-theme .sql-table-container table tr:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.sql-modal-footer {
+  padding: 20px 24px;
+  background: rgba(255, 255, 255, 0.8);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.sql-modal-container.dark-theme .sql-modal-footer {
+  background: rgba(30, 41, 59, 0.8);
+  border-top: 1px solid rgba(71, 85, 105, 0.3);
+}
+
+.sql-modal-close-btn {
+  background: linear-gradient(135deg, #6b7280, #9ca3af);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.sql-modal-close-btn:hover {
+  background: linear-gradient(135deg, #4b5563, #6b7280);
+  transform: translateY(-1px);
+}
+
+/* RTL Support for Modal */
+.sql-modal-container.rtl {
+  direction: rtl;
+}
+
+.sql-modal-container.rtl .sql-table-container table th,
+.sql-modal-container.rtl .sql-table-container table td {
+  text-align: right;
+}
+
+.sql-modal-container.rtl .sql-modal-footer {
+  justify-content: flex-start;
+}
+
+/* Modal Animations */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+.modal-fade-enter-from .sql-modal-container,
+.modal-fade-leave-to .sql-modal-container {
+  transform: scale(0.9) translateY(20px);
+}
+
+/* Responsive Design for SQL Modal */
+@media (max-width: 768px) {
+  .sql-modal-container {
+    width: 95%;
+    max-height: 90vh;
+  }
+
+  .sql-modal-header {
+    padding: 16px 20px;
+  }
+
+  .sql-modal-title {
+    font-size: 16px;
+  }
+
+  .sql-modal-content {
+    padding: 20px;
+  }
+
+  .sql-table-container table th,
+  .sql-table-container table td {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+}
+
+/* Scrollbar for modal content */
+.sql-modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sql-modal-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.sql-modal-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+}
+
+.sql-modal-container.dark-theme .sql-modal-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sql-modal-container.dark-theme .sql-modal-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
 }
 </style>

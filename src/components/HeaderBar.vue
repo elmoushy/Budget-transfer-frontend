@@ -22,12 +22,7 @@
 
     <!-- middle section with tanfeez logo -->
     <div class="middle">
-      <img
-        src="@/assets/img/tanfeez.png"
-        alt="Tanfeez Logo"
-        class="tanfeez-logo"
-        style="width: 220px; height: auto"
-      />
+      <img src="@/assets/img/tanfeez.png" alt="Tanfeez Logo" class="tanfeez-logo" />
     </div>
 
     <!-- action icons -->
@@ -101,7 +96,18 @@ const hasUnreadNotifications = ref(false)
 const newNotificationToast = ref(false)
 let notificationPolling: number | null = null
 let toastTimeout: number | null = null
-
+// Log screen resolution
+// console.log('Screen Resolution:', {
+//   width: window.screen.width,
+//   height: window.screen.height,
+//   availWidth: window.screen.availWidth,
+//   availHeight: window.screen.availHeight,
+//   devicePixelRatio: window.devicePixelRatio,
+//   viewport: {
+//     width: window.innerWidth,
+//     height: window.innerHeight,
+//   },
+// })
 onMounted(() => {
   isDarkMode.value = themeStore.darkMode
   isArabic.value = themeStore.language === 'ar'
@@ -941,16 +947,17 @@ input:checked + .slider:before {
 .tanfeez-logo {
   height: 40px;
   width: auto;
+  max-width: 220px;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Light mode - apply black filter and slightly darken the logo */
+/* Light mode - apply brightness and contrast adjustments */
 .header:not(.dark-theme) .tanfeez-logo {
   filter: brightness(0) invert(0) contrast(1.2) saturate(1.1)
     drop-shadow(0 2px 8px rgba(138, 42, 68, 0.15));
 }
 
-/* Dark mode - brighten and adjust colors without black filter */
+/* Dark mode - brighten and adjust colors */
 .header.dark-theme .tanfeez-logo {
   filter: brightness(1.3) contrast(1.1) saturate(0.9) hue-rotate(10deg)
     drop-shadow(0 2px 12px rgba(225, 75, 106, 0.3));
@@ -971,19 +978,73 @@ input:checked + .slider:before {
 }
 
 /* Responsive adjustments for smaller screens */
-@media (max-width: 768px) {
-  .middle {
-    display: none;
+@media (max-width: 1200px) {
+  .tanfeez-logo {
+    max-width: 180px;
+    height: 36px;
   }
 }
 
 @media (max-width: 1024px) {
   .tanfeez-logo {
+    max-width: 160px;
     height: 32px;
   }
 
   .middle {
     padding: 6px 12px;
+  }
+}
+
+@media (max-width: 900px) {
+  .tanfeez-logo {
+    max-width: 140px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 768px) {
+  .tanfeez-logo {
+    max-width: 120px;
+    height: 24px;
+  }
+}
+
+@media (max-width: 1052px) {
+  .middle {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 0 20px;
+  }
+
+  .actions {
+    gap: 12px;
+  }
+
+  .toggle-container {
+    padding: 6px 8px;
+  }
+
+  .toggle-label {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 360px) {
+  .header {
+    padding: 0 16px;
+  }
+
+  .actions {
+    gap: 8px;
+  }
+
+  .icon {
+    padding: 8px;
   }
 }
 </style>
