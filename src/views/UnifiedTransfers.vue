@@ -93,7 +93,6 @@
               <th class="th-track">{{ tableHeaders.track }}</th>
               <th class="th-status">{{ tableHeaders.status }}</th>
               <th class="th-attachments">{{ tableHeaders.attachments }}</th>
-              <th v-if="showRejectionColumn" class="th-rejection">{{ tableHeaders.rejection }}</th>
             </tr>
           </thead>
           <tbody>
@@ -108,29 +107,30 @@
                 <div class="action-buttons-group">
                   <button
                     class="action-btn edit-btn"
-                    :class="{ disabled: row.status.toLowerCase() !== 'pending' }"
-                    @click="row.status.toLowerCase() === 'pending' ? editRow(row) : null"
-                    :disabled="row.status.toLowerCase() !== 'pending'"
-                    :title="
-                      row.status.toLowerCase() === 'pending'
-                        ? 'Edit'
-                        : 'Cannot edit non-pending items'
-                    "
+                    :class="{ disabled: !isWaitingToSubmit(row) }"
+                    @click="isWaitingToSubmit(row) ? editRow(row) : null"
+                    :disabled="!isWaitingToSubmit(row)"
+                    :title="isWaitingToSubmit(row) ? 'Edit' : 'Cannot edit after submission'"
                   >
                     <EditIcon :size="16" />
                   </button>
                   <button
                     class="action-btn delete-btn"
-                    :class="{ disabled: row.status.toLowerCase() !== 'pending' }"
-                    @click="row.status.toLowerCase() === 'pending' ? deleteRow(row) : null"
-                    :disabled="row.status.toLowerCase() !== 'pending'"
-                    :title="
-                      row.status.toLowerCase() === 'pending'
-                        ? 'Delete'
-                        : 'Cannot delete non-pending items'
-                    "
+                    :class="{ disabled: !isWaitingToSubmit(row) }"
+                    @click="isWaitingToSubmit(row) ? deleteRow(row) : null"
+                    :disabled="!isWaitingToSubmit(row)"
+                    :title="isWaitingToSubmit(row) ? 'Delete' : 'Cannot delete after submission'"
                   >
                     <TrashIcon :size="16" />
+                  </button>
+                  <!-- Rejection Icon for rejected items -->
+                  <button
+                    v-if="isRejectionClickable(row)"
+                    class="action-btn rejection-icon-btn"
+                    @click="showRejectionPopup(row)"
+                    :title="isArabic ? 'عرض سبب الرفض' : 'View rejection reason'"
+                  >
+                    <span class="rejection-icon-small">⚠</span>
                   </button>
                 </div>
               </td>
@@ -191,19 +191,6 @@
                   :title="getAttachmentTooltip(row)"
                 >
                   Attachments
-                </button>
-              </td>
-
-              <!-- Rejection Column (only for contracts) -->
-              <td v-if="showRejectionColumn" class="td-rejection">
-                <button
-                  class="rejection-btn"
-                  :class="{ disabled: !isRejectionClickable(row) }"
-                  @click="isRejectionClickable(row) ? openRejectionModal(row) : null"
-                  :disabled="!isRejectionClickable(row)"
-                  :title="getRejectionTooltip(row)"
-                >
-                  {{ getRejectionText(row) }}
                 </button>
               </td>
             </tr>
@@ -303,7 +290,7 @@
       :approval-data="currentApproval as Record<string, unknown>"
     />
 
-    <RejectionReportModal v-model="showRejectionModal" :rejection-id="currentRejectionId" />
+    <RejectionReportModal v-model="showRejectionModal" :transactionId="currentRejectionId" />
 
     <OracleApprovalPipelineModal v-model="showOracleTrackingModal" />
 
@@ -347,6 +334,54 @@
         </div>
       </div>
     </div>
+
+    <!-- Rejection Reason Popup with Teleport -->
+    <Teleport to="body">
+      <div
+        v-if="showRejectionReasonPopup"
+        class="rejection-popup-overlay"
+        @click="closeRejectionPopup"
+      >
+        <div class="rejection-popup-container" @click.stop>
+          <!-- Popup Header -->
+          <div class="rejection-popup-header">
+            <div class="rejection-popup-title">
+              <span class="rejection-popup-icon">⚠</span>
+              <h3>{{ isArabic ? 'سبب الرفض' : 'Rejection Reason' }}</h3>
+            </div>
+            <button class="rejection-popup-close" @click="closeRejectionPopup">
+              <span>×</span>
+            </button>
+          </div>
+
+          <!-- Popup Body -->
+          <div class="rejection-popup-body">
+            <div v-if="currentRejectionRow" class="rejection-details">
+              <div class="rejection-meta">
+                <span class="meta-label">{{ isArabic ? 'رقم المعاملة:' : 'Transaction:' }}</span>
+                <span class="meta-value">{{ currentRejectionRow.code }}</span>
+              </div>
+              <div class="rejection-reason-content">
+                <p class="reason-label">{{ isArabic ? 'السبب:' : 'Reason:' }}</p>
+                <div class="reason-text-container">
+                  <p class="reason-text-full">{{ currentRejectionReason }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Popup Footer -->
+          <div class="rejection-popup-footer">
+            <button class="btn-popup-close" @click="closeRejectionPopup">
+              {{ isArabic ? 'إغلاق' : 'Close' }}
+            </button>
+            <button class="btn-popup-details" @click="openDetailedRejectionModal">
+              {{ isArabic ? 'عرض التفاصيل الكاملة' : 'View Full Details' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -371,6 +406,7 @@ import OracleApprovalPipelineModal from '@/components/OracleApprovalPipelineModa
 
 // Service imports
 import unifiedTransferService from '@/services/UnifiedTransferService'
+import transferService from '@/services/TransferService'
 import type { TransferData } from '@/services/TransferService'
 
 // CSS imports
@@ -494,7 +530,6 @@ const searchPlaceholder = computed(() => {
   }
   return routeConfig.value.searchPlaceholder
 })
-const showRejectionColumn = computed(() => routeConfig.value.showRejectionColumn)
 const newRequestModalComponent = computed(() => routeConfig.value.newRequestComponent)
 const editModalComponent = computed(() => routeConfig.value.editComponent)
 
@@ -583,6 +618,15 @@ const showOracleTrackingModal = ref(false)
 const showPopup = ref(false)
 const popupType = ref<'success' | 'error' | 'warning' | 'info'>('info')
 const popupMessage = ref('')
+
+// Rejection reasons state
+const rejectionReasons = ref<Map<number, string>>(new Map())
+const loadingRejections = ref<Set<number>>(new Set())
+
+// Rejection popup state
+const showRejectionReasonPopup = ref(false)
+const currentRejectionRow = ref<TransferData | null>(null)
+const currentRejectionReason = ref('')
 
 // ───────────────────────────────────────────────────────────── Computed Properties for Data
 const totalPages = computed(() => {
@@ -682,15 +726,19 @@ function isRejectionClickable(row: TransferData): boolean {
   return row.status.toLowerCase() === 'rejected'
 }
 
-function getRejectionTooltip(row: TransferData): string {
-  if (!isRejectionClickable(row)) {
-    return isArabic.value ? 'غير متاح' : 'Not available'
-  }
-  return isArabic.value ? 'عرض تقرير الرفض' : 'View rejection report'
-}
-
-function getRejectionText(row: TransferData): string {
-  return isRejectionClickable(row) ? (isArabic.value ? 'عرض' : 'View') : isArabic.value ? '-' : '-'
+// Check if a transfer is in "waiting to submit" state (before first submission)
+function isWaitingToSubmit(row: TransferData): boolean {
+  return (
+    !row.approvel_1 &&
+    !row.approvel_2 &&
+    !row.approvel_3 &&
+    !row.approvel_4 &&
+    !row.approvel_1_date &&
+    !row.approvel_2_date &&
+    !row.approvel_3_date &&
+    !row.approvel_4_date &&
+    row.status_level === 1
+  )
 }
 
 function setSourceNavigation(row: TransferData) {
@@ -699,6 +747,44 @@ function setSourceNavigation(row: TransferData) {
       transactionId: row.transaction_id,
       code: row.code,
     })
+  }
+}
+
+// Fetch rejection reason for a specific transaction
+async function fetchRejectionReason(transactionId: number): Promise<string> {
+  if (rejectionReasons.value.has(transactionId)) {
+    return rejectionReasons.value.get(transactionId) || ''
+  }
+
+  if (loadingRejections.value.has(transactionId)) {
+    return ''
+  }
+
+  try {
+    loadingRejections.value.add(transactionId)
+    const reports = await transferService.getRejectionReports(transactionId)
+
+    if (reports && reports.length > 0) {
+      // Get the most recent rejection reason
+      const latestReport = reports[reports.length - 1]
+      const reason =
+        latestReport.rejection_reason ||
+        latestReport.reason_text ||
+        (isArabic.value ? 'لا يوجد سبب محدد' : 'No specific reason provided')
+      rejectionReasons.value.set(transactionId, reason)
+      return reason
+    } else {
+      const fallbackReason = isArabic.value ? 'لا يوجد تقرير رفض' : 'No rejection report available'
+      rejectionReasons.value.set(transactionId, fallbackReason)
+      return fallbackReason
+    }
+  } catch (error) {
+    console.error('Error fetching rejection reason:', error)
+    const errorReason = isArabic.value ? 'خطأ في تحميل سبب الرفض' : 'Error loading rejection reason'
+    rejectionReasons.value.set(transactionId, errorReason)
+    return errorReason
+  } finally {
+    loadingRejections.value.delete(transactionId)
   }
 }
 
@@ -720,6 +806,14 @@ async function fetchData() {
       totalCount.value = response.count || 0
       hasNextPage.value = !!response.next
       hasPrevPage.value = !!response.previous
+
+      // Preload rejection reasons for rejected items (for all routes)
+      const rejectedItems = displayedRows.value.filter((row) => isRejectionClickable(row))
+      rejectedItems.forEach((row) => {
+        if (!rejectionReasons.value.has(row.transaction_id)) {
+          fetchRejectionReason(row.transaction_id)
+        }
+      })
     } else {
       displayedRows.value = []
       totalCount.value = 0
@@ -812,7 +906,7 @@ function editRow(row: TransferData) {
 }
 
 function deleteRow(row: TransferData) {
-  if (row.status.toLowerCase() !== 'pending') {
+  if (!isWaitingToSubmit(row)) {
     return
   }
   rowToDelete.value = row
@@ -848,7 +942,7 @@ function confirmDelete() {
 
 function openFileModal(row: TransferData) {
   currentTransactionId.value = row.transaction_id
-  currentTransactionStatus.value = row.status
+  currentTransactionStatus.value = isWaitingToSubmit(row) ? 'waiting-to-submit' : row.status
   showFileModal.value = true
 }
 
@@ -866,6 +960,38 @@ function openRejectionModal(row: TransferData) {
 
 function openOracleTrackingModal() {
   showOracleTrackingModal.value = true
+}
+
+// Show rejection reason popup
+async function showRejectionPopup(row: TransferData) {
+  if (!isRejectionClickable(row)) return
+
+  currentRejectionRow.value = row
+
+  try {
+    const reason = await fetchRejectionReason(row.transaction_id)
+    currentRejectionReason.value = reason
+    showRejectionReasonPopup.value = true
+  } catch (error) {
+    console.error('Error loading rejection reason:', error)
+    currentRejectionReason.value = isArabic.value
+      ? 'خطأ في تحميل سبب الرفض'
+      : 'Error loading rejection reason'
+    showRejectionReasonPopup.value = true
+  }
+}
+
+function closeRejectionPopup() {
+  showRejectionReasonPopup.value = false
+  currentRejectionRow.value = null
+  currentRejectionReason.value = ''
+}
+
+function openDetailedRejectionModal() {
+  if (currentRejectionRow.value) {
+    openRejectionModal(currentRejectionRow.value)
+    closeRejectionPopup()
+  }
 }
 
 // ───────────────────────────────────────────────────────────── Modal Handlers
@@ -1830,6 +1956,64 @@ watch(
   cursor: not-allowed;
 }
 
+/* Rejection Icon Button in Actions */
+.rejection-icon-btn {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  position: relative;
+  overflow: hidden;
+}
+
+.rejection-icon-btn:hover {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.2);
+}
+
+.rejection-icon-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.rejection-icon-btn:hover::before {
+  left: 100%;
+}
+
+.rejection-icon-small {
+  font-size: 0.9rem;
+  font-weight: 700;
+  animation: pulse-warning 2s ease-in-out infinite;
+}
+
+.dark-theme .rejection-icon-btn {
+  background: linear-gradient(135deg, #3f1f1f 0%, #4a2424 100%);
+  border-color: #7c2d2d;
+  color: #f87171;
+}
+
+.dark-theme .rejection-icon-btn:hover {
+  background: linear-gradient(135deg, #4a2424 0%, #5a2a2a 100%);
+}
+
+@keyframes pulse-warning {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
 /* Code Link */
 .code-link {
   color: #6d1a36;
@@ -1963,28 +2147,275 @@ watch(
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Rejection Button */
-.rejection-btn {
-  padding: 0.375rem 0.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  background: white;
-  color: #374151;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s ease;
+/* Modern Rejection Column Styles */
+.td-rejection {
+  padding: 0.75rem !important;
+  min-width: 280px;
 }
 
-.rejection-btn:hover:not(.disabled) {
-  background: #ef4444;
+.rejection-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.rejection-preview {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 0.75rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.dark-theme .rejection-preview {
+  background: linear-gradient(135deg, #3f1f1f 0%, #4a2424 100%);
+  border-color: #7c2d2d;
+}
+
+.rejection-preview::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(to bottom, #ef4444, #dc2626);
+}
+
+.rejection-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.rejection-icon {
+  font-size: 1rem;
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.rejection-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #dc2626;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dark-theme .rejection-label {
+  color: #f87171;
+}
+
+.rejection-reason-preview {
+  margin-top: 0.5rem;
+}
+
+.reason-text {
+  font-size: 0.85rem;
+  color: #7c2d12;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  font-style: italic;
+}
+
+.dark-theme .reason-text {
+  color: #fed7aa;
+}
+
+.loading-text {
+  opacity: 0.7;
+  animation: pulse-rejection 1.5s ease-in-out infinite;
+}
+
+.loading-dots-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 0.5rem;
+}
+
+.loading-dots-inline .dot {
+  width: 4px;
+  height: 4px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  animation: bounce-dot 1.4s ease-in-out infinite both;
+}
+
+.loading-dots-inline .dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+.loading-dots-inline .dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+.loading-dots-inline .dot:nth-child(3) {
+  animation-delay: 0s;
+}
+
+@keyframes bounce-dot {
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+.rejection-details-btn {
+  background: linear-gradient(135deg, #6b21a8 0%, #7c3aed 100%);
   color: white;
-  border-color: #ef4444;
-  transform: translateY(-1px);
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  align-self: flex-start;
 }
 
-.rejection-btn.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.rejection-details-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.rejection-details-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(107, 33, 168, 0.3);
+  background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+}
+
+.rejection-details-btn:hover::before {
+  left: 100%;
+}
+
+.rejection-details-btn:active {
+  transform: translateY(0);
+}
+
+.btn-icon {
+  font-size: 0.9rem;
+}
+
+.btn-text {
+  font-weight: 500;
+}
+
+.rejection-not-available {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  color: #9ca3af;
+  text-align: center;
+  min-height: 60px;
+}
+
+.na-icon {
+  font-size: 1.25rem;
+  margin-bottom: 0.25rem;
+  opacity: 0.6;
+}
+
+.na-text {
+  font-size: 0.8rem;
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+.dark-theme .rejection-not-available {
+  color: #6b7280;
+}
+
+/* RTL Support for rejection column */
+[dir='rtl'] .rejection-preview::before {
+  left: auto;
+  right: 0;
+}
+
+[dir='rtl'] .rejection-status-badge {
+  flex-direction: row-reverse;
+}
+
+[dir='rtl'] .rejection-details-btn {
+  flex-direction: row-reverse;
+}
+
+[dir='rtl'] .loading-dots-inline {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+/* Animation for loading states */
+@keyframes pulse-rejection {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.reason-text:has-text('Loading...'),
+.reason-text:has-text('جاري التحميل...') {
+  animation: pulse-rejection 1.5s ease-in-out infinite;
+  color: #6b7280;
+}
+
+/* Responsive adjustments for rejection column */
+@media (max-width: 1200px) {
+  .td-rejection {
+    min-width: 240px;
+  }
+
+  .rejection-preview {
+    padding: 0.625rem;
+  }
+
+  .reason-text {
+    font-size: 0.8rem;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .td-rejection {
+    min-width: 200px;
+  }
+
+  .rejection-container {
+    gap: 0.5rem;
+  }
+
+  .rejection-details-btn {
+    padding: 0.375rem 0.5rem;
+    font-size: 0.75rem;
+  }
 }
 
 /* Enhanced Pagination Styles */
@@ -2210,6 +2641,326 @@ watch(
   .pagination-btn,
   .action-btn {
     transition: none;
+  }
+}
+
+/* Rejection Popup Styles */
+.rejection-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+  backdrop-filter: blur(4px);
+}
+
+.rejection-popup-container {
+  background: white;
+  border-radius: 16px;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow: hidden;
+  animation: popupSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 2px solid #fecaca;
+}
+
+.dark-theme .rejection-popup-container {
+  background: #1f1f2e;
+  border-color: #7c2d2d;
+  color: #e5e5e5;
+}
+
+.rejection-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-bottom: 1px solid #fecaca;
+}
+
+.dark-theme .rejection-popup-header {
+  background: linear-gradient(135deg, #3f1f1f 0%, #4a2424 100%);
+  border-bottom-color: #7c2d2d;
+}
+
+.rejection-popup-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.rejection-popup-icon {
+  font-size: 1.5rem;
+  color: #dc2626;
+  animation: bounce 2s infinite;
+}
+
+.dark-theme .rejection-popup-icon {
+  color: #f87171;
+}
+
+.rejection-popup-title h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #7c2d12;
+}
+
+.dark-theme .rejection-popup-title h3 {
+  color: #fed7aa;
+}
+
+.rejection-popup-close {
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 1.75rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.rejection-popup-close:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  transform: scale(1.1);
+}
+
+.dark-theme .rejection-popup-close {
+  color: #9ca3af;
+}
+
+.dark-theme .rejection-popup-close:hover {
+  background: rgba(248, 113, 113, 0.1);
+  color: #f87171;
+}
+
+.rejection-popup-body {
+  padding: 1.5rem;
+}
+
+.rejection-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.rejection-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  border-left: 4px solid #dc2626;
+}
+
+.dark-theme .rejection-meta {
+  background: #2c2c3f;
+  border-left-color: #f87171;
+}
+
+.meta-label {
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.meta-value {
+  font-weight: 700;
+  color: #dc2626;
+  font-size: 0.95rem;
+}
+
+.dark-theme .meta-label {
+  color: #9ca3af;
+}
+
+.dark-theme .meta-value {
+  color: #f87171;
+}
+
+.rejection-reason-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.reason-label {
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.dark-theme .reason-label {
+  color: #e5e5e5;
+}
+
+.reason-text-container {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  position: relative;
+}
+
+.dark-theme .reason-text-container {
+  background: #2c2c3f;
+  border-color: #3f3f5f;
+}
+
+.reason-text-full {
+  margin: 0;
+  line-height: 1.6;
+  color: #4b5563;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.dark-theme .reason-text-full {
+  color: #d1d5db;
+}
+
+.rejection-popup-footer {
+  padding: 1rem 1.5rem;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.dark-theme .rejection-popup-footer {
+  background: #2c2c3f;
+  border-top-color: #3f3f5f;
+}
+
+.btn-popup-close {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  color: #374151;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-popup-close:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.btn-popup-details {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #6b21a8 0%, #7c3aed 100%);
+  color: white;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-popup-details:hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(107, 33, 168, 0.3);
+}
+
+.dark-theme .btn-popup-close {
+  background: #34343e;
+  border-color: #4d4d5a;
+  color: #e5e5e5;
+}
+
+.dark-theme .btn-popup-close:hover {
+  background: #3f3f5f;
+}
+
+/* RTL Support for popup */
+[dir='rtl'] .rejection-popup-title {
+  flex-direction: row-reverse;
+}
+
+[dir='rtl'] .rejection-meta {
+  border-left: none;
+  border-right: 4px solid #dc2626;
+}
+
+[dir='rtl'] .dark-theme .rejection-meta {
+  border-right-color: #f87171;
+}
+
+[dir='rtl'] .rejection-popup-footer {
+  justify-content: flex-start;
+}
+
+/* Animations */
+@keyframes popupSlideIn {
+  0% {
+    transform: scale(0.8) translateY(-20px);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes bounce {
+  0%,
+  20%,
+  53%,
+  80%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  40%,
+  43% {
+    transform: translate3d(0, -8px, 0);
+  }
+  70% {
+    transform: translate3d(0, -4px, 0);
+  }
+  90% {
+    transform: translate3d(0, -2px, 0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .rejection-popup-container {
+    width: 95%;
+    margin: 1rem;
+  }
+
+  .rejection-popup-header,
+  .rejection-popup-body,
+  .rejection-popup-footer {
+    padding: 1rem;
+  }
+
+  .rejection-popup-title h3 {
+    font-size: 1.1rem;
   }
 }
 </style>

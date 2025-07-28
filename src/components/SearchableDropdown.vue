@@ -42,7 +42,7 @@
     <!-- Dropdown Panel Portal -->
     <Teleport to="body">
       <div v-if="isOpen" class="dropdown-panel-portal" :style="panelStyles">
-        <div class="dropdown-panel">
+        <div class="dropdown-panel" ref="panelRef">
           <div v-if="searchPlaceholder" class="search-container">
             <input
               ref="searchInput"
@@ -127,6 +127,7 @@ const searchQuery = ref('')
 const highlightedIndex = ref(-1)
 const searchInput = ref<HTMLInputElement>()
 const dropdownTrigger = ref<HTMLElement>()
+const panelRef = ref<HTMLElement>()
 const panelStyles = ref<Record<string, string>>({})
 
 // Computed properties
@@ -206,23 +207,50 @@ const navigateUp = () => {
 }
 
 const calculatePanelPosition = () => {
-  if (!dropdownTrigger.value) return
+  if (!dropdownTrigger.value || !panelRef.value) return
 
-  const rect = dropdownTrigger.value.getBoundingClientRect()
-  const panelHeight = Math.min(250, filteredOptions.value.length * 40 + 60) // Approximate height
-  const spaceBelow = window.innerHeight - rect.bottom
-  const spaceAbove = rect.top
+  const MARGIN = 8
+  const triggerRect = dropdownTrigger.value.getBoundingClientRect()
+  const vw = window.innerWidth
+  const vh = window.innerHeight
 
-  // Position panel below trigger by default, above if not enough space
-  const showBelow = spaceBelow >= panelHeight || spaceBelow >= spaceAbove
+  // Get the actual dimensions after rendering
+  const panelEl = panelRef.value
+  // Temporarily remove restrictions to measure real height
+  panelEl.style.maxHeight = ''
+  const naturalHeight = panelEl.offsetHeight
+  const naturalWidth = Math.max(triggerRect.width, panelEl.offsetWidth)
+
+  const maxHeight = Math.min(naturalHeight, vh - MARGIN * 2)
+  const width = Math.min(Math.max(triggerRect.width, 260), vw - MARGIN * 2)
+
+  // Decide: show below or above?
+  const spaceBelow = vh - triggerRect.bottom
+  const spaceAbove = triggerRect.top
+  const placeBelow = spaceBelow >= maxHeight || spaceBelow >= spaceAbove
+
+  let top = placeBelow ? triggerRect.bottom + 4 : triggerRect.top - maxHeight - 4
+
+  // Adjust vertically
+  if (top < MARGIN) top = MARGIN
+  if (top + maxHeight > vh - MARGIN) top = vh - maxHeight - MARGIN
+
+  // Adjust horizontally (especially near the right edge)
+  let left = triggerRect.left
+  // In RTL mode, you might prefer aligning from the right
+  if (props.isRtl) left = triggerRect.right - width
+
+  if (left + width > vw - MARGIN) left = vw - width - MARGIN
+  if (left < MARGIN) left = MARGIN
 
   panelStyles.value = {
     position: 'fixed',
-    left: `${rect.left}px`,
-    top: showBelow ? `${rect.bottom + 2}px` : `${rect.top - panelHeight - 2}px`,
-    width: `${rect.width}px`,
+    left: props.isRtl ? `${left}px` : `${left - 50}px`,
+    top: `${top}px`,
+    width: `${width}px`,
+    maxHeight: `${maxHeight}px`,
     zIndex: '999999',
-    maxHeight: '250px',
+    overflow: 'hidden',
   }
 }
 
@@ -268,6 +296,11 @@ watch(isOpen, (newValue) => {
       calculatePanelPosition()
     })
   }
+})
+
+// Recalculate position when search results change
+watch(searchQuery, () => {
+  nextTick(() => calculatePanelPosition())
 })
 </script>
 

@@ -7,7 +7,7 @@
       <div class="filter-container">
         <label for="cost-center">{{ isArabic ? 'مركز التكلفة:' : 'Cost Center:' }}</label>
         <div class="select-container">
-          <select id="cost-center" v-model="selectedCostCenter" @change="fetchLimits(1)">
+          <select id="cost-center" v-model="selectedCostCenter" @change="onCostCenterChange">
             <option value="" disabled>
               {{ isArabic ? '-- اختر مركز التكلفة --' : '-- Select Cost Center --' }}
             </option>
@@ -19,11 +19,37 @@
       </div>
 
       <div v-if="selectedCostCenter" class="pagination-info">
-        {{
-          isArabic
-            ? `عرض ${(currentPage - 1) * 10 + 1} - ${Math.min(currentPage * 10, totalItems)} من ${totalItems}`
-            : `Showing ${(currentPage - 1) * 10 + 1} - ${Math.min(currentPage * 10, totalItems)} of ${totalItems}`
-        }}
+        <div>
+          {{
+            isArabic
+              ? `عرض ${(currentPage - 1) * 10 + 1} - ${Math.min(currentPage * 10, totalItems)} من ${totalItems}`
+              : `Showing ${(currentPage - 1) * 10 + 1} - ${Math.min(currentPage * 10, totalItems)} of ${totalItems}`
+          }}
+        </div>
+        <div v-if="searchTerm.trim()" class="search-status">
+          {{ searchStatusText }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Section -->
+    <div v-if="selectedCostCenter" class="search-section">
+      <div class="search-container">
+        <label for="account-search">{{
+          isArabic ? 'البحث في الحسابات:' : 'Search Accounts:'
+        }}</label>
+        <div class="search-input-container">
+          <input
+            id="account-search"
+            v-model="searchTerm"
+            type="text"
+            :placeholder="
+              isArabic ? 'ادخل رقم الحساب للبحث...' : 'Enter account number to search...'
+            "
+            @input="handleSearch"
+          />
+          <button v-if="searchTerm" @click="clearSearch" class="clear-search-btn">✕</button>
+        </div>
       </div>
     </div>
 
@@ -159,7 +185,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useThemeStore } from '@/stores/themeStore'
-import { useAuthStore } from '@/stores/authStore'
 import apiService from '@/services/apiService'
 
 const themeStore = useThemeStore()
@@ -168,16 +193,21 @@ const isDarkMode = computed(() => themeStore.darkMode)
 
 // Data
 const entities = ref<any[]>([])
-const accountLimits = ref<any[]>([])
+const accountLimits = ref<any[]>([]) // All data from API
+const allAccountLimits = ref<any[]>([]) // Store all original data for filtering
 const selectedCostCenter = ref('')
 const loading = ref(false)
 const showEditModal = ref(false)
 const editingLimit = ref<any>({})
 
+// Search functionality
+const searchTerm = ref('')
+
 // Pagination
 const currentPage = ref(1)
 const totalPages = ref(0)
 const totalItems = ref(0)
+const itemsPerPage = 10
 
 // Using centralized apiService instead of direct API calls
 
@@ -185,6 +215,13 @@ const totalItems = ref(0)
 onMounted(async () => {
   await fetchEntities()
 })
+
+// Handle cost center change
+function onCostCenterChange() {
+  searchTerm.value = '' // Clear search when changing cost center
+  currentPage.value = 1
+  fetchAllLimits()
+}
 
 // Fetch all cost center entities
 async function fetchEntities() {
@@ -199,23 +236,32 @@ async function fetchEntities() {
   }
 }
 
-// Fetch account limits for a specific cost center
-async function fetchLimits(page: number = 1) {
+// Fetch ALL account limits for a specific cost center (no pagination from server)
+async function fetchAllLimits() {
   if (!selectedCostCenter.value) return
 
   try {
     loading.value = true
+
+    // If your API returns paginated data and you need to fetch all pages,
+    // you might need to make multiple requests. For now, assuming first call gets all data:
     const response = await apiService.accountEntities.getAccountLimits(
       selectedCostCenter.value,
-      page,
+      1, // Start with page 1
     )
 
-    accountLimits.value = response.results
-    totalItems.value = response.count
-    totalPages.value = Math.ceil(response.count / 10)
-    currentPage.value = page
+    // Store all original data for client-side filtering
+    allAccountLimits.value = response.results
+
+    // Apply search and pagination locally
+    applySearchAndPagination()
   } catch (error) {
     console.error('Error fetching account limits:', error)
+    // Reset data on error
+    allAccountLimits.value = []
+    accountLimits.value = []
+    totalItems.value = 0
+    totalPages.value = 0
   } finally {
     loading.value = false
   }
@@ -248,9 +294,9 @@ async function updateLimit() {
       target_count: editingLimit.value.target_count,
     })
 
-    // Close modal and refresh
+    // Close modal and refresh data
     showEditModal.value = false
-    await fetchLimits(currentPage.value)
+    await fetchAllLimits()
   } catch (error) {
     console.error('Error updating account limit:', error)
   }
@@ -259,20 +305,23 @@ async function updateLimit() {
 // Pagination helpers
 function nextPage() {
   if (currentPage.value < totalPages.value) {
-    fetchLimits(currentPage.value + 1)
+    currentPage.value++
+    applySearchAndPagination()
   }
 }
 
 function previousPage() {
   if (currentPage.value > 1) {
-    fetchLimits(currentPage.value - 1)
+    currentPage.value--
+    applySearchAndPagination()
   }
 }
 
 function goToPage(page: string | number) {
   const pageNumber = typeof page === 'string' ? parseInt(page, 10) : page
-  if (pageNumber !== currentPage.value) {
-    fetchLimits(pageNumber)
+  if (pageNumber !== currentPage.value && pageNumber >= 1 && pageNumber <= totalPages.value) {
+    currentPage.value = pageNumber
+    applySearchAndPagination()
   }
 }
 
@@ -322,12 +371,55 @@ const visiblePageNumbers = computed(() => {
   return pages
 })
 
+// Computed property for search status display
+const searchStatusText = computed(() => {
+  if (searchTerm.value.trim()) {
+    return isArabic.value
+      ? `البحث عن: "${searchTerm.value}"`
+      : `Searching for: "${searchTerm.value}"`
+  }
+  return ''
+})
+
 // Helper for Yes/No translation
 function translateYesNo(value: string): string {
   if (isArabic.value) {
     return value === 'Yes' ? 'نعم' : 'لا'
   }
   return value
+}
+
+// Search functionality
+function handleSearch() {
+  // Reset to first page when searching
+  currentPage.value = 1
+  applySearchAndPagination()
+}
+
+function clearSearch() {
+  searchTerm.value = ''
+  currentPage.value = 1
+  applySearchAndPagination()
+}
+
+// Apply client-side search and pagination
+function applySearchAndPagination() {
+  let filteredData = [...allAccountLimits.value]
+
+  // Apply search filter if search term exists
+  if (searchTerm.value.trim()) {
+    const searchLower = searchTerm.value.toLowerCase()
+    filteredData = filteredData.filter((limit) => limit.account.toLowerCase().includes(searchLower))
+  }
+
+  // Update total items and pages based on filtered data
+  totalItems.value = filteredData.length
+  totalPages.value = Math.ceil(filteredData.length / itemsPerPage)
+
+  // Apply pagination to filtered data
+  const startIndex = (currentPage.value - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  accountLimits.value = filteredData.slice(startIndex, endIndex)
 }
 </script>
 
@@ -537,6 +629,157 @@ h1::after {
 .pagination-info {
   color: var(--text-color);
   font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.search-status {
+  font-style: italic;
+  color: var(--accent-color);
+  font-weight: 500;
+}
+
+/* Search Section Styles */
+.search-section {
+  margin-bottom: 1.5rem;
+  background: rgba(255, 246, 250, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(138, 42, 68, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow:
+    0 8px 25px var(--shadow-color),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.search-section::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  left: -50px;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--glow-color) 0%, transparent 70%);
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.search-section:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 35px var(--shadow-color),
+    0 0 20px var(--glow-color);
+}
+
+.dark-mode .search-section {
+  background: rgba(30, 30, 46, 0.9);
+  border: 1px solid rgba(225, 75, 106, 0.2);
+}
+
+.search-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.search-container label {
+  font-weight: 600;
+  color: var(--text-color);
+  min-width: fit-content;
+}
+
+.search-input-container {
+  position: relative;
+  flex: 1;
+  max-width: 400px;
+}
+
+.search-input-container input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  padding-right: 2.5rem;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--card-bg);
+  color: var(--text-color);
+  font-size: 1rem;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+[dir='rtl'] .search-input-container input {
+  padding-left: 2.5rem;
+  padding-right: 1rem;
+}
+
+.search-input-container input:focus {
+  border-color: var(--accent-color);
+  outline: none;
+  box-shadow:
+    0 0 0 3px var(--glow-color),
+    0 4px 12px rgba(138, 42, 68, 0.15);
+  transform: translateY(-1px);
+  background: linear-gradient(135deg, var(--card-bg), rgba(138, 42, 68, 0.02));
+}
+
+.search-input-container input:hover {
+  border-color: rgba(138, 42, 68, 0.5);
+  background: linear-gradient(135deg, var(--card-bg), rgba(138, 42, 68, 0.02));
+  transform: translateY(-1px);
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 1.2rem;
+  opacity: 0.7;
+  transition: all 0.3s ease;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+[dir='rtl'] .clear-search-btn {
+  right: auto;
+  left: 0.75rem;
+}
+
+.clear-search-btn:hover {
+  opacity: 1;
+  background: rgba(138, 42, 68, 0.1);
+  color: var(--accent-color);
+}
+
+.dark-mode .search-input-container input:focus {
+  background: linear-gradient(135deg, var(--card-bg), rgba(225, 75, 106, 0.03));
+  box-shadow:
+    0 0 0 3px var(--glow-color),
+    0 4px 12px rgba(225, 75, 106, 0.2);
+}
+
+.dark-mode .search-input-container input:hover {
+  background: linear-gradient(135deg, var(--card-bg), rgba(225, 75, 106, 0.03));
+}
+
+.dark-mode .clear-search-btn:hover {
+  background: rgba(225, 75, 106, 0.15);
+  color: var(--accent-color);
 }
 
 /* Enhanced table container */
@@ -812,7 +1055,7 @@ h1::after {
 
 .page-number.active {
   background: var(--accent-gradient);
-  color: white;
+  color: rgb(0, 0, 0);
   border-color: var(--accent-color);
   box-shadow:
     0 4px 12px rgba(138, 42, 68, 0.3),
@@ -821,11 +1064,20 @@ h1::after {
 }
 
 .page-number:not(.active):hover {
-  background: linear-gradient(135deg, rgba(138, 42, 68, 0.1), rgba(109, 26, 54, 0.1));
-  border-color: rgba(138, 42, 68, 0.3);
-  color: var(--accent-color);
+  /* a solid coral‑pink background */
+  background: #e14b6a;
+  /* matching darker border */
+  border-color: #8a2a44;
+  /* always show white text */
+  color: #fff;
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(138, 42, 68, 0.15);
+  box-shadow: 0 4px 12px rgba(138, 42, 68, 0.3);
+}
+
+.page-number.active:hover {
+  /* a slightly darker pink so it still stands out */
+  background: #a7385c;
+  color: #fff;
 }
 
 .page-number:not(.active):hover::before {

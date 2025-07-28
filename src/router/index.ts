@@ -37,7 +37,7 @@ const routes = [
   {
     path: '/contracts/:id',
     name: 'ContractDetails',
-    component: () => import('@/views/ContractDetail.vue'),
+    component: () => import('@/views/CostCenterTransferRequest.vue'),
     meta: { requiresAuth: true },
   },
   {

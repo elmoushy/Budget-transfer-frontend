@@ -385,7 +385,7 @@
             <button @click="cancelDelete" class="btn-cancel">
               {{ isArabic ? 'إلغاء' : 'Cancel' }}
             </button>
-            <button @click="confirmDelete" class="btn-delete">
+            <button @click="confirmDelete" class="btn-save">
               {{ isArabic ? 'حذف' : 'Delete' }}
             </button>
           </div>

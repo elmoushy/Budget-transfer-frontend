@@ -51,23 +51,8 @@
                 </div>
                 <div class="summary-value">{{ formatNumber(reportData.summary?.total_to) }}</div>
               </div>
-              <div class="summary-item">
-                <!-- <div class="summary-label">{{ isArabic ? 'الحالة:' : 'Status:' }}</div> -->
-                <!-- <div class="summary-value status-badge" :class="getStatusClass()">
-                  {{ formatStatus(reportData.status?.status) }}
-                </div> -->
-              </div>
-              <div class="summary-item">
-                <!-- <div class="summary-label">{{ isArabic ? 'متوازن:' : 'Balanced:' }}</div>
-                <div class="summary-value">
-                  <span v-if="reportData.summary?.balanced" class="balanced-true">
-                    {{ isArabic ? 'نعم' : 'Yes' }}
-                  </span>
-                  <span v-else class="balanced-false">
-                    {{ isArabic ? 'لا' : 'No' }}
-                  </span>
-                </div> -->
-              </div>
+              <div class="summary-item"></div>
+              <div class="summary-item"></div>
             </div>
           </div>
 
@@ -136,7 +121,7 @@ import 'jspdf-autotable' // Make sure this import is present
 import html2canvas from 'html2canvas'
 import transferService from '@/services/TransferService'
 import { useThemeStore } from '@/stores/themeStore'
-import logoImage from '@/assets/img/lightidea_logo.png' // Import the logo image
+import logoImage from '@/assets/img/tanfeez_black.png' // Import the logo image
 
 export default {
   name: 'TransferReport',
@@ -336,7 +321,6 @@ export default {
       }
 
       try {
-        console.log('Starting PDF generation using html2canvas...')
         const rtl = isArabic()
 
         // Calculate totals for the footer
@@ -407,7 +391,6 @@ export default {
           <img src="${logoUrl}" alt="Logo" style="max-height: 70px; max-width: 200px;" />
         </div>
         <div class="report-title">
-          <th style="font-size: 42px; color: #333; font-weight: bold; margin-top: 0; margin-bottom: 15px; text-align: ${rtl ? 'right' : 'left'}; display: block; width: 100%;">${rtl ? 'تقرير المناقلة' : 'Transfer Report'}</th>
         </div>
       </div>
 

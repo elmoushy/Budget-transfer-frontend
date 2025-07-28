@@ -520,31 +520,23 @@
       </Transition>
     </Teleport>
 
-    <!-- Toast (auto-dismiss) -->
-    <Teleport to="body">
-      <transition name="fade">
-        <div v-if="toast.show" class="toast" :class="`toast--${toast.type}`" role="alert">
-          {{ toast.message }}
-        </div>
-      </transition>
-    </Teleport>
-
-    <!-- Dialog/Popup (needs confirm or timed) -->
+    <!-- Add FuturisticPopup component for contract mode -->
     <FuturisticPopup
-      v-model:show="dialog.show"
-      :type="dialog.type"
-      :title="dialog.title"
-      :message="dialog.message"
-      :timer="dialog.timer"
-      :showConfirmButton="dialog.needConfirm"
+      v-if="isContractMode"
+      v-model:show="showPopup"
+      :type="popupType"
+      :title="popupTitle"
+      :message="popupMessage"
+      :timer="popupTimer"
+      :showConfirmButton="true"
       :confirmButtonText="isArabic ? 'موافق' : 'OK'"
-      @confirm="handleDialogConfirm"
+      @confirm="handlePopupConfirm"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick, reactive } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -613,6 +605,13 @@ interface TransferRowData {
   done: number
   from_center?: number
   [key: string]: unknown // Index signature for compatibility
+}
+
+interface AlertState {
+  show: boolean
+  message: string
+  type: string
+  timer: number | null
 }
 
 interface DropdownChangeEvent {
@@ -995,15 +994,12 @@ const createTransfer = async () => {
     const validRows = dataArray.filter((item) => item.cost_center_code && item.account_code)
     if (!validRows.length) {
       if (isContractMode.value) {
-        await showDialog(
+        showFuturisticAlert(
           isArabic.value ? 'لا توجد بيانات صالحة للإرسال' : 'No valid rows to send',
           'warning',
         )
       } else {
-        showToast(
-          isArabic.value ? 'لا توجد بيانات صالحة للإرسال' : 'No valid rows to send',
-          'warning',
-        )
+        alert(isArabic.value ? 'لا توجد بيانات صالحة للإرسال' : 'No valid rows to send')
       }
       return
     }
@@ -1037,19 +1033,20 @@ const createTransfer = async () => {
       // Pass the auth token as second argument to the API call
       await extendedContractService.createContract(dataToSend, authStore.token!)
 
-      await showDialog(
+      await showFuturisticAlert(
         isArabic.value ? 'تم إنشاء العقد بنجاح' : 'Contract created successfully',
         'success',
-        { timer: 3000 },
       )
     } else {
       // Pass the auth token as second argument to the API call
       await transferService.createTransfer(dataToSend)
 
-      showToast(
-        isArabic.value ? 'تم إنشاء النقل بنجاح' : 'Transfer created successfully',
-        'success',
-      )
+      // Create styled alert message with emoji and formatting
+      const successPrefix = '✅ '
+      const successMessage = isArabic.value
+        ? 'تم إنشاء النقل بنجاح'
+        : 'Transfer created successfully'
+      alert(successPrefix + successMessage)
     }
 
     await loadData()
@@ -1065,15 +1062,16 @@ const createTransfer = async () => {
     }
   } catch (err: unknown) {
     // Enhanced error alert with emoji
+    const errorPrefix = '❌ '
     const error = err as Error & { response?: { data?: { message?: string } } }
     const errorMessage = isArabic.value
       ? 'فشل في إنشاء النقل: ' + (error?.response?.data?.message || error?.message || '')
       : 'Failed to create transfer: ' + (error?.response?.data?.message || error?.message || '')
 
     if (isContractMode.value) {
-      await showDialog(errorMessage, 'error')
+      showFuturisticAlert(errorMessage, 'error')
     } else {
-      showToast(errorMessage, 'error')
+      alert(errorPrefix + errorMessage)
     }
     console.error('Error creating transfer:', err)
   }
@@ -1091,15 +1089,12 @@ const deleteRow = (index: number) => {
     changesMade.value = true
   } else {
     if (isContractMode.value) {
-      showDialog(
+      showFuturisticAlert(
         isArabic.value ? 'يجب أن يكون هناك صف واحد على الأقل' : 'At least one row must exist',
         'warning',
       )
     } else {
-      showToast(
-        isArabic.value ? 'يجب أن يكون هناك صف واحد على الأقل' : 'At least one row must exist',
-        'warning',
-      )
+      alert(isArabic.value ? 'يجب أن يكون هناك صف واحد على الأقل' : 'At least one row must exist')
     }
   }
 }
@@ -1299,30 +1294,55 @@ const formatNumber = (value: number | string | null | undefined): string | null 
   }).format(Number(value))
 }
 
+const alertState = ref<AlertState>({
+  show: false,
+  message: '',
+  type: 'success', // 'success' or 'error'
+  timer: null,
+})
+
+const showAlert = (message: string, type = 'success') => {
+  // Clear any existing timer
+  if (alertState.value.timer) {
+    clearTimeout(alertState.value.timer)
+  }
+
+  // Set alert properties
+  alertState.value.message = message
+  alertState.value.type = type
+  alertState.value.show = true
+
+  // Auto-hide after 4 seconds
+  alertState.value.timer = setTimeout(() => {
+    alertState.value.show = false
+  }, 4000)
+}
+
 const submitRequest = async () => {
   try {
     if (isContractMode.value) {
       await extendedContractService.submitContractRequest(transactionId.value!)
-      await showDialog(
+      await showFuturisticAlert(
         isArabic.value ? 'تم تقديم الطلب بنجاح' : 'Request submitted successfully',
         'success',
-        { timer: 1500 },
       )
       router.push('/contracts')
     } else {
       await transferService.submitTransferRequest(transactionId.value!)
-      await showDialog(
-        isArabic.value ? 'تم تقديم الطلب بنجاح' : 'Request submitted successfully',
-        'success',
-        { timer: 1500 },
-      )
-      router.push('/')
+      showAlert(isArabic.value ? 'تم تقديم الطلب بنجاح' : 'Request submitted successfully')
+      // Delay navigation to allow alert to be seen
+      setTimeout(() => {
+        router.push('/')
+      }, 1500)
     }
   } catch {
     if (isContractMode.value) {
-      await showDialog(isArabic.value ? 'فشل في تقديم الطلب' : 'Failed to submit request', 'error')
+      showFuturisticAlert(
+        isArabic.value ? 'فشل في تقديم الطلب' : 'Failed to submit request',
+        'error',
+      )
     } else {
-      showToast(isArabic.value ? 'فشل في تقديم الطلب' : 'Failed to submit request', 'error')
+      showAlert(isArabic.value ? 'فشل في تقديم الطلب' : 'Failed to submit request', 'error')
     }
   }
 }
@@ -1331,27 +1351,23 @@ const reopenRequest = async () => {
   try {
     if (isContractMode.value) {
       await extendedContractService.reopenContractRequest(transactionId.value!)
-      await showDialog(
+      await showFuturisticAlert(
         isArabic.value ? 'تم إعادة فتح الطلب بنجاح' : 'Request reopened successfully',
         'success',
-        { timer: 3000 },
       )
     } else {
       await transferService.reopenTransferRequest(transactionId.value!)
-      showToast(
-        isArabic.value ? 'تم إعادة فتح الطلب بنجاح' : 'Request reopened successfully',
-        'success',
-      )
+      showAlert(isArabic.value ? 'تم إعادة فتح الطلب بنجاح' : 'Request reopened successfully')
     }
     await loadData()
   } catch {
     if (isContractMode.value) {
-      await showDialog(
+      showFuturisticAlert(
         isArabic.value ? 'فشل في إعادة فتح الطلب' : 'Failed to reopen request',
         'error',
       )
     } else {
-      showToast(isArabic.value ? 'فشل في إعادة فتح الطلب' : 'Failed to reopen request', 'error')
+      showAlert(isArabic.value ? 'فشل في إعادة فتح الطلب' : 'Failed to reopen request', 'error')
     }
   }
 }
@@ -1373,13 +1389,13 @@ const generateReport = async () => {
       window.URL.revokeObjectURL(url)
 
       // Show success message
-      await showDialog(
+      showFuturisticAlert(
         isArabic.value ? 'تم إنشاء التقرير بنجاح' : 'Report generated successfully',
         'success',
-        { timer: 3000 },
+        3000,
       )
     } catch {
-      await showDialog(
+      showFuturisticAlert(
         isArabic.value ? 'فشل في إنشاء التقرير' : 'Failed to generate report',
         'error',
       )
@@ -1523,11 +1539,10 @@ const fetchPivotFundDetails = async (item: TransferItem) => {
       item.financialDataFromApi = false
 
       // Alert the user about the missing data
-      showToast(
+      alert(
         isArabic.value
           ? `لا توجد بيانات مالية لهذا التحديد. المركز: ${item.cost_center_code}, الحساب: ${item.account_code}`
           : `No financial data found for Cost Center: ${item.cost_center_code}, Account: ${item.account_code}`,
-        'warning',
       )
 
       // Mark that changes have been made
@@ -1553,11 +1568,10 @@ const fetchPivotFundDetails = async (item: TransferItem) => {
     const err = error as { response?: { status?: number } }
     if (err.response && err.response.status === 404) {
       // Alert the user with the specific IDs that failed
-      showToast(
+      alert(
         isArabic.value
           ? `لا توجد بيانات لهذا التحديد. المركز: ${item.cost_center_code}, الحساب: ${item.account_code}`
           : `This doesn't have data for Cost Center: ${item.cost_center_code}, Account: ${item.account_code}`,
-        'warning',
       )
 
       // Reset the last changed selection
@@ -1585,89 +1599,48 @@ const fetchPivotFundDetails = async (item: TransferItem) => {
 // Add state variable to control report modal visibility
 const showReportModal = ref(false)
 
-// Unified Toast and Dialog System
-// Toast (auto-dismiss notifications)
-const toast = reactive({
-  show: false,
-  message: '',
-  type: 'success' as 'success' | 'error' | 'warning' | 'info',
-  timerId: null as number | null,
-})
+// Add state for FuturisticPopup (used in contract mode)
+const showPopup = ref(false)
+const popupType = ref('success')
+const popupTitle = ref('')
+const popupMessage = ref('')
+const popupTimer = ref(0)
+const pendingAction = ref<(() => void) | null>(null)
 
-function showToast(message: string, type: typeof toast.type = 'success', duration = 3000) {
-  if (toast.timerId) clearTimeout(toast.timerId)
-  toast.message = message
-  toast.type = type
-  toast.show = true
-  toast.timerId = window.setTimeout(() => (toast.show = false), duration)
-}
+// FuturisticPopup methods (for contract mode)
+const showFuturisticAlert = (text: string, icon = 'info', timer: number | null = null) => {
+  // Set default titles based on icon type
+  let title = ''
+  if (icon === 'success') {
+    title = isArabic.value ? 'نجاح!' : 'Success!'
+  } else if (icon === 'error') {
+    title = isArabic.value ? 'خطأ!' : 'Error!'
+  } else if (icon === 'warning') {
+    title = isArabic.value ? 'تحذير!' : 'Warning!'
+  } else {
+    title = isArabic.value ? 'تنبيه!' : 'Notice!'
+  }
 
-// Dialog (Promise-based confirmations)
-const dialog = reactive<{
-  show: boolean
-  type: string
-  title: string
-  message: string
-  timer: number
-  needConfirm: boolean
-  resolve: (() => void) | null
-}>({
-  show: false,
-  type: 'info',
-  title: '',
-  message: '',
-  timer: 0,
-  needConfirm: true,
-  resolve: null,
-})
+  // Set popup properties
+  popupType.value = icon
+  popupTitle.value = title
+  popupMessage.value = text
+  popupTimer.value = timer || (icon === 'success' ? 3000 : 0)
+  showPopup.value = true
 
-function showDialog(
-  message: string,
-  type: 'success' | 'error' | 'warning' | 'info' = 'info',
-  opts: { title?: string; timer?: number; confirm?: boolean } = {},
-) {
+  // Return a promise that resolves when the popup is closed
   return new Promise<void>((resolve) => {
-    dialog.type = type
-    dialog.title =
-      opts.title ??
-      (type === 'success'
-        ? isArabic.value
-          ? 'نجاح!'
-          : 'Success!'
-        : type === 'error'
-          ? isArabic.value
-            ? 'خطأ!'
-            : 'Error!'
-          : type === 'warning'
-            ? isArabic.value
-              ? 'تحذير!'
-              : 'Warning!'
-            : isArabic.value
-              ? 'تنبيه!'
-              : 'Notice!')
-    dialog.message = message
-    dialog.timer = opts.timer ?? 0
-    dialog.needConfirm = opts.confirm ?? dialog.timer === 0
-    dialog.resolve = resolve
-    dialog.show = true
-
-    if (dialog.timer > 0) {
-      setTimeout(() => {
-        if (dialog.show) {
-          dialog.show = false
-          dialog.resolve?.()
-          dialog.resolve = null
-        }
-      }, dialog.timer)
+    pendingAction.value = () => {
+      resolve()
     }
   })
 }
 
-// Handle dialog confirm event
-const handleDialogConfirm = () => {
-  if (dialog.resolve) {
-    dialog.resolve()
-    dialog.resolve = null
+// Handle popup confirm/close event
+const handlePopupConfirm = () => {
+  if (pendingAction.value) {
+    pendingAction.value()
+    pendingAction.value = null
   }
 }
 </script>
@@ -1675,65 +1648,6 @@ const handleDialogConfirm = () => {
 <style src="@/styles/CostCenterTransferRequest.css" scoped></style>
 
 <style>
-/* Toast Styles */
-.toast {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 9999;
-  padding: 16px 24px;
-  border-radius: 8px;
-  color: white;
-  font-weight: 500;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  max-width: 400px;
-  word-wrap: break-word;
-}
-
-.toast--success {
-  background-color: #28a745;
-}
-
-.toast--error {
-  background-color: #dc3545;
-}
-
-.toast--warning {
-  background-color: #ffc107;
-  color: #212529;
-}
-
-.toast--info {
-  background-color: #17a2b8;
-}
-
-/* Toast Animation */
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.3s ease;
-}
-
-.fade-enter-from {
-  opacity: 0;
-  transform: translateX(100%);
-}
-
-.fade-leave-to {
-  opacity: 0;
-  transform: translateX(100%);
-}
-
-/* RTL Toast Position */
-.rtl .toast {
-  right: auto;
-  left: 20px;
-}
-
-.rtl .fade-enter-from,
-.rtl .fade-leave-to {
-  transform: translateX(-100%);
-}
-
 /* Add to your existing styles */
 .readonly-input {
   background-color: #f0f0f0;

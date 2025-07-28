@@ -6,8 +6,8 @@
         <button class="close-modal" @click="closeModal">×</button>
       </div>
       <div class="modal-body file-modal-body">
-        <!-- File upload form - Only show if status is pending -->
-        <div v-if="status.toLowerCase() === 'pending'" class="file-upload-section">
+        <!-- File upload form - Only show if status is waiting to submit -->
+        <div v-if="status.toLowerCase() === 'waiting-to-submit'" class="file-upload-section">
           <h3>{{ isArabic ? 'تحميل ملف جديد' : 'Upload New File' }}</h3>
           <div
             class="file-drop-zone"
@@ -54,14 +54,14 @@
           </button>
         </div>
 
-        <!-- Read-only notice when not pending -->
+        <!-- Read-only notice when not waiting to submit -->
         <div v-else class="read-only-notice">
           <InfoIcon size="18" />
           <p>
             {{
               isArabic
-                ? 'المرفقات للقراءة فقط. لا يمكن إضافة مرفقات جديدة لطلبات موافق عليها أو مرفوضة.'
-                : 'Attachments are read-only. You cannot add new attachments to approved or rejected requests.'
+                ? 'المرفقات للقراءة فقط. لا يمكن إضافة مرفقات جديدة بعد التقديم.'
+                : 'Attachments are read-only. You cannot add new attachments after submission.'
             }}
           </p>
         </div>
