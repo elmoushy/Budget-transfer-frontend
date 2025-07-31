@@ -50,9 +50,9 @@ export default {
    */
   auth: {
     /**
-     * Login user
+     * Login user with JWT authentication
      * @param {Object} credentials - Username and password
-     * @returns {Promise} Login response with token and user data
+     * @returns {Promise} Login response with access and refresh tokens
      */
     login: async (credentials) => {
       try {
@@ -64,6 +64,62 @@ export default {
         return response.data
       } catch (error) {
         console.error('Login error:', error)
+        throw error
+      }
+    },
+
+    /**
+     * Validate current access token
+     * @returns {Promise} Token validation response with user data
+     */
+    validateToken: async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}${ENDPOINTS.AUTH.TOKEN_EXPIRED}`, {
+          headers: getAuthHeaders(),
+        })
+        return response.data
+      } catch (error) {
+        console.error('Token validation error:', error)
+        throw error
+      }
+    },
+
+    /**
+     * Refresh access token using refresh token
+     * @param {string} refreshToken - The refresh token
+     * @returns {Promise} New access and refresh tokens
+     */
+    refreshToken: async (refreshToken) => {
+      try {
+        const response = await axios.post(`${API_BASE_URL}${ENDPOINTS.AUTH.TOKEN_REFRESH}`, {
+          refresh: refreshToken,
+        })
+        return response.data
+      } catch (error) {
+        console.error('Token refresh error:', error)
+        throw error
+      }
+    },
+
+    /**
+     * Change user password
+     * @param {string} oldPassword - Current password
+     * @param {string} newPassword - New password
+     * @returns {Promise} Password change response
+     */
+    changePassword: async (oldPassword, newPassword) => {
+      try {
+        const response = await axios.post(
+          `${API_BASE_URL}${ENDPOINTS.AUTH.CHANGE_PASSWORD}`,
+          {
+            old_password: oldPassword,
+            new_password: newPassword,
+          },
+          { headers: getAuthHeaders() },
+        )
+        return response.data
+      } catch (error) {
+        console.error('Password change error:', error)
         throw error
       }
     },

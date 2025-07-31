@@ -89,6 +89,7 @@ import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
 import { EyeIcon, EyeOffIcon } from 'lucide-vue-next'
 import apiService from '@/services/apiService'
+import axios from 'axios'
 
 // Component name for debugging
 defineOptions({
@@ -175,19 +176,46 @@ async function handleLogin() {
     // Note: apiService throws errors for non-200 responses,
     // so we won't have to check response.ok
 
-    // Store auth token and user data
+    // Store auth token, refresh token and user data
     await authStore.setAuth({
       token: data.token,
+      refreshToken: data.refresh,
       user: data.data,
     })
 
     // Navigate to dashboard or home page
     router.push({ name: 'Dashboard' })
-  } catch (err) {
+  } catch (err: unknown) {
     console.error('Login error:', err)
-    error.value = isArabic.value
-      ? 'حدث خطأ أثناء محاولة تسجيل الدخول. الرجاء المحاولة مرة أخرى.'
-      : 'An error occurred while trying to log in. Please try again.'
+
+    // Handle specific error messages
+    if (axios.isAxiosError(err) && err.response) {
+      if (err.response.status === 401) {
+        error.value = isArabic.value
+          ? 'اسم المستخدم أو كلمة المرور غير صحيحة'
+          : 'Invalid username or password'
+      } else if (err.response.status === 400) {
+        // Handle validation errors
+        const errorData = err.response.data
+        if (errorData.username) {
+          usernameError.value = errorData.username[0]
+        }
+        if (errorData.password) {
+          passwordError.value = errorData.password[0]
+        }
+        if (!errorData.username && !errorData.password) {
+          error.value = isArabic.value ? 'بيانات الدخول غير صحيحة' : 'Invalid login data'
+        }
+      } else {
+        error.value = isArabic.value
+          ? 'حدث خطأ أثناء محاولة تسجيل الدخول. الرجاء المحاولة مرة أخرى.'
+          : 'An error occurred while trying to log in. Please try again.'
+      }
+    } else {
+      error.value = isArabic.value
+        ? 'حدث خطأ أثناء محاولة تسجيل الدخول. الرجاء المحاولة مرة أخرى.'
+        : 'An error occurred while trying to log in. Please try again.'
+    }
   } finally {
     isLoading.value = false
   }

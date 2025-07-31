@@ -43,6 +43,9 @@ declare module '@/services/apiService' {
     auth: {
       login: (credentials: UserCredentials) => Promise<any>
       logout: () => Promise<any>
+      validateToken: () => Promise<any>
+      refreshToken: (refreshToken: string) => Promise<any>
+      changePassword: (oldPassword: string, newPassword: string) => Promise<any>
       getUsers: () => Promise<User[]>
       registerUser: (userData: RegisterUserData) => Promise<any>
       updateUser: (userId: number, userData: UpdateUserData) => Promise<any>

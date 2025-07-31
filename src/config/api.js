@@ -18,6 +18,8 @@ export const ENDPOINTS = {
     USER_UPDATE: '/api/auth/users/update/',
     USER_DELETE: '/api/auth/users/delete/',
     NOTIFICATIONS: '/api/auth/Notifications',
+    TOKEN_REFRESH: '/api/auth/token-refresh/',
+    CHANGE_PASSWORD: '/api/auth/change-password/',
     // User levels endpoints
     LEVELS: '/api/auth/levels/',
     LEVEL_UPDATE: '/api/auth/levels/update/',
