@@ -170,7 +170,6 @@
                   :is-rtl="isRTL"
                   :search-placeholder="isArabic ? 'البحث في الحسابات...' : 'Search accounts...'"
                   :no-results-text="isArabic ? 'لا توجد نتائج' : 'No results found'"
-                  @change="(value) => updateAccountName(item, { target: { value } })"
                 />
               </td>
               <td class="name-display">
@@ -203,7 +202,6 @@
                     isArabic ? 'البحث في مراكز التكلفة...' : 'Search cost centers...'
                   "
                   :no-results-text="isArabic ? 'لا توجد نتائج' : 'No results found'"
-                  @change="(value) => updateCostCenterName(item, { target: { value } })"
                 />
               </td>
             </tr>
@@ -615,10 +613,6 @@ interface TransferRowData {
   [key: string]: unknown // Index signature for compatibility
 }
 
-interface DropdownChangeEvent {
-  target: { value: string | number }
-}
-
 // State variables
 const transactionId = ref<number | null>(null)
 const transferData = ref<TransferItem[]>([])
@@ -837,40 +831,10 @@ const getCostCenterName = (code: string | undefined) => {
   return entity ? entity.alias_default : ''
 }
 
-const updateCostCenterName = (item: TransferItem, event: string | DropdownChangeEvent) => {
-  // Handle both direct value from SearchableDropdown and event from select
-  const code = typeof event === 'string' ? event : String(event.target.value)
-  item.cost_center_code = code
-  item.cost_center_name = getCostCenterName(code)
-
-  // Track that cost center was the last field changed
-  item.lastChangedField = 'cost_center_code'
-
-  // Try to fetch financial data if both codes are available
-  fetchPivotFundDetails(item)
-
-  checkForChanges()
-}
-
 const getAccountName = (code: string | undefined) => {
   if (!code) return ''
   const account = accountEntities.value.find((a) => a.account === code)
   return account ? account.alias_default : ''
-}
-
-const updateAccountName = (item: TransferItem, event: string | DropdownChangeEvent) => {
-  // Handle both direct value from SearchableDropdown and event from select
-  const code = typeof event === 'string' ? event : String(event.target.value)
-  item.account_code = code
-  item.account_name = getAccountName(code)
-
-  // Track that account was the last field changed
-  item.lastChangedField = 'account_code'
-
-  // Try to fetch financial data if both codes are available
-  fetchPivotFundDetails(item)
-
-  checkForChanges()
 }
 
 // Method to validate number input and handle conversion
@@ -1182,6 +1146,45 @@ watch(
   () => [transferData.value, contractData.value],
   () => {
     checkForChanges()
+  },
+  { deep: true },
+)
+
+// Add watchers for dropdown changes to update related fields
+watch(
+  () => currentData.value.map((item) => item.account_code),
+  (newCodes, oldCodes) => {
+    if (newCodes && oldCodes) {
+      newCodes.forEach((newCode, index) => {
+        if (newCode !== oldCodes[index] && newCode) {
+          const item = currentData.value[index]
+          if (item) {
+            item.account_name = getAccountName(newCode)
+            item.lastChangedField = 'account_code'
+            fetchPivotFundDetails(item)
+          }
+        }
+      })
+    }
+  },
+  { deep: true },
+)
+
+watch(
+  () => currentData.value.map((item) => item.cost_center_code),
+  (newCodes, oldCodes) => {
+    if (newCodes && oldCodes) {
+      newCodes.forEach((newCode, index) => {
+        if (newCode !== oldCodes[index] && newCode) {
+          const item = currentData.value[index]
+          if (item) {
+            item.cost_center_name = getCostCenterName(newCode)
+            item.lastChangedField = 'cost_center_code'
+            fetchPivotFundDetails(item)
+          }
+        }
+      })
+    }
   },
   { deep: true },
 )

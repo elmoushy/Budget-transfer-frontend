@@ -17,7 +17,7 @@
       }"
     >
       <span v-if="selectedOption" class="value-text">
-        {{ selectedOption.label }}
+        {{ selectedOption.label || '' }}
       </span>
       <span v-else class="placeholder-text">
         {{ placeholder || 'Select option...' }}
@@ -69,7 +69,7 @@
               @click="selectOption(option)"
               @mouseenter="highlightedIndex = index"
             >
-              {{ option.label }}
+              {{ option.label || '' }}
             </div>
 
             <div v-if="filteredOptions.length === 0" class="no-results">
@@ -90,7 +90,7 @@ import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 
 interface DropdownOption {
   value: string | number
-  label: string
+  label?: string
 }
 
 interface Props {
@@ -140,11 +140,15 @@ const filteredOptions = computed(() => {
     return props.options
   }
 
-  return props.options.filter(
-    (option) =>
-      option.label.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      option.value.toString().toLowerCase().includes(searchQuery.value.toLowerCase()),
-  )
+  return props.options.filter((option) => {
+    const label = option.label || ''
+    const value = option.value || ''
+    return (
+      (typeof label === 'string' &&
+        label.toLowerCase().includes(searchQuery.value.toLowerCase())) ||
+      value.toString().toLowerCase().includes(searchQuery.value.toLowerCase())
+    )
+  })
 })
 
 // Methods
@@ -219,7 +223,7 @@ const calculatePanelPosition = () => {
   // Temporarily remove restrictions to measure real height
   panelEl.style.maxHeight = ''
   const naturalHeight = panelEl.offsetHeight
-  const naturalWidth = Math.max(triggerRect.width, panelEl.offsetWidth)
+  // const naturalWidth = Math.max(triggerRect.width, panelEl.offsetWidth)
 
   const maxHeight = Math.min(naturalHeight, vh - MARGIN * 2)
   const width = Math.min(Math.max(triggerRect.width, 260), vw - MARGIN * 2)

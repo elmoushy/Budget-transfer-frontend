@@ -93,82 +93,6 @@ import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
 import apiService from '@/services/apiService'
 
-// Robot animation state
-const robotState = ref<'sleeping' | 'waking' | 'awake'>('sleeping')
-const robotButton = ref<HTMLButtonElement | null>(null)
-
-// Robot animation function
-const wakeUpRobot = async () => {
-  if (robotState.value !== 'sleeping') return
-
-  // Start waking animation
-  robotState.value = 'waking'
-
-  // Create floating robot clone for animation
-  const robotElement = robotButton.value
-  if (!robotElement) return
-
-  const robotRect = robotElement.getBoundingClientRect()
-
-  // Create animated clone
-  const robotClone = robotElement.cloneNode(true) as HTMLElement
-  robotClone.style.position = 'fixed'
-  robotClone.style.top = `${robotRect.top}px`
-  robotClone.style.left = `${robotRect.left}px`
-  robotClone.style.width = `${robotRect.width}px`
-  robotClone.style.height = `${robotRect.height}px`
-  robotClone.style.zIndex = '10000'
-  robotClone.style.pointerEvents = 'none'
-  robotClone.classList.add('robot-floating')
-
-  document.body.appendChild(robotClone)
-
-  // Wait a moment for waking animation
-  await new Promise((resolve) => setTimeout(resolve, 500))
-
-  robotState.value = 'awake'
-
-  // Find where the chatbot toggle button should appear
-  // Since the button might be hidden, we'll animate to the chatbot container position
-  const chatbotContainer = document.querySelector('.chatbot-container') as HTMLElement
-  if (chatbotContainer) {
-    // Get the expected position where the toggle button would appear
-    const containerRect = chatbotContainer.getBoundingClientRect()
-
-    // Animate robot gliding down to chatbot position
-    robotClone.style.transition = 'all 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-    robotClone.style.top = `${containerRect.top}px`
-    robotClone.style.left = `${containerRect.left}px`
-    robotClone.style.transform = 'scale(1.1)'
-
-    // After gliding, simulate tap and trigger chatbot
-    setTimeout(() => {
-      // Add tap animation
-      robotClone.style.transform = 'scale(0.9)'
-
-      setTimeout(() => {
-        // Trigger chatbot open by dispatching a custom event
-        const chatEvent = new CustomEvent('robot-open-chat', { bubbles: true })
-        document.dispatchEvent(chatEvent)
-
-        // Clean up
-        robotClone.remove()
-
-        // Reset robot state after animation
-        setTimeout(() => {
-          robotState.value = 'sleeping'
-        }, 2000)
-      }, 200)
-    }, 1200)
-  } else {
-    // Fallback if chatbot not found - just clean up
-    robotClone.remove()
-    setTimeout(() => {
-      robotState.value = 'sleeping'
-    }, 1000)
-  }
-}
-
 // Define interfaces for menu items
 interface MenuItem {
   label: string
@@ -303,12 +227,10 @@ const adminRouteIds = [9, 10, 11, 12] // User Management, Account-Entity Managem
 const fetchRoutesData = async () => {
   try {
     isLoading.value = true
-    console.log('Fetching fresh route data from API...')
 
     const response = await apiService.accountEntities.getMainRoutes()
     if (response.data && Array.isArray(response.data)) {
       routesData.value = response.data
-      console.log('Route data updated:', response.data)
     } else {
       throw new Error('Invalid response format')
     }

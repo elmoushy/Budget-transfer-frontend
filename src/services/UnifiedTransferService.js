@@ -116,8 +116,8 @@ export default {
     const authStore = useAuthStore()
     try {
       const response = await axios.post(
-        `${BASE_URL}/api/budget/transfers/${transactionId}/submit/`,
-        {},
+        `${BASE_URL}/api/adjd-transfers/submit/`,
+        { transaction: transactionId },
         {
           headers: {
             Authorization: `Bearer ${authStore.token}`,
@@ -140,8 +140,11 @@ export default {
     const authStore = useAuthStore()
     try {
       const response = await axios.post(
-        `${BASE_URL}/api/budget/transfers/${transactionId}/reopen/`,
-        {},
+        `${BASE_URL}/api/adjd-transfers/reopen/`,
+        {
+          transaction: transactionId,
+          action: 'reopen',
+        },
         {
           headers: {
             Authorization: `Bearer ${authStore.token}`,

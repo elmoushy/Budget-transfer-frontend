@@ -61,7 +61,6 @@ class NotificationService {
     //   console.error('Error checking system notifications:', error)
     //   return { Number_Of_Notifications: 0 }
     // }
-    console.log('System notifications endpoint disabled')
     return { Number_Of_Notifications: 0 }
   }
 
