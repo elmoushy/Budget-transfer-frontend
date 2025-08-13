@@ -1,8 +1,0 @@
-/* filepath: c:\Users\iP\Full Stack\Budget-transfer-frontend\src\assets\css\Home.css */
-/* Home-specific styles that extend the shared page styles */
-
-.home-page {
-  /* Any specific styles for home page container that differ from page-container */
-}
-
-/* Any home-specific overrides that aren't in shared styles */
