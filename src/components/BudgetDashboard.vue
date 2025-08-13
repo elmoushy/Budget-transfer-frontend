@@ -1,25 +1,37 @@
 <template>
-  <div class="budget-dashboard rtl-layout" :class="{ 'dark-mode': isDarkMode }" dir="rtl">
+  <div
+    class="budget-dashboard"
+    :class="{ 'dark-mode': isDarkMode, 'rtl-layout': isArabic }"
+    :dir="isArabic ? 'rtl' : 'ltr'"
+  >
     <!-- Header Controls -->
     <div class="dashboard-header">
       <div class="dashboard-info">
-        <h1 class="dashboard-title">لوحة تحويل الميزانية</h1>
-        <p class="dashboard-subtitle">تحليلات ورؤى شاملة لتحويل الميزانية</p>
+        <h1 class="dashboard-title">
+          {{ isArabic ? 'لوحة تحويل الميزانية' : 'Budget Transfer Dashboard' }}
+        </h1>
+        <p class="dashboard-subtitle">
+          {{
+            isArabic
+              ? 'تحليلات ورؤى شاملة لتحويل الميزانية'
+              : 'Comprehensive Budget Transfer Analytics and Insights'
+          }}
+        </p>
       </div>
 
       <div class="dashboard-controls">
         <!-- Type Selector -->
         <div class="control-group">
-          <label>الوضع:</label>
+          <label>{{ isArabic ? 'الوضع:' : 'Mode:' }}</label>
           <select
             v-model="selectedType"
             @change="handleTypeChange"
             class="type-selector"
             :disabled="loading"
           >
-            <option value="normal">عادي</option>
-            <option value="all">الكل</option>
-            <option value="smart">ذكي</option>
+            <option value="normal">{{ isArabic ? 'عادي' : 'Normal' }}</option>
+            <option value="all">{{ isArabic ? 'الكل' : 'All' }}</option>
+            <option value="smart">{{ isArabic ? 'ذكي' : 'Smart' }}</option>
           </select>
         </div>
 
@@ -32,11 +44,12 @@
             :class="{ loading }"
           >
             <i class="fas fa-sync-alt" :class="{ spinning: loading }"></i>
-            تحديث
+            {{ isArabic ? 'تحديث' : 'Refresh' }}
           </button>
 
           <div v-if="lastFetched" class="last-fetched">
-            آخر تحديث: {{ formatRelativeTimeCairo(lastFetched) }}
+            {{ isArabic ? 'آخر تحديث:' : 'Last updated:' }}
+            {{ formatRelativeTimeCairo(lastFetched) }}
           </div>
         </div>
       </div>
@@ -47,7 +60,7 @@
       <div class="loading-spinner">
         <i class="fas fa-chart-line spinning"></i>
       </div>
-      <p>جاري تحميل بيانات اللوحة...</p>
+      <p>{{ isArabic ? 'جاري تحميل بيانات اللوحة...' : 'Loading dashboard data...' }}</p>
     </div>
 
     <!-- Error State -->
@@ -60,11 +73,11 @@
       <div class="error-actions">
         <button @click="handleRetry" class="retry-btn">
           <i class="fas fa-redo"></i>
-          حاول مرة أخرى
+          {{ isArabic ? 'حاول مرة أخرى' : 'Try Again' }}
         </button>
         <button v-if="isAuthError" @click="handleRelogin" class="login-btn">
           <i class="fas fa-sign-in-alt"></i>
-          إعادة تسجيل الدخول
+          {{ isArabic ? 'إعادة تسجيل الدخول' : 'Sign In Again' }}
         </button>
       </div>
     </div>
@@ -72,10 +85,14 @@
     <!-- Empty State -->
     <EmptyState
       v-else-if="isEmpty"
-      title="لا توجد بيانات تحويل"
-      description="لا توجد تحويلات ميزانية للعرض في الوقت الحالي."
+      :title="isArabic ? 'لا توجد بيانات تحويل' : 'No Transfer Data'"
+      :description="
+        isArabic
+          ? 'لا توجد تحويلات ميزانية للعرض في الوقت الحالي.'
+          : 'No budget transfers available to display at this time.'
+      "
       icon-class="fas fa-chart-bar"
-      action-text="تحديث البيانات"
+      :action-text="isArabic ? 'تحديث البيانات' : 'Refresh Data'"
       @action="handleRefresh"
     />
 
@@ -87,7 +104,7 @@
         <div class="kpi-section glass-section" data-section="kpi">
           <h2 class="section-title">
             <i class="fas fa-chart-pie section-icon"></i>
-            مؤشرات الأداء الرئيسية
+            {{ isArabic ? 'مؤشرات الأداء الرئيسية' : 'Key Performance Indicators' }}
           </h2>
           <div class="kpi-grid">
             <!-- Normal Mode KPIs -->
@@ -98,7 +115,9 @@
                 </div>
                 <div class="kpi-content">
                   <div class="kpi-value">{{ normalData.total_transfers }}</div>
-                  <div class="kpi-label">إجمالي التحويلات</div>
+                  <div class="kpi-label">
+                    {{ isArabic ? 'إجمالي التحويلات' : 'Total Transfers' }}
+                  </div>
                 </div>
               </div>
 
@@ -108,7 +127,7 @@
                 </div>
                 <div class="kpi-content">
                   <div class="kpi-value">{{ normalData.approved_transfers }}</div>
-                  <div class="kpi-label">مُوافق عليها</div>
+                  <div class="kpi-label">{{ isArabic ? 'مُوافق عليها' : 'Approved' }}</div>
                 </div>
               </div>
 
@@ -118,7 +137,7 @@
                 </div>
                 <div class="kpi-content">
                   <div class="kpi-value">{{ normalData.pending_transfers }}</div>
-                  <div class="kpi-label">قيد الانتظار</div>
+                  <div class="kpi-label">{{ isArabic ? 'قيد الانتظار' : 'Pending' }}</div>
                 </div>
               </div>
 
@@ -128,7 +147,7 @@
                 </div>
                 <div class="kpi-content">
                   <div class="kpi-value">{{ normalData.rejected_transfers }}</div>
-                  <div class="kpi-label">مرفوضة</div>
+                  <div class="kpi-label">{{ isArabic ? 'مرفوضة' : 'Rejected' }}</div>
                 </div>
               </div>
             </template>
@@ -141,7 +160,9 @@
                 </div>
                 <div class="kpi-content">
                   <div class="kpi-value">{{ formatCurrency(flowTotals.totalTo) }}</div>
-                  <div class="kpi-label">إجمالي التدفق الداخل</div>
+                  <div class="kpi-label">
+                    {{ isArabic ? 'إجمالي التدفق الداخل' : 'Total Inflow' }}
+                  </div>
                 </div>
               </div>
 
@@ -151,7 +172,9 @@
                 </div>
                 <div class="kpi-content">
                   <div class="kpi-value">{{ formatCurrency(flowTotals.totalFrom) }}</div>
-                  <div class="kpi-label">إجمالي التدفق الخارج</div>
+                  <div class="kpi-label">
+                    {{ isArabic ? 'إجمالي التدفق الخارج' : 'Total Outflow' }}
+                  </div>
                 </div>
               </div>
 
@@ -165,7 +188,15 @@
                 <div class="kpi-content">
                   <div class="kpi-value">{{ formatCurrency(Math.abs(flowTotals.net)) }}</div>
                   <div class="kpi-label">
-                    صافي {{ flowTotals.net >= 0 ? 'التدفق الداخل' : 'التدفق الخارج' }}
+                    {{
+                      isArabic
+                        ? flowTotals.net >= 0
+                          ? 'صافي التدفق الداخل'
+                          : 'صافي التدفق الخارج'
+                        : flowTotals.net >= 0
+                          ? 'Net Inflow'
+                          : 'Net Outflow'
+                    }}
                   </div>
                 </div>
               </div>
@@ -175,8 +206,10 @@
           <!-- Smart Mode Filter Badge -->
           <div v-if="isSmartMode && flowData?.applied_filters" class="filter-badge glass-badge">
             <i class="fas fa-filter"></i>
-            مركز التكلفة: {{ flowData.applied_filters.cost_center_code || 'الكل' }} | الحساب:
-            {{ flowData.applied_filters.account_code || 'الكل' }}
+            {{ isArabic ? 'مركز التكلفة:' : 'Cost Center:' }}
+            {{ flowData.applied_filters.cost_center_code || (isArabic ? 'الكل' : 'All') }} |
+            {{ isArabic ? 'الحساب:' : 'Account:' }}
+            {{ flowData.applied_filters.account_code || (isArabic ? 'الكل' : 'All') }}
           </div>
         </div>
 
@@ -184,11 +217,11 @@
         <div class="overview-section glass-section" data-section="overview">
           <h2 class="section-title">
             <i class="fas fa-chart-bar section-icon"></i>
-            تحليلات عامة
+            {{ isArabic ? 'تحليلات عامة' : 'General Analytics' }}
           </h2>
           <div v-if="isNormalMode && normalData" class="charts-grid">
             <div class="chart-card glass-card">
-              <h3>حالة التحويل</h3>
+              <h3>{{ isArabic ? 'حالة التحويل' : 'Transfer Status' }}</h3>
               <StatusDonut
                 :approved="normalData.approved_transfers"
                 :pending="normalData.pending_transfers"
@@ -197,7 +230,7 @@
             </div>
 
             <div class="chart-card glass-card">
-              <h3>فئات التحويل</h3>
+              <h3>{{ isArabic ? 'فئات التحويل' : 'Transfer Categories' }}</h3>
               <TransferCategories
                 :far="normalData.total_transfers_far"
                 :afr="normalData.total_transfers_afr"
@@ -208,12 +241,12 @@
 
           <div v-else-if="flowData" class="charts-grid">
             <div class="chart-card glass-card wide">
-              <h3>مجاميع مراكز التكلفة</h3>
+              <h3>{{ isArabic ? 'مجاميع مراكز التكلفة' : 'Cost Center Totals' }}</h3>
               <CostCenterTotals :grouped-data="costCenterGrouped" />
             </div>
 
             <div class="chart-card glass-card wide">
-              <h3>مجاميع أكواد الحساب</h3>
+              <h3>{{ isArabic ? 'مجاميع أكواد الحساب' : 'Account Code Totals' }}</h3>
               <AccountCodeTotals :grouped-data="accountCodeGrouped" />
             </div>
           </div>
@@ -227,16 +260,16 @@
         >
           <h2 class="section-title">
             <i class="fas fa-project-diagram section-icon"></i>
-            التحويلات وسير العمل
+            {{ isArabic ? 'التحويلات وسير العمل' : 'Transfers & Workflow' }}
           </h2>
           <div class="charts-grid">
             <div class="chart-card glass-card">
-              <h3>المعلقة حسب المستوى</h3>
+              <h3>{{ isArabic ? 'المعلقة حسب المستوى' : 'Pending by Level' }}</h3>
               <PendingByLevel :pending-by-level="normalData.pending_transfers_by_level" />
             </div>
 
             <div class="chart-card glass-card">
-              <h3>الجدول الزمني للطلبات</h3>
+              <h3>{{ isArabic ? 'الجدول الزمني للطلبات' : 'Requests Timeline' }}</h3>
               <RequestsTimeline :timeline-data="timelineData" />
             </div>
           </div>
@@ -246,16 +279,16 @@
         <div v-if="flowData" class="flows-section glass-section" data-section="flows">
           <h2 class="section-title">
             <i class="fas fa-exchange-alt section-icon"></i>
-            التدفقات والمجاميع
+            {{ isArabic ? 'التدفقات والمجاميع' : 'Flows & Totals' }}
           </h2>
           <div class="flow-visualization">
             <div class="chart-card glass-card">
-              <h3>خريطة حرارية للتدفق</h3>
+              <h3>{{ isArabic ? 'خريطة حرارية للتدفق' : 'Flow Heatmap' }}</h3>
               <FlowHeatmap :heatmap-cells="heatmapCells" />
             </div>
 
             <div class="chart-card glass-card">
-              <h3>مخطط تدفق سانكي</h3>
+              <h3>{{ isArabic ? 'مخطط تدفق سانكي' : 'Sankey Flow Diagram' }}</h3>
               <SankeyDiagram :sankey-data="sankeyData" />
             </div>
           </div>
@@ -265,14 +298,14 @@
         <div class="data-section glass-section" data-section="data">
           <h2 class="section-title">
             <i class="fas fa-table section-icon"></i>
-            تحليلات البيانات
+            {{ isArabic ? 'تحليلات البيانات' : 'Data Analytics' }}
           </h2>
           <div class="data-content glass-card">
             <div class="table-controls">
               <h3>{{ getTableTitle() }}</h3>
               <button @click="exportTableData" class="export-btn glass-btn">
                 <i class="fas fa-download"></i>
-                تصدير CSV
+                {{ isArabic ? 'تصدير CSV' : 'Export CSV' }}
               </button>
             </div>
 
@@ -281,8 +314,10 @@
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th>تاريخ الطلب (توقيت القاهرة)</th>
-                    <th>عدد الأيام</th>
+                    <th>
+                      {{ isArabic ? 'تاريخ الطلب (توقيت القاهرة)' : 'Request Date (Cairo Time)' }}
+                    </th>
+                    <th>{{ isArabic ? 'عدد الأيام' : 'Number of Days' }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -300,23 +335,23 @@
                 <thead>
                   <tr>
                     <th @click="sortTable('cost_center_code')" class="sortable">
-                      مركز التكلفة
+                      {{ isArabic ? 'مركز التكلفة' : 'Cost Center' }}
                       <i class="fas fa-sort sort-icon"></i>
                     </th>
                     <th @click="sortTable('account_code')" class="sortable">
-                      كود الحساب
+                      {{ isArabic ? 'كود الحساب' : 'Account Code' }}
                       <i class="fas fa-sort sort-icon"></i>
                     </th>
                     <th @click="sortTable('total_from_center')" class="sortable">
-                      من المركز
+                      {{ isArabic ? 'من المركز' : 'From Center' }}
                       <i class="fas fa-sort sort-icon"></i>
                     </th>
                     <th @click="sortTable('total_to_center')" class="sortable">
-                      إلى المركز
+                      {{ isArabic ? 'إلى المركز' : 'To Center' }}
                       <i class="fas fa-sort sort-icon"></i>
                     </th>
                     <th @click="sortTable('net')" class="sortable">
-                      صافي التدفق
+                      {{ isArabic ? 'صافي التدفق' : 'Net Flow' }}
                       <i class="fas fa-sort sort-icon"></i>
                     </th>
                   </tr>
@@ -410,12 +445,12 @@
           <div v-if="activeTab === 'transfers' && isNormalMode && normalData" class="tab-panel">
             <div class="charts-grid">
               <div class="chart-card">
-                <h3>المعلقة حسب المستوى</h3>
+                <h3>{{ isArabic ? 'المعلقة حسب المستوى' : 'Pending by Level' }}</h3>
                 <PendingByLevel :pending-by-level="normalData.pending_transfers_by_level" />
               </div>
 
               <div class="chart-card">
-                <h3>الجدول الزمني للطلبات</h3>
+                <h3>{{ isArabic ? 'الجدول الزمني للطلبات' : 'Requests Timeline' }}</h3>
                 <RequestsTimeline :timeline-data="timelineData" />
               </div>
             </div>
@@ -425,12 +460,12 @@
           <div v-if="activeTab === 'flows' && flowData" class="tab-panel">
             <div class="flow-visualization">
               <div class="chart-card">
-                <h3>خريطة حرارية للتدفق</h3>
+                <h3>{{ isArabic ? 'خريطة حرارية للتدفق' : 'Flow Heatmap' }}</h3>
                 <FlowHeatmap :heatmap-cells="heatmapCells" />
               </div>
 
               <div class="chart-card">
-                <h3>مخطط تدفق سانكي</h3>
+                <h3>{{ isArabic ? 'مخطط تدفق سانكي' : 'Sankey Flow Diagram' }}</h3>
                 <SankeyDiagram :sankey-data="sankeyData" />
               </div>
             </div>
@@ -443,7 +478,7 @@
                 <h3>{{ getTableTitle() }}</h3>
                 <button @click="exportTableData" class="export-btn">
                   <i class="fas fa-download"></i>
-                  تصدير CSV
+                  {{ isArabic ? 'تصدير CSV' : 'Export CSV' }}
                 </button>
               </div>
 
@@ -452,8 +487,10 @@
                 <table class="data-table">
                   <thead>
                     <tr>
-                      <th>تاريخ الطلب (توقيت القاهرة)</th>
-                      <th>عدد الأيام</th>
+                      <th>
+                        {{ isArabic ? 'تاريخ الطلب (توقيت القاهرة)' : 'Request Date (Cairo Time)' }}
+                      </th>
+                      <th>{{ isArabic ? 'عدد الأيام' : 'Number of Days' }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -620,14 +657,19 @@ const activeTab = ref<string>('overview')
 
 // Tab configuration
 const availableTabs = computed(() => [
-  { id: 'overview', label: 'نظرة عامة', icon: 'fas fa-chart-bar' },
-  { id: 'transfers', label: 'التحويلات', icon: 'fas fa-project-diagram' },
-  { id: 'flows', label: 'التدفقات', icon: 'fas fa-exchange-alt' },
-  { id: 'data', label: 'البيانات', icon: 'fas fa-table' },
+  { id: 'overview', label: isArabic.value ? 'نظرة عامة' : 'Overview', icon: 'fas fa-chart-bar' },
+  {
+    id: 'transfers',
+    label: isArabic.value ? 'التحويلات' : 'Transfers',
+    icon: 'fas fa-project-diagram',
+  },
+  { id: 'flows', label: isArabic.value ? 'التدفقات' : 'Flows', icon: 'fas fa-exchange-alt' },
+  { id: 'data', label: isArabic.value ? 'البيانات' : 'Data', icon: 'fas fa-table' },
 ])
 
 // Computed properties
 const isDarkMode = computed(() => themeStore.darkMode)
+const isArabic = computed(() => themeStore.language === 'ar')
 const loading = computed(() => dashboardStore.loading)
 const error = computed(() => dashboardStore.error)
 const hasData = computed(() => dashboardStore.hasData)
@@ -716,14 +758,15 @@ const handleRelogin = () => {
 }
 
 const getErrorTitle = () => {
-  if (isAuthError.value) return 'مطلوب المصادقة'
-  if (error.value?.includes('500')) return 'خطأ في الخادم'
-  return 'فشل الطلب'
+  if (isAuthError.value) return isArabic.value ? 'مطلوب المصادقة' : 'Authentication Required'
+  if (error.value?.includes('500')) return isArabic.value ? 'خطأ في الخادم' : 'Server Error'
+  return isArabic.value ? 'فشل الطلب' : 'Request Failed'
 }
 
 const getTableTitle = () => {
-  if (isNormalMode.value) return 'بيانات الجدول الزمني للطلبات'
-  return 'بيانات مجموعات التدفق'
+  if (isNormalMode.value)
+    return isArabic.value ? 'بيانات الجدول الزمني للطلبات' : 'Request Timeline Data'
+  return isArabic.value ? 'بيانات مجموعات التدفق' : 'Flow Combinations Data'
 }
 
 const exportTableData = () => {
