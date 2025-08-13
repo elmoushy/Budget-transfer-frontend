@@ -1,25 +1,25 @@
 <template>
-  <div class="budget-dashboard" :class="{ 'dark-mode': isDarkMode }">
+  <div class="budget-dashboard" :class="{ 'dark-mode': isDarkMode, rtl: isRTL }">
     <!-- Header Controls -->
     <div class="dashboard-header">
       <div class="dashboard-info">
-        <h1 class="dashboard-title">Budget Transfer Dashboard</h1>
-        <p class="dashboard-subtitle">Comprehensive budget transfer analytics and insights</p>
+        <h1 class="dashboard-title">{{ translations.dashboardTitle }}</h1>
+        <p class="dashboard-subtitle">{{ translations.dashboardSubtitle }}</p>
       </div>
 
       <div class="dashboard-controls">
         <!-- Type Selector -->
         <div class="control-group">
-          <label>Mode:</label>
+          <label>{{ translations.mode }}</label>
           <select
             v-model="selectedType"
             @change="handleTypeChange"
             class="type-selector"
             :disabled="loading"
           >
-            <option value="normal">Normal</option>
-            <option value="all">All</option>
-            <option value="smart">Smart</option>
+            <option value="normal">{{ translations.normalMode }}</option>
+            <option value="all">{{ translations.allMode }}</option>
+            <option value="smart">{{ translations.smartMode }}</option>
           </select>
         </div>
 
@@ -32,11 +32,11 @@
             :class="{ loading }"
           >
             <i class="fas fa-sync-alt" :class="{ spinning: loading }"></i>
-            Refresh
+            {{ translations.refreshData }}
           </button>
 
           <div v-if="lastFetched" class="last-fetched">
-            Last updated: {{ formatRelativeTimeCairo(lastFetched) }}
+            {{ translations.lastFetched }} {{ formatRelativeTimeCairo(lastFetched) }}
           </div>
         </div>
       </div>
@@ -47,7 +47,7 @@
       <div class="loading-spinner">
         <i class="fas fa-chart-line spinning"></i>
       </div>
-      <p>Loading dashboard data...</p>
+      <p>{{ translations.loadingDashboard }}</p>
     </div>
 
     <!-- Error State -->
@@ -60,11 +60,11 @@
       <div class="error-actions">
         <button @click="handleRetry" class="retry-btn">
           <i class="fas fa-redo"></i>
-          Try Again
+          {{ translations.tryAgain }}
         </button>
         <button v-if="isAuthError" @click="handleRelogin" class="login-btn">
           <i class="fas fa-sign-in-alt"></i>
-          Re-login
+          {{ translations.reLogin }}
         </button>
       </div>
     </div>
@@ -72,10 +72,10 @@
     <!-- Empty State -->
     <EmptyState
       v-else-if="isEmpty"
-      title="No Transfer Data"
-      description="There are no budget transfers to display at the moment."
+      :title="translations.noTransferData"
+      :description="translations.noTransferDescription"
       icon-class="fas fa-chart-bar"
-      action-text="Refresh Data"
+      :action-text="translations.refreshDataBtn"
       @action="handleRefresh"
     />
 
@@ -87,7 +87,7 @@
         <div class="kpi-section glass-section" data-section="kpi">
           <h2 class="section-title">
             <i class="fas fa-chart-pie section-icon"></i>
-            Key Performance Indicators
+            {{ translations.keyMetrics }}
           </h2>
           <div class="kpi-grid">
             <!-- Normal Mode KPIs -->
@@ -98,7 +98,9 @@
                 </div>
                 <div class="kpi-content">
                   <div class="kpi-value">{{ normalData.total_transfers }}</div>
-                  <div class="kpi-label">Total Transfers</div>
+                  <div class="kpi-label">
+                    {{ translations.totalTransfers || 'Total Transfers' }}
+                  </div>
                 </div>
               </div>
 
@@ -108,7 +110,7 @@
                 </div>
                 <div class="kpi-content">
                   <div class="kpi-value">{{ normalData.approved_transfers }}</div>
-                  <div class="kpi-label">Approved</div>
+                  <div class="kpi-label">{{ translations.approved }}</div>
                 </div>
               </div>
 
@@ -118,7 +120,7 @@
                 </div>
                 <div class="kpi-content">
                   <div class="kpi-value">{{ normalData.pending_transfers }}</div>
-                  <div class="kpi-label">Pending</div>
+                  <div class="kpi-label">{{ translations.pending }}</div>
                 </div>
               </div>
 
@@ -128,7 +130,7 @@
                 </div>
                 <div class="kpi-content">
                   <div class="kpi-value">{{ normalData.rejected_transfers }}</div>
-                  <div class="kpi-label">Rejected</div>
+                  <div class="kpi-label">{{ translations.rejected }}</div>
                 </div>
               </div>
             </template>
@@ -141,7 +143,7 @@
                 </div>
                 <div class="kpi-content">
                   <div class="kpi-value">{{ formatCurrency(flowTotals.totalTo) }}</div>
-                  <div class="kpi-label">Total Inflow</div>
+                  <div class="kpi-label">{{ translations.totalInflow }}</div>
                 </div>
               </div>
 
@@ -151,7 +153,7 @@
                 </div>
                 <div class="kpi-content">
                   <div class="kpi-value">{{ formatCurrency(flowTotals.totalFrom) }}</div>
-                  <div class="kpi-label">Total Outflow</div>
+                  <div class="kpi-label">{{ translations.totalOutflow }}</div>
                 </div>
               </div>
 
@@ -164,29 +166,33 @@
                 </div>
                 <div class="kpi-content">
                   <div class="kpi-value">{{ formatCurrency(Math.abs(flowTotals.net)) }}</div>
-                  <div class="kpi-label">Net {{ flowTotals.net >= 0 ? 'Inflow' : 'Outflow' }}</div>
+                  <div class="kpi-label">
+                    {{ flowTotals.net >= 0 ? translations.netInflow : translations.netOutflow }}
+                  </div>
                 </div>
               </div>
             </template>
           </div>
 
           <!-- Smart Mode Filter Badge -->
-          <div v-if="isSmartMode && flowData?.applied_filters" class="filter-badge glass-badge">
+          <!-- <div v-if="isSmartMode && flowData?.applied_filters" class="filter-badge glass-badge">
             <i class="fas fa-filter"></i>
-            Cost Center: {{ flowData.applied_filters.cost_center_code || 'ALL' }} | Account:
-            {{ flowData.applied_filters.account_code || 'ALL' }}
-          </div>
+            {{ translations.costCenterFilter }}
+            {{ flowData.applied_filters.cost_center_code || translations.all }} |
+            {{ translations.accountFilter }}
+            {{ flowData.applied_filters.account_code || translations.all }}
+          </div> -->
         </div>
 
         <!-- Overview Section -->
         <div class="overview-section glass-section" data-section="overview">
           <h2 class="section-title">
             <i class="fas fa-chart-bar section-icon"></i>
-            Overview Analytics
+            {{ translations.overviewAnalytics }}
           </h2>
           <div v-if="isNormalMode && normalData" class="charts-grid">
             <div class="chart-card glass-card">
-              <h3>Transfer Status</h3>
+              <h3>{{ translations.transferStatus }}</h3>
               <StatusDonut
                 :approved="normalData.approved_transfers"
                 :pending="normalData.pending_transfers"
@@ -195,7 +201,7 @@
             </div>
 
             <div class="chart-card glass-card">
-              <h3>Transfer Categories</h3>
+              <h3>{{ translations.transferCategories }}</h3>
               <TransferCategories
                 :far="normalData.total_transfers_far"
                 :afr="normalData.total_transfers_afr"
@@ -206,12 +212,12 @@
 
           <div v-else-if="flowData" class="charts-grid">
             <div class="chart-card glass-card wide">
-              <h3>Cost Center Totals</h3>
+              <h3>{{ translations.costCenterTotals }}</h3>
               <CostCenterTotals :grouped-data="costCenterGrouped" />
             </div>
 
             <div class="chart-card glass-card wide">
-              <h3>Account Code Totals</h3>
+              <h3>{{ translations.accountCodeTotals }}</h3>
               <AccountCodeTotals :grouped-data="accountCodeGrouped" />
             </div>
           </div>
@@ -225,16 +231,16 @@
         >
           <h2 class="section-title">
             <i class="fas fa-project-diagram section-icon"></i>
-            Transfers & Workflow
+            {{ translations.transfersWorkflow }}
           </h2>
           <div class="charts-grid">
             <div class="chart-card glass-card">
-              <h3>Pending by Level</h3>
+              <h3>{{ translations.pendingByLevel }}</h3>
               <PendingByLevel :pending-by-level="normalData.pending_transfers_by_level" />
             </div>
 
             <div class="chart-card glass-card">
-              <h3>Requests Timeline</h3>
+              <h3>{{ translations.requestsTimeline }}</h3>
               <RequestsTimeline :timeline-data="timelineData" />
             </div>
           </div>
@@ -244,16 +250,16 @@
         <div v-if="flowData" class="flows-section glass-section" data-section="flows">
           <h2 class="section-title">
             <i class="fas fa-exchange-alt section-icon"></i>
-            Flows & Totals
+            {{ translations.flowsTotals }}
           </h2>
           <div class="flow-visualization">
             <div class="chart-card glass-card">
-              <h3>Flow Heatmap</h3>
+              <h3>{{ translations.flowHeatmap }}</h3>
               <FlowHeatmap :heatmap-cells="heatmapCells" />
             </div>
 
             <div class="chart-card glass-card">
-              <h3>Sankey Flow Diagram</h3>
+              <h3>{{ translations.sankeyDiagram }}</h3>
               <SankeyDiagram :sankey-data="sankeyData" />
             </div>
           </div>
@@ -263,14 +269,14 @@
         <div class="data-section glass-section" data-section="data">
           <h2 class="section-title">
             <i class="fas fa-table section-icon"></i>
-            Data Analytics
+            {{ translations.dataTables }}
           </h2>
           <div class="data-content glass-card">
             <div class="table-controls">
               <h3>{{ getTableTitle() }}</h3>
               <button @click="exportTableData" class="export-btn glass-btn">
                 <i class="fas fa-download"></i>
-                Export CSV
+                {{ translations.exportData }}
               </button>
             </div>
 
@@ -298,23 +304,23 @@
                 <thead>
                   <tr>
                     <th @click="sortTable('cost_center_code')" class="sortable">
-                      Cost Center
+                      {{ translations.costCenter }}
                       <i class="fas fa-sort sort-icon"></i>
                     </th>
                     <th @click="sortTable('account_code')" class="sortable">
-                      Account Code
+                      {{ translations.accountCode }}
                       <i class="fas fa-sort sort-icon"></i>
                     </th>
                     <th @click="sortTable('total_from_center')" class="sortable">
-                      From Center
+                      {{ translations.fromCenter }}
                       <i class="fas fa-sort sort-icon"></i>
                     </th>
                     <th @click="sortTable('total_to_center')" class="sortable">
-                      To Center
+                      {{ translations.toCenter }}
                       <i class="fas fa-sort sort-icon"></i>
                     </th>
                     <th @click="sortTable('net')" class="sortable">
-                      Net Flow
+                      {{ translations.netFlow }}
                       <i class="fas fa-sort sort-icon"></i>
                     </th>
                   </tr>
@@ -400,7 +406,7 @@
 
       <!-- Tabs Navigation -->
       <div class="tabs-section">
-        <div class="tabs-nav">
+        <!-- <div class="tabs-nav">
           <button
             v-for="tab in availableTabs"
             :key="tab.id"
@@ -410,44 +416,11 @@
             <i :class="tab.icon"></i>
             {{ tab.label }}
           </button>
-        </div>
+        </div> -->
 
         <!-- Tab Content -->
         <div class="tab-content">
           <!-- Overview Tab -->
-          <div v-if="activeTab === 'overview'" class="tab-panel">
-            <div v-if="isNormalMode && normalData" class="charts-grid">
-              <div class="chart-card">
-                <h3>Transfer Status</h3>
-                <StatusDonut
-                  :approved="normalData.approved_transfers"
-                  :pending="normalData.pending_transfers"
-                  :rejected="normalData.rejected_transfers"
-                />
-              </div>
-
-              <div class="chart-card">
-                <h3>Transfer Categories</h3>
-                <TransferCategories
-                  :far="normalData.total_transfers_far"
-                  :afr="normalData.total_transfers_afr"
-                  :fad="normalData.total_transfers_fad"
-                />
-              </div>
-            </div>
-
-            <div v-else-if="flowData" class="charts-grid">
-              <div class="chart-card wide">
-                <h3>Cost Center Totals</h3>
-                <CostCenterTotals :grouped-data="costCenterGrouped" />
-              </div>
-
-              <div class="chart-card wide">
-                <h3>Account Code Totals</h3>
-                <AccountCodeTotals :grouped-data="accountCodeGrouped" />
-              </div>
-            </div>
-          </div>
 
           <!-- Transfers & Workflow Tab (Normal Mode) -->
           <div v-if="activeTab === 'transfers' && isNormalMode && normalData" class="tab-panel">
@@ -659,9 +632,21 @@ const dashboardStore = useBudgetDashboardStore()
 const selectedType = ref<DashboardType>('normal')
 const sortColumn = ref<string>('')
 const sortDirection = ref<'asc' | 'desc'>('asc')
+const activeTab = ref<string>('overview')
+
+// Define available tabs
+const availableTabs = computed(() => [
+  { id: 'overview', label: translations.value.overview, icon: 'fas fa-chart-pie' },
+  { id: 'transfers', label: translations.value.transfers, icon: 'fas fa-exchange-alt' },
+  { id: 'flows', label: translations.value.flows, icon: 'fas fa-project-diagram' },
+  { id: 'data', label: translations.value.data, icon: 'fas fa-table' },
+  { id: 'performance', label: translations.value.performance, icon: 'fas fa-tachometer-alt' },
+])
 
 // Computed properties
 const isDarkMode = computed(() => themeStore.darkMode)
+const isArabic = computed(() => themeStore.language === 'ar')
+const isRTL = computed(() => themeStore.language === 'ar')
 const loading = computed(() => dashboardStore.loading)
 const error = computed(() => dashboardStore.error)
 const hasData = computed(() => dashboardStore.hasData)
@@ -707,6 +692,169 @@ const flowTotals = computed(() => {
   return calculateTotalSums(flowData.value.cost_center_totals)
 })
 
+// Arabic translations
+const translations = computed(() => {
+  if (isArabic.value) {
+    return {
+      // Header
+      dashboardTitle: 'لوحة تحكم تحويل الميزانية',
+      dashboardSubtitle: 'تحليلات شاملة ورؤى تحويل الميزانية',
+      mode: 'الوضع:',
+      refreshData: 'تحديث البيانات',
+      lastFetched: 'آخر تحديث:',
+
+      // Dashboard types
+      normalMode: 'عادي',
+      allMode: 'الكل',
+      smartMode: 'ذكي',
+
+      // Loading states
+      loadingDashboard: 'جاري تحميل بيانات لوحة التحكم...',
+      noTransferData: 'لا توجد بيانات تحويل',
+      noTransferDescription: 'لا توجد تحويلات ميزانية للعرض في الوقت الحالي.',
+      refreshDataBtn: 'تحديث البيانات',
+
+      // Error states
+      authRequired: 'مطلوب مصادقة',
+      serverError: 'خطأ في الخادم',
+      requestFailed: 'فشل الطلب',
+      tryAgain: 'المحاولة مرة أخرى',
+      reLogin: 'تسجيل الدخول مرة أخرى',
+
+      // KPI labels
+      approved: 'موافق عليه',
+      pending: 'معلق',
+      rejected: 'مرفوض',
+      totalTransfers: 'إجمالي التحويلات',
+      totalInflow: 'إجمالي التدفق الداخل',
+      totalOutflow: 'إجمالي التدفق الخارج',
+      netInflow: 'صافي التدفق الداخل',
+      netOutflow: 'صافي التدفق الخارج',
+
+      // Section titles
+      keyMetrics: 'المؤشرات الرئيسية',
+      overviewAnalytics: 'تحليلات الملخص',
+      transfersWorkflow: 'التحويلات وسير العمل',
+      flowsTotals: 'التدفقات والمجاميع',
+      dataTables: 'جداول البيانات',
+      performanceMetrics: 'مقاييس الأداء',
+
+      // Chart titles
+      transferStatus: 'حالة التحويل',
+      transferCategories: 'فئات التحويل',
+      pendingByLevel: 'المعلق حسب المستوى',
+      requestsTimeline: 'الجدول الزمني للطلبات',
+      costCenterTotals: 'مجاميع مراكز التكلفة',
+      accountCodeTotals: 'مجاميع رموز الحسابات',
+      flowHeatmap: 'خريطة حرارية للتدفق',
+      sankeyDiagram: 'مخطط سانكي',
+
+      // Table headers
+      costCenter: 'مركز التكلفة',
+      accountCode: 'رمز الحساب',
+      fromCenter: 'من المركز',
+      toCenter: 'إلى المركز',
+      netFlow: 'صافي التدفق',
+
+      // Data table
+      requestTimelineData: 'بيانات الجدول الزمني للطلبات',
+      flowCombinationsData: 'بيانات تركيبات التدفق',
+      exportData: 'تصدير البيانات',
+
+      // Tabs
+      overview: 'الملخص',
+      transfers: 'التحويلات وسير العمل',
+      flows: 'التدفقات والمجاميع',
+      data: 'جداول البيانات',
+      performance: 'الأداء',
+
+      // Filter badge
+      costCenterFilter: 'مركز التكلفة:',
+      accountFilter: 'الحساب:',
+      all: 'الكل',
+    }
+  }
+
+  return {
+    // Header
+    dashboardTitle: 'Budget Transfer Dashboard',
+    dashboardSubtitle: 'Comprehensive budget transfer analytics and insights',
+    mode: 'Mode:',
+    refreshData: 'Refresh Data',
+    lastFetched: 'Last updated:',
+
+    // Dashboard types
+    normalMode: 'Normal',
+    allMode: 'All',
+    smartMode: 'Smart',
+
+    // Loading states
+    loadingDashboard: 'Loading dashboard data...',
+    noTransferData: 'No Transfer Data',
+    noTransferDescription: 'There are no budget transfers to display at the moment.',
+    refreshDataBtn: 'Refresh Data',
+
+    // Error states
+    authRequired: 'Authentication Required',
+    serverError: 'Server Error',
+    requestFailed: 'Request Failed',
+    tryAgain: 'Try Again',
+    reLogin: 'Re-login',
+
+    // KPI labels
+    approved: 'Approved',
+    pending: 'Pending',
+    rejected: 'Rejected',
+    totalTransfers: 'Total Transfers',
+    totalInflow: 'Total Inflow',
+    totalOutflow: 'Total Outflow',
+    netInflow: 'Net Inflow',
+    netOutflow: 'Net Outflow',
+
+    // Section titles
+    keyMetrics: 'Key Metrics',
+    overviewAnalytics: 'Overview Analytics',
+    transfersWorkflow: 'Transfers & Workflow',
+    flowsTotals: 'Flows & Totals',
+    dataTables: 'Data Tables',
+    performanceMetrics: 'Performance Metrics',
+
+    // Chart titles
+    transferStatus: 'Transfer Status',
+    transferCategories: 'Transfer Categories',
+    pendingByLevel: 'Pending by Level',
+    requestsTimeline: 'Requests Timeline',
+    costCenterTotals: 'Cost Center Totals',
+    accountCodeTotals: 'Account Code Totals',
+    flowHeatmap: 'Flow Heatmap',
+    sankeyDiagram: 'Sankey Diagram',
+
+    // Table headers
+    costCenter: 'Cost Center',
+    accountCode: 'Account Code',
+    fromCenter: 'From Center',
+    toCenter: 'To Center',
+    netFlow: 'Net Flow',
+
+    // Data table
+    requestTimelineData: 'Request Timeline Data',
+    flowCombinationsData: 'Flow Combinations Data',
+    exportData: 'Export Data',
+
+    // Tabs
+    overview: 'Overview',
+    transfers: 'Transfers & Workflow',
+    flows: 'Flows & Totals',
+    data: 'Data Tables',
+    performance: 'Performance',
+
+    // Filter badge
+    costCenterFilter: 'Cost Center:',
+    accountFilter: 'Account:',
+    all: 'ALL',
+  }
+})
+
 const sortedTableData = computed(() => {
   if (!flowData.value?.filtered_combinations) return []
 
@@ -750,14 +898,14 @@ const handleRelogin = () => {
 }
 
 const getErrorTitle = () => {
-  if (isAuthError.value) return 'Authentication Required'
-  if (error.value?.includes('500')) return 'Server Error'
-  return 'Request Failed'
+  if (isAuthError.value) return translations.value.authRequired
+  if (error.value?.includes('500')) return translations.value.serverError
+  return translations.value.requestFailed
 }
 
 const getTableTitle = () => {
-  if (isNormalMode.value) return 'Request Timeline Data'
-  return 'Flow Combinations Data'
+  if (isNormalMode.value) return translations.value.requestTimelineData
+  return translations.value.flowCombinationsData
 }
 
 const exportTableData = () => {
@@ -1681,5 +1829,149 @@ html {
 
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, #8a2a44, #e14b6a);
+}
+
+/* RTL Support for Arabic */
+.budget-dashboard.rtl {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Tajawal', 'Arial', 'Tahoma', sans-serif;
+}
+
+.budget-dashboard.rtl .dashboard-header {
+  direction: rtl;
+}
+
+.budget-dashboard.rtl .dashboard-controls {
+  flex-direction: row-reverse;
+}
+
+.budget-dashboard.rtl .control-group label {
+  text-align: right;
+}
+
+.budget-dashboard.rtl .action-group {
+  align-items: flex-start;
+}
+
+.budget-dashboard.rtl .last-fetched {
+  text-align: right;
+}
+
+.budget-dashboard.rtl .section-title {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.budget-dashboard.rtl .section-icon {
+  margin-left: 0;
+  margin-right: 1rem;
+}
+
+.budget-dashboard.rtl .kpi-card {
+  text-align: right;
+}
+
+.budget-dashboard.rtl .kpi-icon {
+  margin-left: 1.5rem;
+  margin-right: 0;
+}
+
+.budget-dashboard.rtl .chart-card h3 {
+  text-align: right;
+  flex-direction: row-reverse;
+}
+
+.budget-dashboard.rtl .table-controls {
+  flex-direction: row-reverse;
+}
+
+.budget-dashboard.rtl .data-table {
+  direction: rtl;
+}
+
+.budget-dashboard.rtl .data-table th,
+.budget-dashboard.rtl .data-table td {
+  text-align: right;
+}
+
+.budget-dashboard.rtl .data-table th.sortable {
+  direction: rtl;
+}
+
+.budget-dashboard.rtl .sort-icon {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+.budget-dashboard.rtl .filter-badge {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.budget-dashboard.rtl .error-container,
+.budget-dashboard.rtl .loading-container {
+  direction: rtl;
+  text-align: center;
+}
+
+.budget-dashboard.rtl .error-actions {
+  flex-direction: row-reverse;
+}
+
+.budget-dashboard.rtl .tabs-nav {
+  direction: rtl;
+}
+
+.budget-dashboard.rtl .tab-btn {
+  flex-direction: row-reverse;
+}
+
+/* Arabic font enhancements */
+.budget-dashboard.rtl h1,
+.budget-dashboard.rtl h2,
+.budget-dashboard.rtl h3,
+.budget-dashboard.rtl h4 {
+  font-family: 'Tajawal', 'Arial', 'Tahoma', sans-serif;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.budget-dashboard.rtl .dashboard-title {
+  background: linear-gradient(135deg, #e14b6a, #8a2a44, #e14b6a);
+  background-size: 200% 200%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: gradientShift 3s ease-in-out infinite;
+}
+
+.budget-dashboard.rtl .kpi-value {
+  font-family: 'Tajawal', 'Arial', 'Tahoma', sans-serif;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* Dark mode RTL adjustments */
+.budget-dashboard.rtl.dark-mode .dashboard-title {
+  background: linear-gradient(135deg, #e14b6a, #d946ef, #e14b6a);
+  background-size: 200% 200%;
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+/* Responsive RTL adjustments */
+@media (max-width: 768px) {
+  .budget-dashboard.rtl .dashboard-header {
+    text-align: center;
+  }
+
+  .budget-dashboard.rtl .dashboard-controls {
+    flex-direction: column;
+  }
+
+  .budget-dashboard.rtl .table-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 </style>

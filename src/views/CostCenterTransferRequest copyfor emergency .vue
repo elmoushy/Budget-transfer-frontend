@@ -611,7 +611,7 @@ interface AlertState {
   show: boolean
   message: string
   type: string
-  timer: number | null
+  timer: NodeJS.Timeout | null
 }
 
 interface DropdownChangeEvent {

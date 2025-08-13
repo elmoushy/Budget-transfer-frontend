@@ -16,7 +16,7 @@
       </p>
 
       <!-- Simplified flow representation -->
-      <div class="simplified-flows">
+      <div class="simplified-flows no-rtl">
         <div class="flow-summary">
           <h5>Flow Summary:</h5>
           <div class="flow-stats">
@@ -252,6 +252,20 @@ const totalFlowValue = computed(() =>
 
 .legend-line.outflow {
   background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+/* Prevent RTL styling on flow representation */
+.no-rtl {
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+.no-rtl .stat-item {
+  flex-direction: row !important;
+}
+
+.no-rtl .legend-item {
+  flex-direction: row !important;
 }
 
 @media (max-width: 768px) {

@@ -597,7 +597,7 @@ const hasPrevPage = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(6) // Add page size state
 const searchQuery = ref('')
-const searchTimer = ref<number | null>(null)
+const searchTimer = ref<NodeJS.Timeout | null>(null)
 
 // Modal states
 const showModal = ref(false)

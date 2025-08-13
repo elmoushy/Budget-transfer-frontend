@@ -412,7 +412,7 @@ function translateYesNo(value: string): string {
 }
 
 // Search functionality with debounce
-let searchTimeout: number | null = null
+let searchTimeout: NodeJS.Timeout | null = null
 
 function handleSearch() {
   // Clear existing timeout

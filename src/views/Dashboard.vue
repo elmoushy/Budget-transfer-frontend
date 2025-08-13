@@ -1,6 +1,10 @@
 <!-- DashboardView.vue -->
 <template>
-  <div class="dashboard" :class="{ 'dark-mode': isDarkMode, rtl: isRTL }">
+  <div
+    class="dashboard"
+    :class="{ 'dark-mode': isDarkMode, rtl: isRTL }"
+    :dir="isRTL ? 'rtl' : 'ltr'"
+  >
     <BudgetDashboard />
   </div>
 </template>
@@ -13,7 +17,7 @@ import BudgetDashboard from '@/components/BudgetDashboard.vue'
 export default {
   name: 'DashboardView',
   components: {
-    BudgetDashboard
+    BudgetDashboard,
   },
   setup() {
     const themeStore = useThemeStore()
@@ -23,7 +27,7 @@ export default {
 
     return {
       isDarkMode,
-      isRTL
+      isRTL,
     }
   },
 }

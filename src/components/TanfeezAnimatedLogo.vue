@@ -67,7 +67,7 @@ export default {
   data() {
     return {
       shouldAnimate: false,
-      animationInterval: null as number | null,
+      animationInterval: null as NodeJS.Timeout | null,
     }
   },
   mounted() {
