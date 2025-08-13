@@ -1,0 +1,131 @@
+/* filepath: c:\Users\iP\Full Stack\Budget-transfer-frontend\src\assets\css\Enhancements.css */
+/* Enhancements-specific styles that extend the shared page styles */
+
+.enhancements-page {
+  /* Any specific styles for enhancements page container that differ from page-container */
+}
+
+/* Any enhancements-specific overrides that aren't in shared styles */
+
+/* Attachment cell styling */
+.attachment-cell {
+  display: flex;
+  justify-content: center;
+}
+
+.attachment-indicator {
+  position: relative;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.attachment-indicator:hover {
+  background-color: rgba(109, 26, 54, 0.1);
+  transform: scale(1.15);
+}
+
+.attachment-indicator::after {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.has-attachments {
+  color: #047857;
+}
+
+.has-attachments::after {
+  background: rgba(52, 211, 153, 0.2);
+  animation: scaleIn 0.3s ease;
+}
+
+.has-attachments:hover::after {
+  background: rgba(52, 211, 153, 0.3);
+}
+
+.no-attachments {
+  color: #6b7280;
+}
+
+.no-attachments::after {
+  background: rgba(156, 163, 175, 0.2);
+}
+
+.no-attachments:hover::after {
+  background: rgba(156, 163, 175, 0.3);
+}
+
+.attachment-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #6d1a36;
+  color: white;
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: scaleIn 0.3s ease;
+}
+
+@keyframes scaleIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.attachment-text {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.attachment-text.with-attachments {
+  color: #047857;
+  font-weight: 600;
+}
+
+/* Dark mode attachment styles */
+.dark-mode .has-attachments {
+  color: #4ade80;
+}
+
+.dark-mode .has-attachments::after {
+  background: rgba(52, 211, 153, 0.15);
+}
+
+.dark-mode .no-attachments {
+  color: #9ca3af;
+}
+
+.dark-mode .no-attachments::after {
+  background: rgba(156, 163, 175, 0.15);
+}
+
+.dark-mode .attachment-badge {
+  background: #8a2a44;
+}
+
+.dark-mode .attachment-text {
+  color: #9ca3af;
+}
+
+.dark-mode .attachment-text.with-attachments {
+  color: #4ade80;
+}
