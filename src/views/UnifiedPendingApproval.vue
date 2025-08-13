@@ -88,7 +88,10 @@
                 </span>
               </td>
               <td class="td-code">
-                <router-link :to="getDetailRoute(row)" class="code-link">
+                <router-link
+                  :to="{ path: getDetailRoute(row), query: { viewOnly: 'true' } }"
+                  class="code-link"
+                >
                   {{ row.code }}
                 </router-link>
               </td>
@@ -97,12 +100,7 @@
               <td class="td-transaction-date">{{ row.transaction_date }}</td>
               <td class="td-actions">
                 <div class="action-buttons-group">
-                  <button
-                    v-if="routeConfig.showViewButton"
-                    class="action-btn view-btn"
-                    @click="viewDetails(row)"
-                    title="View"
-                  >
+                  <button class="action-btn view-btn" @click="viewDetails(row)" title="View">
                     <EyeIcon />
                   </button>
                   <button class="action-btn approve-btn" @click="approveRow(row)" title="Approve">
@@ -322,7 +320,7 @@ const routeConfigs: Record<string, RouteConfig> = {
       en: 'Transfers Pending Approval',
     },
     apiCode: 'FAR',
-    detailRoute: '/cost-center-transfer/:id?viewOnly=true',
+    detailRoute: '/cost-center-transfer/:id',
     showViewButton: false,
     headers: {
       ar: {
@@ -644,8 +642,11 @@ const paginatedRows = computed(() => rows.value)
 
 // ───────────────────────────────────────────────────────────── Row Actions
 function viewDetails(row: RowData) {
-  const route = getDetailRoute(row)
-  router.push(route)
+  const routePath = getDetailRoute(row)
+  router.push({
+    path: routePath,
+    query: { viewOnly: 'true' },
+  })
 }
 
 function approveRow(row: RowData) {

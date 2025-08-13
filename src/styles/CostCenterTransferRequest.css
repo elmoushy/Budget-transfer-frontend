@@ -2125,3 +2125,15 @@
     transition: none;
   }
 }
+
+/* Button Loading Spinner */
+.btn-icon.loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top: 2px solid currentColor;
+  animation: spin 1s linear infinite;
+  margin-right: 0;
+}

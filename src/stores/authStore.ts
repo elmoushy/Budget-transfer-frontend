@@ -14,6 +14,7 @@ interface AuthState {
   token: string | null
   refreshToken: string | null
   user: User | null
+  user_level?: number
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -22,6 +23,8 @@ export const useAuthStore = defineStore('auth', () => {
   const refreshToken = ref<string | null>(localStorage.getItem('refreshToken'))
   const userStr = localStorage.getItem('user')
   const user = ref<User | null>(userStr && userStr !== 'undefined' ? JSON.parse(userStr) : null)
+  const userLevelStr = localStorage.getItem('user_level')
+  const userLevel = ref<number | null>(userLevelStr ? parseInt(userLevelStr) : null)
   const sessionExpired = ref(false)
   const isRefreshing = ref(false)
 
@@ -33,6 +36,7 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = auth.token
     refreshToken.value = auth.refreshToken
     user.value = auth.user
+    userLevel.value = auth.user_level || null
     sessionExpired.value = false
 
     // Store in localStorage for persistence
@@ -45,6 +49,9 @@ export const useAuthStore = defineStore('auth', () => {
     if (auth.user) {
       localStorage.setItem('user', JSON.stringify(auth.user))
     }
+    if (auth.user_level !== undefined) {
+      localStorage.setItem('user_level', auth.user_level.toString())
+    }
   }
 
   async function logout() {
@@ -52,6 +59,7 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = null
     refreshToken.value = null
     user.value = null
+    userLevel.value = null
     sessionExpired.value = false
     isRefreshing.value = false
 
@@ -59,6 +67,7 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('token')
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('user')
+    localStorage.removeItem('user_level')
 
     // Could add API call to invalidate token on server if needed
     // await fetch(`${API_BASE_URL}${ENDPOINTS.AUTH.LOGOUT}`, {...})
@@ -151,6 +160,7 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = null
     refreshToken.value = null
     user.value = null
+    userLevel.value = null
     sessionExpired.value = false
     isRefreshing.value = false
 
@@ -158,6 +168,7 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('token')
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('user')
+    localStorage.removeItem('user_level')
   }
 
   // Helper to reset the session expired flag
@@ -254,6 +265,7 @@ export const useAuthStore = defineStore('auth', () => {
     token,
     refreshToken,
     user,
+    userLevel,
     isAuthenticated,
     sessionExpired,
     isRefreshing,

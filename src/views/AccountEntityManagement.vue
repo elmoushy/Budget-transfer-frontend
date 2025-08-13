@@ -7,14 +7,16 @@
       <div class="filter-container">
         <label for="cost-center">{{ isArabic ? 'مركز التكلفة:' : 'Cost Center:' }}</label>
         <div class="select-container">
-          <select id="cost-center" v-model="selectedCostCenter" @change="onCostCenterChange">
-            <option value="" disabled>
-              {{ isArabic ? '-- اختر مركز التكلفة --' : '-- Select Cost Center --' }}
-            </option>
-            <option v-for="entity in entities" :key="entity.id" :value="entity.entity">
-              {{ entity.alias_default }}
-            </option>
-          </select>
+          <SearchableDropdown
+            v-model="selectedCostCenter"
+            :options="costCenterOptions"
+            :placeholder="isArabic ? '-- اختر مركز التكلفة --' : '-- Select Cost Center --'"
+            :searchPlaceholder="isArabic ? 'البحث في مراكز التكلفة...' : 'Search cost centers...'"
+            :noResultsText="isArabic ? 'لا توجد نتائج' : 'No results found'"
+            :isDarkMode="isDarkMode"
+            :isRtl="isArabic"
+            @change="onCostCenterChange"
+          />
         </div>
       </div>
 
@@ -186,19 +188,50 @@
 import { ref, computed, onMounted } from 'vue'
 import { useThemeStore } from '@/stores/themeStore'
 import apiService from '@/services/apiService'
+import SearchableDropdown from '@/components/SearchableDropdown.vue'
 
 const themeStore = useThemeStore()
 const isArabic = computed(() => themeStore.language === 'ar')
 const isDarkMode = computed(() => themeStore.darkMode)
 
+// Computed property for SearchableDropdown options
+const costCenterOptions = computed(() => {
+  return entities.value.map((entity) => ({
+    value: entity.entity,
+    label: entity.alias_default,
+  }))
+})
+
 // Data
-const entities = ref<any[]>([])
-const accountLimits = ref<any[]>([]) // All data from API
-const allAccountLimits = ref<any[]>([]) // Store all original data for filtering
+interface Entity {
+  entity: string
+  alias_default: string
+}
+
+interface AccountLimit {
+  id: number
+  account: string
+  is_transer_allowed_for_source: string
+  is_transer_allowed_for_target: string
+  is_transer_allowed: string
+  source_count: number
+  target_count: number
+}
+
+const entities = ref<Entity[]>([])
+const accountLimits = ref<AccountLimit[]>([]) // Current page data from API
 const selectedCostCenter = ref('')
 const loading = ref(false)
 const showEditModal = ref(false)
-const editingLimit = ref<any>({})
+const editingLimit = ref<AccountLimit>({
+  id: 0,
+  account: '',
+  is_transer_allowed_for_source: 'No',
+  is_transer_allowed_for_target: 'No',
+  is_transer_allowed: 'No',
+  source_count: 0,
+  target_count: 0,
+})
 
 // Search functionality
 const searchTerm = ref('')
@@ -236,29 +269,26 @@ async function fetchEntities() {
   }
 }
 
-// Fetch ALL account limits for a specific cost center (no pagination from server)
+// Fetch account limits for a specific cost center with server-side pagination
 async function fetchAllLimits() {
   if (!selectedCostCenter.value) return
 
   try {
     loading.value = true
 
-    // If your API returns paginated data and you need to fetch all pages,
-    // you might need to make multiple requests. For now, assuming first call gets all data:
     const response = await apiService.accountEntities.getAccountLimits(
       selectedCostCenter.value,
-      1, // Start with page 1
+      currentPage.value,
+      searchTerm.value.trim(), // Pass account ID to API
     )
 
-    // Store all original data for client-side filtering
-    allAccountLimits.value = response.results
-
-    // Apply search and pagination locally
-    applySearchAndPagination()
+    // Set data directly from API response
+    accountLimits.value = response.results || []
+    totalItems.value = response.count || 0
+    totalPages.value = Math.ceil(totalItems.value / itemsPerPage)
   } catch (error) {
     console.error('Error fetching account limits:', error)
     // Reset data on error
-    allAccountLimits.value = []
     accountLimits.value = []
     totalItems.value = 0
     totalPages.value = 0
@@ -268,15 +298,7 @@ async function fetchAllLimits() {
 }
 
 // Edit limit
-function editLimit(limit: {
-  id: number
-  account: string
-  is_transer_allowed_for_source: string
-  is_transer_allowed_for_target: string
-  is_transer_allowed: string
-  source_count: number
-  target_count: number
-}) {
+function editLimit(limit: AccountLimit) {
   editingLimit.value = { ...limit }
   showEditModal.value = true
 }
@@ -306,14 +328,14 @@ async function updateLimit() {
 function nextPage() {
   if (currentPage.value < totalPages.value) {
     currentPage.value++
-    applySearchAndPagination()
+    fetchAllLimits() // Fetch data for the new page
   }
 }
 
 function previousPage() {
   if (currentPage.value > 1) {
     currentPage.value--
-    applySearchAndPagination()
+    fetchAllLimits() // Fetch data for the new page
   }
 }
 
@@ -321,7 +343,7 @@ function goToPage(page: string | number) {
   const pageNumber = typeof page === 'string' ? parseInt(page, 10) : page
   if (pageNumber !== currentPage.value && pageNumber >= 1 && pageNumber <= totalPages.value) {
     currentPage.value = pageNumber
-    applySearchAndPagination()
+    fetchAllLimits() // Fetch data for the new page
   }
 }
 
@@ -389,37 +411,33 @@ function translateYesNo(value: string): string {
   return value
 }
 
-// Search functionality
+// Search functionality with debounce
+let searchTimeout: number | null = null
+
 function handleSearch() {
-  // Reset to first page when searching
-  currentPage.value = 1
-  applySearchAndPagination()
+  // Clear existing timeout
+  if (searchTimeout) {
+    clearTimeout(searchTimeout)
+  }
+
+  // Debounce search to avoid too many API calls
+  searchTimeout = setTimeout(() => {
+    // Reset to first page when searching
+    currentPage.value = 1
+    fetchAllLimits() // Fetch data with account ID filter
+  }, 300) // 300ms delay
 }
 
 function clearSearch() {
-  searchTerm.value = ''
-  currentPage.value = 1
-  applySearchAndPagination()
-}
-
-// Apply client-side search and pagination
-function applySearchAndPagination() {
-  let filteredData = [...allAccountLimits.value]
-
-  // Apply search filter if search term exists
-  if (searchTerm.value.trim()) {
-    const searchLower = searchTerm.value.toLowerCase()
-    filteredData = filteredData.filter((limit) => limit.account.toLowerCase().includes(searchLower))
+  // Clear timeout if exists
+  if (searchTimeout) {
+    clearTimeout(searchTimeout)
+    searchTimeout = null
   }
 
-  // Update total items and pages based on filtered data
-  totalItems.value = filteredData.length
-  totalPages.value = Math.ceil(filteredData.length / itemsPerPage)
-
-  // Apply pagination to filtered data
-  const startIndex = (currentPage.value - 1) * itemsPerPage
-  const endIndex = startIndex + itemsPerPage
-  accountLimits.value = filteredData.slice(startIndex, endIndex)
+  searchTerm.value = ''
+  currentPage.value = 1
+  fetchAllLimits() // Fetch data without account ID filter
 }
 </script>
 
@@ -567,24 +585,22 @@ h1::after {
   width: 250px;
 }
 
-.select-container select {
-  width: 100%;
+/* Override SearchableDropdown styles to match the theme */
+.select-container :deep(.dropdown-trigger) {
   padding: 0.75rem 1rem;
   border: 2px solid var(--border-color);
   border-radius: 8px;
-  appearance: none;
   background-color: var(--card-bg);
   color: var(--text-color);
   font-size: 1rem;
-  cursor: pointer;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
 }
 
-.select-container select:focus {
+.select-container :deep(.dropdown-trigger:focus),
+.select-container :deep(.dropdown-trigger.active) {
   border-color: var(--accent-color);
-  outline: none;
   box-shadow:
     0 0 0 3px var(--glow-color),
     0 4px 12px rgba(138, 42, 68, 0.15);
@@ -592,38 +608,22 @@ h1::after {
   background: linear-gradient(135deg, var(--card-bg), rgba(138, 42, 68, 0.02));
 }
 
-.select-container select:hover {
+.select-container :deep(.dropdown-trigger:hover) {
   border-color: rgba(138, 42, 68, 0.5);
   background: linear-gradient(135deg, var(--card-bg), rgba(138, 42, 68, 0.02));
   transform: translateY(-1px);
 }
 
-.dark-mode .select-container select:focus {
+.dark-mode .select-container :deep(.dropdown-trigger:focus),
+.dark-mode .select-container :deep(.dropdown-trigger.active) {
   background: linear-gradient(135deg, var(--card-bg), rgba(225, 75, 106, 0.03));
   box-shadow:
     0 0 0 3px var(--glow-color),
     0 4px 12px rgba(225, 75, 106, 0.2);
 }
 
-.dark-mode .select-container select:hover {
+.dark-mode .select-container :deep(.dropdown-trigger:hover) {
   background: linear-gradient(135deg, var(--card-bg), rgba(225, 75, 106, 0.03));
-}
-
-.select-container::after {
-  content: '▼';
-  position: absolute;
-  right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  font-size: 0.8rem;
-  color: var(--text-color);
-  opacity: 0.7;
-}
-
-[dir='rtl'] .select-container::after {
-  right: auto;
-  left: 1rem;
 }
 
 .pagination-info {

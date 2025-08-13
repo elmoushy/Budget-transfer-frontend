@@ -676,17 +676,25 @@ export default {
      * Get account limits for a specific cost center
      * @param {string} costCenter - Cost center code
      * @param {number} page - Page number
+     * @param {string} accountId - Account ID for filtering
      * @returns {Promise} Account limits data
      */
-    getAccountLimits: async (costCenter, page = 1) => {
+    getAccountLimits: async (costCenter, page = 1, accountId = '') => {
       try {
+        const params = {
+          cost_center: costCenter,
+          page,
+        }
+
+        // Add account_id parameter if provided
+        if (accountId && accountId.trim()) {
+          params.account_id = accountId.trim()
+        }
+
         const response = await axios.get(
           `${API_BASE_URL}${ENDPOINTS.ACCOUNTS_ENTITIES.ACCOUNT_ENTITY_LIMIT_LIST}`,
           {
-            params: {
-              cost_center: costCenter,
-              page,
-            },
+            params,
             headers: getAuthHeaders(),
           },
         )

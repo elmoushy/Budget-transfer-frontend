@@ -220,6 +220,9 @@ const routeIdToRouteName: Record<number, string> = {
   12: 'Controller',
 }
 
+// Routes to hide when user_level = 1
+const restrictedRouteIds = [6, 7, 8] // EnhancementsPendingApproval, ContractsPendingApproval, SettlementsPendingApproval
+
 // Mapping for admin routes (these should only show for admin users)
 const adminRouteIds = [9, 10, 11, 12] // User Management, Account-Entity Management, Accounts & Entities, Controller
 
@@ -269,7 +272,16 @@ const menuItems = computed(() => {
   return routesData.value
     .filter((route) => {
       // Exclude admin routes from regular menu
-      return !adminRouteIds.includes(route.id) && routeIdToRouteName[route.id]
+      if (adminRouteIds.includes(route.id)) {
+        return false
+      }
+
+      // Hide restricted routes if user_level is 1
+      if (authStore.userLevel === 1 && restrictedRouteIds.includes(route.id)) {
+        return false
+      }
+
+      return routeIdToRouteName[route.id]
     })
     .sort((a, b) => a.id - b.id) // Sort by ID to maintain consistent order
     .map((route) => ({

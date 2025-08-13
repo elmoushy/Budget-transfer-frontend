@@ -19,13 +19,14 @@
           :disabled="!isSaveButtonEnabled"
           :class="{ 'btn-disabled': !isSaveButtonEnabled }"
         >
-          <span class="btn-icon">✓</span>
-          {{ isArabic ? 'حفظ' : 'Save' }}
+          <span class="btn-icon" v-if="!isSaving">✓</span>
+          <span class="btn-icon loading-spinner" v-if="isSaving"></span>
+          {{ isSaving ? (isArabic ? 'جاري الحفظ...' : 'Saving...') : isArabic ? 'حفظ' : 'Save' }}
         </button>
       </div>
       <!-- Show status info if in view-only mode -->
       <div class="view-status-info" v-if="route.query.viewOnly === 'true'">
-        <span class="status-badge" :class="statusClass">{{ formattedStatus }}</span>
+        <span class="view-only-badge">{{ isArabic ? 'عرض فقط' : 'View Only' }}</span>
       </div>
     </div>
 
@@ -51,7 +52,7 @@
         <table class="transfer-table">
           <thead>
             <tr>
-              <th class="action-column"></th>
+              <th class="action-column" v-if="!route.query.viewOnly"></th>
               <th>{{ isArabic ? 'إلى' : 'To' }}</th>
               <th v-if="!isFromEnhancementsPage">{{ isArabic ? 'من' : 'From' }}</th>
               <th>{{ isArabic ? 'حقًا ماليًا' : 'Encumbrance' }}</th>
@@ -74,7 +75,7 @@
                 'row-valid': !item.validation_errors || item.validation_errors.length === 0,
               }"
             >
-              <td class="action-column">
+              <td class="action-column" v-if="!route.query.viewOnly">
                 <button
                   class="btn-delete-row"
                   @click="deleteRow(index)"
@@ -97,7 +98,11 @@
                 </div>
               </td>
               <td class="number-cell">
+                <div v-if="route.query.viewOnly === 'true'" class="name-display">
+                  {{ formatNumber(item.to_center_input) || '-' }}
+                </div>
                 <input
+                  v-else
                   type="text"
                   v-model="item.to_center_input"
                   class="number-input"
@@ -108,7 +113,11 @@
                 />
               </td>
               <td v-if="!isFromEnhancementsPage" class="number-cell">
+                <div v-if="route.query.viewOnly === 'true'" class="name-display">
+                  {{ formatNumber(item.from_center_input) || '-' }}
+                </div>
                 <input
+                  v-else
                   type="text"
                   v-model="item.from_center_input"
                   class="number-input"
@@ -146,7 +155,11 @@
                 {{ item.account_name || getAccountName(item.account_code) || '-' }}
               </td>
               <td class="dropdown-cell">
+                <div v-if="route.query.viewOnly === 'true'" class="name-display">
+                  {{ item.account_code || '-' }}
+                </div>
                 <SearchableDropdown
+                  v-else
                   v-model="item.account_code"
                   :options="
                     accountEntities.map((account) => ({
@@ -176,7 +189,11 @@
                 {{ item.cost_center_name || getCostCenterName(item.cost_center_code) || '-' }}
               </td>
               <td class="dropdown-cell">
+                <div v-if="route.query.viewOnly === 'true'" class="name-display">
+                  {{ item.cost_center_code || '-' }}
+                </div>
                 <SearchableDropdown
+                  v-else
                   v-model="item.cost_center_code"
                   :options="
                     costCenterEntities.map((entity) => ({
@@ -208,7 +225,7 @@
           </tbody>
           <tfoot>
             <tr class="summary-row">
-              <td></td>
+              <td v-if="!route.query.viewOnly"></td>
               <td class="number-cell">{{ formatNumber(summaryData.toSum) || '-' }}</td>
               <td v-if="!isFromEnhancementsPage" class="number-cell">
                 {{ formatNumber(summaryData.fromSum) || '-' }}
@@ -262,6 +279,23 @@
           @click="submitRequest"
           :disabled="!isSubmitButtonEnabled"
           :class="{ 'btn-disabled': !isSubmitButtonEnabled, rtl: isRTL }"
+          :title="
+            !isSubmitButtonEnabled
+              ? !currentData || currentData.length === 0
+                ? isArabic
+                  ? 'لا توجد بيانات للتقديم'
+                  : 'No data to submit'
+                : changesMade
+                  ? isArabic
+                    ? 'يجب حفظ التغييرات أولاً'
+                    : 'Please save changes first'
+                  : isArabic
+                    ? 'غير متاح للتقديم'
+                    : 'Not available for submission'
+              : isArabic
+                ? 'تقديم الطلب'
+                : 'Submit request'
+          "
         >
           <span class="btn-icon-modern" :class="{ rtl: isRTL }">
             <svg
@@ -309,6 +343,15 @@
           @click="reopenRequest"
           :disabled="!isReopenButtonEnabled"
           :class="{ 'btn-disabled': !isReopenButtonEnabled, rtl: isRTL }"
+          :title="
+            !isReopenButtonEnabled && changesMade
+              ? isArabic
+                ? 'يجب حفظ التغييرات أولاً'
+                : 'Please save changes first'
+              : isArabic
+                ? 'إعادة فتح الطلب'
+                : 'Reopen request'
+          "
         >
           <span class="btn-icon-modern" :class="{ rtl: isRTL }">
             <svg
@@ -642,6 +685,9 @@ const apiSummary = ref<ApiSummary | null>(null)
 // Add new ref for current status
 const currentStatus = ref('not yet sent for approval') // Default value
 
+// Add loading state for save button
+const isSaving = ref(false)
+
 // Add a computed property to check if navigation is from EnhancementsPage
 const navigationStore = useNavigationStore()
 const isFromEnhancementsPage = computed(() => {
@@ -703,13 +749,22 @@ const isSaveButtonEnabled = computed(() => {
   return (
     (currentStatus.value === 'is rejected' ||
       currentStatus.value === 'not yet sent for approval') &&
-    changesMade.value
+    changesMade.value &&
+    !isSaving.value
   )
 })
 
 const isSubmitButtonEnabled = computed(() => {
+  // Disable if there are no rows
+  if (!currentData.value || currentData.value.length === 0) {
+    return false
+  }
   // Disable if there are validation errors or the balance is false
   if ((apiSummary.value && apiSummary.value.balanced === false) || hasValidationErrors.value) {
+    return false
+  }
+  // Disable if there are unsaved changes - user must save first
+  if (changesMade.value) {
     return false
   }
   return currentStatus.value === 'not yet sent for approval'
@@ -720,6 +775,10 @@ const isReopenButtonEnabled = computed(() => {
   if ((apiSummary.value && apiSummary.value.balanced === false) || hasValidationErrors.value) {
     return false
   }
+  // Disable if there are unsaved changes - user must save first
+  if (changesMade.value) {
+    return false
+  }
   return currentStatus.value === 'is rejected'
 })
 
@@ -727,49 +786,6 @@ const isUploadButtonEnabled = computed(() => {
   return (
     currentStatus.value === 'is rejected' || currentStatus.value === 'not yet sent for approval'
   )
-})
-
-// Format status for display
-const formattedStatus = computed(() => {
-  const status = currentStatus.value
-
-  if (isArabic.value) {
-    switch (status) {
-      case 'approved':
-        return 'معتمد'
-      case 'is rejected':
-        return 'مرفوض'
-      case 'watting for approval':
-        return 'في انتظار الموافقة'
-      case 'not yet sent for approval':
-        return 'لم يتم الإرسال للموافقة'
-      default:
-        return status
-    }
-  } else {
-    switch (status) {
-      case 'watting for approval':
-        return 'Waiting for approval'
-      default:
-        return status.charAt(0).toUpperCase() + status.slice(1)
-    }
-  }
-})
-
-// Add status class for styling
-const statusClass = computed(() => {
-  switch (currentStatus.value) {
-    case 'approved':
-      return 'status-approved'
-    case 'is rejected':
-      return 'status-rejected'
-    case 'watting for approval':
-      return 'status-waiting'
-    case 'not yet sent for approval':
-      return 'status-not-sent'
-    default:
-      return ''
-  }
 })
 
 // Theme and language
@@ -951,6 +967,10 @@ const toSafeNumber = (value: unknown): number => {
 
 // Create transfer function
 const createTransfer = async () => {
+  if (isSaving.value) return // Prevent multiple clicks
+
+  isSaving.value = true // Set loading state
+
   try {
     // Get the appropriate data array
     const dataArray = isContractMode.value ? contractData.value : transferData.value
@@ -1007,8 +1027,14 @@ const createTransfer = async () => {
         { timer: 3000 },
       )
     } else {
-      // Pass the auth token as second argument to the API call
-      await transferService.createTransfer(dataToSend)
+      // For transfer mode, call the specific endpoint you mentioned
+      const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
+      await axios.post(`${BASE_URL}/api/adjd-transfers/create/`, dataToSend, {
+        headers: {
+          Authorization: `Bearer ${authStore.token}`,
+          'Content-Type': 'application/json',
+        },
+      })
 
       showToast(
         isArabic.value ? 'تم إنشاء النقل بنجاح' : 'Transfer created successfully',
@@ -1040,6 +1066,8 @@ const createTransfer = async () => {
       showToast(errorMessage, 'error')
     }
     console.error('Error creating transfer:', err)
+  } finally {
+    isSaving.value = false // Reset loading state
   }
 }
 
@@ -1303,6 +1331,36 @@ const formatNumber = (value: number | string | null | undefined): string | null 
 }
 
 const submitRequest = async () => {
+  // Check if there are no rows
+  if (!currentData.value || currentData.value.length === 0) {
+    if (isContractMode.value) {
+      await showDialog(isArabic.value ? 'لا توجد بيانات للتقديم' : 'No data to submit', 'warning')
+    } else {
+      showToast(isArabic.value ? 'لا توجد بيانات للتقديم' : 'No data to submit', 'warning')
+    }
+    return
+  }
+
+  // Check if there are unsaved changes
+  if (changesMade.value) {
+    if (isContractMode.value) {
+      await showDialog(
+        isArabic.value
+          ? 'يجب حفظ التغييرات أولاً قبل التقديم'
+          : 'Please save your changes before submitting',
+        'warning',
+      )
+    } else {
+      showToast(
+        isArabic.value
+          ? 'يجب حفظ التغييرات أولاً قبل التقديم'
+          : 'Please save your changes before submitting',
+        'warning',
+      )
+    }
+    return
+  }
+
   try {
     if (isContractMode.value) {
       await extendedContractService.submitContractRequest(transactionId.value!)
@@ -1331,6 +1389,26 @@ const submitRequest = async () => {
 }
 
 const reopenRequest = async () => {
+  // Check if there are unsaved changes
+  if (changesMade.value) {
+    if (isContractMode.value) {
+      await showDialog(
+        isArabic.value
+          ? 'يجب حفظ التغييرات أولاً قبل إعادة فتح الطلب'
+          : 'Please save your changes before reopening the request',
+        'warning',
+      )
+    } else {
+      showToast(
+        isArabic.value
+          ? 'يجب حفظ التغييرات أولاً قبل إعادة فتح الطلب'
+          : 'Please save your changes before reopening the request',
+        'warning',
+      )
+    }
+    return
+  }
+
   try {
     if (isContractMode.value) {
       await extendedContractService.reopenContractRequest(transactionId.value!)
@@ -2143,4 +2221,36 @@ const handleDialogConfirm = () => {
 }
 
 /* End RTL styles */
+
+/* View-only mode styles */
+.view-status-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+}
+
+.view-only-badge {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.dark-mode .view-only-badge {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+  border: 1px solid rgba(79, 70, 229, 0.3);
+}
+
+.rtl .view-status-info {
+  margin-left: 0;
+  margin-right: auto;
+}
 </style>

@@ -181,6 +181,7 @@ async function handleLogin() {
       token: data.token,
       refreshToken: data.refresh,
       user: data.data,
+      user_level: data.user_level,
     })
 
     // Navigate to dashboard or home page

@@ -18,6 +18,7 @@ export interface LoginResponse {
     role: string
     can_transfer_budget: boolean
   }
+  user_level: number
   message: string
   token: string
   refresh: string
