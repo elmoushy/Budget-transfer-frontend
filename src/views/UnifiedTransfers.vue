@@ -273,7 +273,7 @@
     <component
       :is="editModalComponent"
       v-model="showEditModal"
-      :transfer-data="currentEditTransfer"
+      :contract-data="currentEditTransfer"
       @submit="handleEditSubmit"
     />
 
@@ -374,9 +374,6 @@
           <div class="rejection-popup-footer">
             <button class="btn-popup-close" @click="closeRejectionPopup">
               {{ isArabic ? 'إغلاق' : 'Close' }}
-            </button>
-            <button class="btn-popup-details" @click="openDetailedRejectionModal">
-              {{ isArabic ? 'عرض التفاصيل الكاملة' : 'View Full Details' }}
             </button>
           </div>
         </div>
