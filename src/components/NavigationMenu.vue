@@ -42,8 +42,8 @@
             </router-link>
           </li>
 
-          <!-- Admin links shown directly if user is admin -->
-          <template v-if="isAdminUser">
+          <!-- Admin links shown directly if user is admin (but not superadmin) -->
+          <template v-if="isAdminUser && !isSuperAdminUser">
             <li
               v-for="adminItem in adminMenuItems"
               :key="adminItem.route"
@@ -51,6 +51,28 @@
             >
               <router-link :to="{ name: adminItem.route }">
                 {{ adminItem.label }}
+              </router-link>
+            </li>
+          </template>
+
+          <!-- Superadmin links shown directly if user is superadmin (includes admin + superadmin items) -->
+          <template v-if="isSuperAdminUser">
+            <li
+              v-for="adminItem in adminMenuItems"
+              :key="adminItem.route"
+              :class="{ active: currentRoute === adminItem.route }"
+            >
+              <router-link :to="{ name: adminItem.route }">
+                {{ adminItem.label }}
+              </router-link>
+            </li>
+            <li
+              v-for="superAdminItem in superAdminMenuItems"
+              :key="superAdminItem.route"
+              :class="{ active: currentRoute === superAdminItem.route }"
+            >
+              <router-link :to="{ name: superAdminItem.route }">
+                {{ superAdminItem.label }}
               </router-link>
             </li>
           </template>
@@ -91,7 +113,6 @@ import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
-import apiService from '@/services/apiService'
 
 // Define interfaces for menu items
 interface MenuItem {
@@ -116,13 +137,35 @@ const authStore = useAuthStore()
 const currentRoute = computed(() => route.name)
 const dropdownOpen = ref(false)
 
-// Reactive state for routes data - simplified, no caching
-const routesData = ref<RouteData[]>([])
-const isLoading = ref(true)
+// Reactive state for routes data - now using hardcoded data
+const routesData = ref<RouteData[]>([
+  { id: 2, english_name: 'Dashboard', arabic_name: 'لوحة القيادة' },
+  { id: 3, english_name: 'Transfer', arabic_name: 'المناقلات' },
+  { id: 4, english_name: 'Fund Adjustment Department', arabic_name: 'التسويه' },
+  { id: 5, english_name: 'Additional Fund Request', arabic_name: 'التعزيزات' },
+  { id: 6, english_name: 'Pending Transfers', arabic_name: 'التعزيزات قيد الاعتماد' },
+  { id: 7, english_name: 'Pending Fund Adjustment', arabic_name: 'العقود قيد الاعتماد' },
+  { id: 8, english_name: 'Pending Additional Fund', arabic_name: 'التسويات قيد الاعتماد' },
+  { id: 9, english_name: 'User Management', arabic_name: 'إدارة المستخدمين' },
+  {
+    id: 10,
+    english_name: 'Account-Entity Management',
+    arabic_name: 'إدارة الحسابات والكيانات',
+  },
+  { id: 11, english_name: 'Accounts & Entities', arabic_name: 'الحسابات والكيانات' },
+  { id: 12, english_name: 'Control', arabic_name: 'التحكم' },
+  { id: 13, english_name: 'User Abilities', arabic_name: 'صلاحيات المستخدمين' },
+])
+const isLoading = ref(false)
 
 // Check if user is an admin
 const isAdminUser = computed(() => {
   return authStore.user?.role === 'admin'
+})
+
+// Check if user is a superadmin
+const isSuperAdminUser = computed(() => {
+  return authStore.user?.role === 'superadmin'
 })
 
 // Define dropdownItem with proper typing
@@ -218,6 +261,7 @@ const routeIdToRouteName: Record<number, string> = {
   10: 'AccountEntityManagement',
   11: 'AccountsEntityView',
   12: 'Controller',
+  13: 'UserAbilities', // New route for superadmin
 }
 
 // Routes to hide when user_level = 1
@@ -226,44 +270,10 @@ const restrictedRouteIds = [6, 7, 8] // EnhancementsPendingApproval, ContractsPe
 // Mapping for admin routes (these should only show for admin users)
 const adminRouteIds = [9, 10, 11, 12] // User Management, Account-Entity Management, Accounts & Entities, Controller
 
-// Simple function to fetch routes data from API - no caching
-const fetchRoutesData = async () => {
-  try {
-    isLoading.value = true
+// Mapping for superadmin routes (these should only show for superadmin users)
+const superAdminRouteIds = [13] // User Abilities
 
-    const response = await apiService.accountEntities.getMainRoutes()
-    if (response.data && Array.isArray(response.data)) {
-      routesData.value = response.data
-    } else {
-      throw new Error('Invalid response format')
-    }
-  } catch (error) {
-    console.error('Error fetching routes data:', error)
-
-    // Fallback to static data only if API fails completely
-    routesData.value = [
-      { id: 2, english_name: 'Dashboard', arabic_name: 'لوحة القيادة' },
-      { id: 3, english_name: 'Transfer', arabic_name: 'المناقلات' },
-      { id: 4, english_name: 'Fund Adjustment Department', arabic_name: 'التسويه' },
-      { id: 5, english_name: 'Additional Fund Request', arabic_name: 'التعزيزات' },
-      { id: 6, english_name: 'Pending Transfers', arabic_name: 'التعزيزات قيد الاعتماد' },
-      { id: 7, english_name: 'Pending Fund Adjustment', arabic_name: 'العقود قيد الاعتماد' },
-      { id: 8, english_name: 'Pending Additional Fund', arabic_name: 'التسويات قيد الاعتماد' },
-      { id: 9, english_name: 'User Management', arabic_name: 'إدارة المستخدمين' },
-      {
-        id: 10,
-        english_name: 'Account-Entity Management',
-        arabic_name: 'إدارة الحسابات والكيانات',
-      },
-      { id: 11, english_name: 'Accounts & Entities', arabic_name: 'الحسابات والكيانات' },
-      { id: 12, english_name: 'Control', arabic_name: 'التحكم' },
-    ]
-  } finally {
-    isLoading.value = false
-  }
-}
-
-// Create computed properties for menu items based on fetched data
+// Create computed properties for menu items based on hardcoded data
 const menuItems = computed(() => {
   if (isLoading.value || !routesData.value.length) {
     return []
@@ -273,6 +283,11 @@ const menuItems = computed(() => {
     .filter((route) => {
       // Exclude admin routes from regular menu
       if (adminRouteIds.includes(route.id)) {
+        return false
+      }
+
+      // Exclude superadmin routes from regular menu
+      if (superAdminRouteIds.includes(route.id)) {
         return false
       }
 
@@ -309,10 +324,26 @@ const adminMenuItems = computed(() => {
     .filter((item) => item.route) // Ensure we have a valid route
 })
 
-// Fetch data only on component mount (page refresh)
-onMounted(() => {
-  fetchRoutesData()
+const superAdminMenuItems = computed(() => {
+  if (isLoading.value || !routesData.value.length) {
+    return []
+  }
 
+  return routesData.value
+    .filter((route) => {
+      // Only include superadmin routes
+      return superAdminRouteIds.includes(route.id) && routeIdToRouteName[route.id]
+    })
+    .sort((a, b) => a.id - b.id) // Sort by ID to maintain consistent order
+    .map((route) => ({
+      label: isArabic.value ? route.arabic_name : route.english_name,
+      route: routeIdToRouteName[route.id],
+    }))
+    .filter((item) => item.route) // Ensure we have a valid route
+})
+
+// Setup on component mount
+onMounted(() => {
   // Add window resize listener to check scroll buttons
   window.addEventListener('resize', checkScrollNeeded)
 
@@ -323,7 +354,7 @@ onMounted(() => {
 })
 
 // Watch for changes in menu items to update scroll buttons
-watch([menuItems, adminMenuItems], () => {
+watch([menuItems, adminMenuItems, superAdminMenuItems], () => {
   nextTick(() => {
     checkScrollNeeded()
   })

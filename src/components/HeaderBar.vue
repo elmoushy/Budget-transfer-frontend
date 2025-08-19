@@ -1238,6 +1238,9 @@ input:checked + .slider:before {
   direction: ltr !important;
   /* Continuous morphing animation */
   animation: glassmorphism-pulse 8s ease-in-out infinite;
+  /* Enhanced centering for all resolutions 1040px+ */
+  min-width: fit-content;
+  white-space: nowrap;
 }
 
 .middle::before {
@@ -1498,6 +1501,7 @@ input:checked + .slider:before {
       0 4px 16px rgba(225, 75, 106, 0.08),
       inset 0 1px 0 rgba(255, 255, 255, 0.5),
       inset 0 -1px 0 rgba(138, 42, 68, 0.05);
+    /* Maintain perfect centering during animation */
     transform: translate(-50%, -50%) scale(1);
   }
   50% {
@@ -1508,6 +1512,7 @@ input:checked + .slider:before {
       0 6px 20px rgba(225, 75, 106, 0.12),
       inset 0 1px 0 rgba(255, 255, 255, 0.6),
       inset 0 -1px 0 rgba(138, 42, 68, 0.08);
+    /* Maintain perfect centering during scale animation */
     transform: translate(-50%, -50%) scale(1.02);
   }
 }
@@ -1759,6 +1764,7 @@ input:checked + .slider:before {
       0 4px 16px rgba(225, 75, 106, 0.12),
       inset 0 1px 0 rgba(248, 233, 240, 0.3),
       inset 0 -1px 0 rgba(167, 56, 92, 0.08);
+    /* Maintain perfect centering during animation */
     transform: translate(-50%, -50%) scale(1);
   }
   50% {
@@ -1769,6 +1775,7 @@ input:checked + .slider:before {
       0 6px 20px rgba(225, 75, 106, 0.18),
       inset 0 1px 0 rgba(248, 233, 240, 0.4),
       inset 0 -1px 0 rgba(167, 56, 92, 0.12);
+    /* Maintain perfect centering during scale animation */
     transform: translate(-50%, -50%) scale(1.02);
   }
 }
@@ -1790,6 +1797,7 @@ input:checked + .slider:before {
     0 12px 32px rgba(138, 42, 68, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.6),
     0 0 40px rgba(225, 75, 106, 0.2);
+  /* Maintain perfect centering during hover animation */
   transform: translate(-50%, -50%) translateY(-3px) scale(1.03);
   animation-play-state: paused;
 }
@@ -1801,6 +1809,8 @@ input:checked + .slider:before {
     0 12px 32px rgba(167, 56, 92, 0.25),
     inset 0 1px 0 rgba(248, 233, 240, 0.4),
     0 0 40px rgba(225, 75, 106, 0.3);
+  /* Maintain perfect centering during hover animation */
+  transform: translate(-50%, -50%) translateY(-3px) scale(1.03);
   animation-play-state: paused;
 }
 
@@ -1820,6 +1830,52 @@ input:checked + .slider:before {
   .brand-wordmark {
     width: 130px;
     height: 32px;
+  }
+}
+
+/* Enhanced centering for resolution range 1175px to 1500px and above */
+@media (min-width: 1175px) {
+  .middle {
+    /* Ensure perfect centering with enhanced positioning */
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0 auto;
+    /* Prevent any potential flex-basis issues */
+    flex-shrink: 0;
+    /* Enhanced centering calculation for this resolution range */
+    max-width: calc(100vw - 500px); /* Account for left and right sections */
+    min-width: fit-content;
+  }
+
+  .header {
+    /* Ensure header container supports perfect centering */
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+@media (min-width: 1175px) and (max-width: 1500px) {
+  .middle {
+    /* Fine-tuned centering for 1175px-1500px range */
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    /* Additional positioning refinements */
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+@media (min-width: 1500px) {
+  .middle {
+    /* Perfect centering for 1500px and above */
+    left: 50%;
+    transform: translate(-50%, -50%);
+    /* Enhanced positioning for larger screens */
+    max-width: 600px; /* Prevent over-expansion on very large screens */
   }
 }
 
@@ -1863,7 +1919,7 @@ input:checked + .slider:before {
   }
 }
 
-@media (max-width: 1052px) {
+@media (max-width: 1175px) {
   .middle {
     display: none;
   }

@@ -65,6 +65,12 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/settlements/:id',
+    name: 'SettlementDetails',
+    component: () => import('@/views/CostCenterTransferRequest.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/notifications',
     name: 'NotificationsPage',
     component: () => import('@/views/NotificationsPage.vue'),
@@ -95,6 +101,12 @@ const routes = [
     component: () => import('@/views/ControllerPage.vue'),
     meta: { requiresAuth: true, requiresAdmin: true },
   },
+  {
+    path: '/admin/user-abilities',
+    name: 'UserAbilities',
+    component: () => import('@/views/UserAbilities.vue'),
+    meta: { requiresAuth: true, requiresSuperAdmin: true },
+  },
   // Catch-all route for 404
   {
     path: '/:pathMatch(.*)*',
@@ -114,10 +126,16 @@ router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore()
     const requiresAuth = to.meta.requiresAuth !== false
     const requiresAdmin = to.meta.requiresAdmin === true
+    const requiresSuperAdmin = to.meta.requiresSuperAdmin === true
 
     // Check if route requires authentication and user is not authenticated
     if (requiresAuth && !authStore.isAuthenticated) {
       next({ name: 'Login' })
+    }
+    // Check if route requires super admin role and user is not a super admin
+    else if (requiresSuperAdmin && authStore.user?.role !== 'superadmin') {
+      // Redirect to dashboard if trying to access super admin route without super admin privileges
+      next({ name: 'Dashboard' })
     }
     // Check if route requires admin role and user is not an admin
     else if (requiresAdmin && authStore.user?.role !== 'admin') {

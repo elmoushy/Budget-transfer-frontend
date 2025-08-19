@@ -249,7 +249,7 @@ const calculatePanelPosition = () => {
 
   panelStyles.value = {
     position: 'fixed',
-    left: props.isRtl ? `${left}px` : `${left - 50}px`,
+    left: `${left}px`,
     top: `${top}px`,
     width: `${width}px`,
     maxHeight: `${maxHeight}px`,

@@ -9,7 +9,7 @@
             >© {{ currentYear }}
             {{
               isArabic
-                ? 'شركة فكرة النور. جميع الحقوق محفوظة.'
+                ? 'شركة Light Idea. جميع الحقوق محفوظة.'
                 : 'Light Idea Company. All rights reserved.'
             }}</span
           >
