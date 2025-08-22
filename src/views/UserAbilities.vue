@@ -418,15 +418,61 @@
                       {{ isArabic ? 'معرف الكيان' : 'Entity ID' }} *
                     </label>
                     <div class="input-wrapper">
-                      <input
-                        id="entity-id"
+                      <SearchableDropdown
                         v-model="form.entity"
-                        type="number"
-                        required
-                        class="form-input"
-                        :placeholder="isArabic ? 'أدخل معرف الكيان' : 'Enter Entity ID'"
+                        :options="entityOptions"
+                        :placeholder="
+                          loadingEntities
+                            ? isArabic
+                              ? 'جاري التحميل...'
+                              : 'Loading entities...'
+                            : isArabic
+                              ? 'اختر الكيان'
+                              : 'Select Entity'
+                        "
+                        :search-placeholder="isArabic ? 'البحث عن كيان...' : 'Search entities...'"
+                        :no-results-text="isArabic ? 'لا توجد نتائج' : 'No entities found'"
+                        :disabled="loadingEntities"
+                        :is-dark-mode="isDarkMode"
+                        :is-rtl="isArabic"
+                        class="form-dropdown"
                       />
-                      <div class="input-focus-border"></div>
+                      <button
+                        v-if="entities.length === 0 && !loadingEntities"
+                        @click="loadEntities"
+                        type="button"
+                        class="reload-users-btn"
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 14 14"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M12.25 7c0-2.9-2.35-5.25-5.25-5.25S1.75 4.1 1.75 7s2.35 5.25 5.25 5.25c1.28 0 2.45-.46 3.36-1.22"
+                            stroke="currentColor"
+                            stroke-width="1.2"
+                            fill="none"
+                          />
+                          <path
+                            d="M10.5 4.5L12.25 7l-1.75 2.5"
+                            stroke="currentColor"
+                            stroke-width="1.2"
+                            fill="none"
+                          />
+                        </svg>
+                        {{ isArabic ? 'إعادة تحميل' : 'Reload' }}
+                      </button>
+                      <div
+                        v-if="entities.length === 0 && !loadingEntities"
+                        class="no-users-message"
+                      >
+                        <small class="text-muted">
+                          No entities available - Click reload or check permissions
+                        </small>
+                      </div>
                     </div>
                   </div>
 
@@ -701,6 +747,15 @@ import userAbilitiesService, {
   type UserAbilityFilters,
 } from '@/services/userAbilitiesService'
 import { userService, type User } from '@/services/userService'
+import apiService from '@/services/apiService'
+
+// Types
+interface Entity {
+  id: number
+  entity: number
+  parent: string
+  alias_default: string
+}
 
 // Store
 const themeStore = useThemeStore()
@@ -717,11 +772,21 @@ const userOptions = computed(() =>
   })),
 )
 
+// Entity options for dropdown
+const entityOptions = computed(() =>
+  entities.value.map((entity) => ({
+    value: entity.entity,
+    label: entity.alias_default,
+  })),
+)
+
 // State
 const abilities = ref<UserAbility[]>([])
 const users = ref<User[]>([])
+const entities = ref<Entity[]>([])
 const loading = ref(false)
 const loadingUsers = ref(false)
+const loadingEntities = ref(false)
 const submitting = ref(false)
 const showAddModal = ref(false)
 const showEditModal = ref(false)
@@ -767,6 +832,21 @@ const loadUsers = async () => {
   }
 }
 
+const loadEntities = async () => {
+  try {
+    loadingEntities.value = true
+    console.log('Loading entities from API...')
+    const response = await apiService.accountEntities.getEntities()
+    entities.value = response.data || []
+    console.log('Entities loaded successfully:', entities.value)
+  } catch (error) {
+    console.error('Error loading entities:', error)
+    showMessage(isArabic.value ? 'خطأ في تحميل الكيانات' : 'Error loading entities', 'error')
+  } finally {
+    loadingEntities.value = false
+  }
+}
+
 const applyFilters = () => {
   loadAbilities()
 }
@@ -800,7 +880,7 @@ const submitForm = async () => {
   }
 
   if (!form.value.entity || form.value.entity === 0) {
-    showMessage(isArabic.value ? 'يرجى إدخال معرف الكيان' : 'Please enter entity ID', 'error')
+    showMessage(isArabic.value ? 'يرجى اختيار كيان' : 'Please select an entity', 'error')
     return
   }
 
@@ -880,6 +960,7 @@ const showMessage = (msg: string, type: 'success' | 'error') => {
 onMounted(() => {
   loadAbilities()
   loadUsers() // Also load users on component mount
+  loadEntities() // Load entities on component mount
 })
 
 // Watch for modal opening to load users

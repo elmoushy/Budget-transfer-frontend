@@ -1,9 +1,11 @@
 <template>
-  <div class="transfer-request-page" :class="{ 'dark-mode': isDarkMode, rtl: isRTL }">
-    <div class="page-header">
+  <div
+    :class="[styles.transferRequestPage, { [styles.darkMode]: isDarkMode, [styles.rtl]: isRTL }]"
+  >
+    <div :class="styles.pageHeader">
       <!-- Replaced title with error message when unbalanced -->
-      <div v-if="apiSummary && !apiSummary.balanced" class="balance-error-message">
-        <span class="error-text">
+      <div v-if="apiSummary && !apiSummary.balanced" :class="styles.balanceErrorMessage">
+        <span :class="styles.errorText">
           {{
             isArabic
               ? 'الميزان غير متوازن. يرجى مراجعة قيم التحويل.'
@@ -12,47 +14,46 @@
         </span>
       </div>
       <!-- Only show action buttons if not in view-only mode -->
-      <div class="header-actions" v-if="!route.query.viewOnly">
+      <div :class="styles.headerActions" v-if="!route.query.viewOnly">
         <button
-          class="btn-header-create"
+          :class="[styles.btnHeaderCreate, { [styles.btnDisabled]: !isSaveButtonEnabled }]"
           @click="createTransfer"
           :disabled="!isSaveButtonEnabled"
-          :class="{ 'btn-disabled': !isSaveButtonEnabled }"
         >
-          <span class="btn-icon" v-if="!isSaving">✓</span>
-          <span class="btn-icon loading-spinner" v-if="isSaving"></span>
+          <span :class="styles.btnIcon" v-if="!isSaving">✓</span>
+          <span :class="[styles.btnIcon, styles.loadingSpinner]" v-if="isSaving"></span>
           {{ isSaving ? (isArabic ? 'جاري الحفظ...' : 'Saving...') : isArabic ? 'حفظ' : 'Save' }}
         </button>
       </div>
       <!-- Show status info if in view-only mode -->
-      <div class="view-status-info" v-if="route.query.viewOnly === 'true'">
-        <span class="view-only-badge">{{ isArabic ? 'عرض فقط' : 'View Only' }}</span>
+      <div :class="styles.viewStatusInfo" v-if="route.query.viewOnly === 'true'">
+        <span :class="styles.viewOnlyBadge">{{ isArabic ? 'عرض فقط' : 'View Only' }}</span>
       </div>
     </div>
 
     <!-- Loading state -->
-    <div v-if="loading" class="loading-container">
-      <div class="loading-spinner"></div>
+    <div v-if="loading" :class="styles.loadingContainer">
+      <div :class="styles.loadingSpinner"></div>
       <p>{{ isArabic ? 'جاري التحميل...' : 'Loading...' }}</p>
     </div>
 
     <!-- Error state -->
-    <div v-else-if="error" class="error-container">
-      <div class="error-icon">!</div>
+    <div v-else-if="error" :class="styles.errorContainer">
+      <div :class="styles.errorIcon">!</div>
       <p>{{ isArabic ? 'حدث خطأ أثناء تحميل البيانات' : 'Error loading data' }}</p>
-      <button class="btn-retry" @click="loadData">
+      <button :class="styles.btnRetry" @click="loadData">
         {{ isArabic ? 'إعادة المحاولة' : 'Retry' }}
       </button>
     </div>
 
     <!-- Data display -->
-    <div v-else class="data-container">
+    <div v-else :class="styles.dataContainer">
       <!-- Table -->
-      <div class="card-container table-container">
-        <table class="transfer-table">
+      <div :class="[styles.cardContainer, styles.tableContainer]">
+        <table :class="styles.transferTable">
           <thead>
             <tr>
-              <th class="action-column" v-if="!route.query.viewOnly"></th>
+              <th :class="styles.actionColumn" v-if="!route.query.viewOnly"></th>
               <th>{{ isArabic ? 'إلى' : 'To' }}</th>
               <th v-if="!isFromEnhancementsPage">{{ isArabic ? 'من' : 'From' }}</th>
               <th>{{ isArabic ? 'حقًا ماليًا' : 'Encumbrance' }}</th>
@@ -69,93 +70,100 @@
             <tr
               v-for="(item, index) in currentData"
               :key="(item.transfer_id || item.contract_id || index) as string"
-              class="data-row"
-              :class="{
-                'row-error': item.validation_errors && item.validation_errors.length > 0,
-                'row-valid': !item.validation_errors || item.validation_errors.length === 0,
-              }"
+              :class="[
+                styles.dataRow,
+                {
+                  [styles.rowError]: item.validation_errors && item.validation_errors.length > 0,
+                  [styles.rowValid]: !item.validation_errors || item.validation_errors.length === 0,
+                },
+              ]"
             >
-              <td class="action-column" v-if="!route.query.viewOnly">
+              <td :class="styles.actionColumn" v-if="!route.query.viewOnly">
                 <button
-                  class="btn-delete-row"
+                  :class="[styles.btnDeleteRow, { [styles.btnDisabled]: !isScreenEditable }]"
                   @click="deleteRow(index)"
                   title="Delete Row"
                   :disabled="!isScreenEditable"
-                  :class="{ 'btn-disabled': !isScreenEditable }"
                 >
-                  <span class="delete-icon">×</span>
+                  <span :class="styles.deleteIcon">×</span>
                 </button>
                 <!-- Replace tooltip with click-based error display -->
                 <div
                   v-if="item.validation_errors && item.validation_errors.length > 0"
-                  class="validation-error-indicator"
+                  :class="styles.validationErrorIndicator"
                   @click="showErrorDetails(item.validation_errors)"
                 >
-                  <span class="error-icon-small">!</span>
+                  <span :class="styles.errorIconSmall">!</span>
                 </div>
-                <div v-else class="validation-success-indicator">
-                  <span class="success-icon-small">✓</span>
+                <div v-else :class="styles.validationSuccessIndicator">
+                  <span :class="styles.successIconSmall">✓</span>
                 </div>
               </td>
-              <td class="number-cell">
-                <div v-if="route.query.viewOnly === 'true'" class="name-display">
+              <td :class="styles.numberCell">
+                <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
                   {{ formatNumber(item.to_center_input) || '-' }}
                 </div>
                 <input
                   v-else
                   type="text"
                   v-model="item.to_center_input"
-                  class="number-input"
+                  :class="[
+                    styles.tableInput,
+                    styles.numberInput,
+                    { [styles.readonlyInput]: !isScreenEditable },
+                  ]"
                   @input="validateNumberInput(item, 'to_center')"
                   :placeholder="isArabic ? 'إلى' : 'To'"
                   :readonly="!isScreenEditable"
-                  :class="{ 'readonly-input': !isScreenEditable }"
                 />
               </td>
-              <td v-if="!isFromEnhancementsPage" class="number-cell">
-                <div v-if="route.query.viewOnly === 'true'" class="name-display">
+              <td v-if="!isFromEnhancementsPage" :class="styles.numberCell">
+                <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
                   {{ formatNumber(item.from_center_input) || '-' }}
                 </div>
                 <input
                   v-else
                   type="text"
                   v-model="item.from_center_input"
-                  class="number-input"
+                  :class="[
+                    styles.tableInput,
+                    styles.numberInput,
+                    { [styles.readonlyInput]: !isScreenEditable },
+                  ]"
                   @input="validateNumberInput(item, 'from_center')"
                   :placeholder="isArabic ? 'من' : 'From'"
                   :readonly="!isScreenEditable"
-                  :class="{ 'readonly-input': !isScreenEditable }"
                 />
               </td>
-              <td class="number-cell">
+              <td :class="styles.numberCell">
                 <!-- Display-only for Encumbrance -->
-                <div class="name-display">
+                <div :class="styles.nameDisplay">
                   {{ formatNumber(item.encumbrance) || '-' }}
                 </div>
               </td>
-              <td class="number-cell">
+              <td :class="styles.numberCell">
                 <!-- Display-only for Available Budget -->
-                <div class="name-display">
+                <div :class="styles.nameDisplay">
                   {{ formatNumber(item.available_budget) || '-' }}
                 </div>
               </td>
-              <td class="number-cell">
+              <td :class="styles.numberCell">
                 <!-- Display-only for Actual -->
-                <div class="name-display">
+                <div :class="styles.nameDisplay">
                   {{ formatNumber(item.actual) || '-' }}
                 </div>
               </td>
-              <td class="number-cell">
+              <td :class="styles.numberCell">
                 <!-- Display-only for Approved Budget -->
-                <div class="name-display">
+                <div :class="styles.nameDisplay">
                   {{ formatNumber(item.approved_budget) || '-' }}
                 </div>
               </td>
-              <td class="name-display">
+              <td :class="styles.nameDisplay">
                 {{ item.account_name || getAccountName(item.account_code) || '-' }}
               </td>
-              <td class="dropdown-cell">
-                <div v-if="route.query.viewOnly === 'true'" class="name-display">
+              <td :class="styles.dropdownCell">
+                <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
                   {{ item.account_code || '-' }}
                 </div>
                 <SearchableDropdown
@@ -185,11 +193,11 @@
                   :no-results-text="isArabic ? 'لا توجد نتائج' : 'No results found'"
                 />
               </td>
-              <td class="name-display">
+              <td :class="styles.nameDisplay">
                 {{ item.cost_center_name || getCostCenterName(item.cost_center_code) || '-' }}
               </td>
-              <td class="dropdown-cell">
-                <div v-if="route.query.viewOnly === 'true'" class="name-display">
+              <td :class="styles.dropdownCell">
+                <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
                   {{ item.cost_center_code || '-' }}
                 </div>
                 <SearchableDropdown
@@ -224,29 +232,38 @@
             </tr>
           </tbody>
           <tfoot>
-            <tr class="summary-row">
+            <tr :class="styles.summaryRow">
               <td v-if="!route.query.viewOnly"></td>
-              <td class="number-cell">{{ formatNumber(summaryData.toSum) || '-' }}</td>
-              <td v-if="!isFromEnhancementsPage" class="number-cell">
+              <td :class="styles.numberCell">{{ formatNumber(summaryData.toSum) || '-' }}</td>
+              <td v-if="!isFromEnhancementsPage" :class="styles.numberCell">
                 {{ formatNumber(summaryData.fromSum) || '-' }}
               </td>
-              <td class="number-cell">{{ formatNumber(summaryData.encumbranceSum) || '-' }}</td>
-              <td class="number-cell">{{ formatNumber(summaryData.availableBudgetSum) || '-' }}</td>
-              <td class="number-cell">{{ formatNumber(summaryData.actualSum) || '-' }}</td>
-              <td class="number-cell">{{ formatNumber(summaryData.approvedBudgetSum) || '-' }}</td>
-              <td colspan="4" class="summary-label">
+              <td :class="styles.numberCell">
+                {{ formatNumber(summaryData.encumbranceSum) || '-' }}
+              </td>
+              <td :class="styles.numberCell">
+                {{ formatNumber(summaryData.availableBudgetSum) || '-' }}
+              </td>
+              <td :class="styles.numberCell">{{ formatNumber(summaryData.actualSum) || '-' }}</td>
+              <td :class="styles.numberCell">
+                {{ formatNumber(summaryData.approvedBudgetSum) || '-' }}
+              </td>
+              <td colspan="4" :class="styles.summaryLabel">
                 {{ isArabic ? 'المجموع الكلي' : 'Overall Sum' }}
               </td>
             </tr>
             <tr v-if="!route.query.viewOnly">
-              <td colspan="11" class="add-row-cell">
+              <td colspan="11" :class="styles.addRowCell">
                 <button
-                  class="btn-modern btn-add-row-modern"
+                  :class="[
+                    styles.btnModern,
+                    styles.btnAddRowModern,
+                    { [styles.btnDisabled]: !isScreenEditable },
+                  ]"
                   @click="addNewRow"
                   :disabled="!isScreenEditable"
-                  :class="{ 'btn-disabled': !isScreenEditable }"
                 >
-                  <span class="btn-icon-modern">
+                  <span :class="styles.btnIconModern">
                     <svg
                       width="16"
                       height="16"
@@ -259,7 +276,9 @@
                       <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
                   </span>
-                  <span class="btn-text">{{ isArabic ? 'إضافة صف جديد' : 'Add New Row' }}</span>
+                  <span :class="styles.btnText">{{
+                    isArabic ? 'إضافة صف جديد' : 'Add New Row'
+                  }}</span>
                 </button>
               </td>
             </tr>
@@ -268,17 +287,23 @@
       </div>
 
       <!-- Total rows info -->
-      <div class="total-info">
+      <div :class="styles.totalInfo">
         {{ isArabic ? `المجموع ${currentData.length}` : `Total ${currentData.length}` }}
       </div>
 
       <!-- Action buttons - hidden in view-only mode -->
-      <div class="action-buttons-modern" v-if="!route.query.viewOnly" :class="{ rtl: isRTL }">
+      <div
+        :class="[styles.actionButtonsModern, { [styles.rtl]: isRTL }]"
+        v-if="!route.query.viewOnly"
+      >
         <button
-          class="btn-modern btn-submit"
+          :class="[
+            styles.btnModern,
+            styles.btnSubmit,
+            { [styles.btnDisabled]: !isSubmitButtonEnabled, [styles.rtl]: isRTL },
+          ]"
           @click="submitRequest"
           :disabled="!isSubmitButtonEnabled"
-          :class="{ 'btn-disabled': !isSubmitButtonEnabled, rtl: isRTL }"
           :title="
             !isSubmitButtonEnabled
               ? !currentData || currentData.length === 0
@@ -297,7 +322,7 @@
                 : 'Submit request'
           "
         >
-          <span class="btn-icon-modern" :class="{ rtl: isRTL }">
+          <span :class="[styles.btnIconModern, { [styles.rtl]: isRTL }]">
             <svg
               width="16"
               height="16"
@@ -310,17 +335,20 @@
               <path d="M9 18l6-6-6-6" />
             </svg>
           </span>
-          <span class="btn-text">{{ isArabic ? 'تقديم' : 'Submit' }}</span>
+          <span :class="styles.btnText">{{ isArabic ? 'تقديم' : 'Submit' }}</span>
         </button>
 
         <button
           v-if="!route.query.viewOnly"
-          class="btn-modern btn-upload"
+          :class="[
+            styles.btnModern,
+            styles.btnUpload,
+            { [styles.btnDisabled]: !isUploadButtonEnabled, [styles.rtl]: isRTL },
+          ]"
           @click="uploadFile"
           :disabled="!isUploadButtonEnabled"
-          :class="{ 'btn-disabled': !isUploadButtonEnabled, rtl: isRTL }"
         >
-          <span class="btn-icon-modern" :class="{ rtl: isRTL }">
+          <span :class="[styles.btnIconModern, { [styles.rtl]: isRTL }]">
             <svg
               width="16"
               height="16"
@@ -334,15 +362,20 @@
               <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
           </span>
-          <span class="btn-text">{{ isArabic ? 'رفع ملف المناقلة' : 'Upload Transfer File' }}</span>
+          <span :class="styles.btnText">{{
+            isArabic ? 'رفع ملف المناقلة' : 'Upload Transfer File'
+          }}</span>
         </button>
 
         <button
           v-if="!route.query.viewOnly"
-          class="btn-modern btn-reopen"
+          :class="[
+            styles.btnModern,
+            styles.btnReopen,
+            { [styles.btnDisabled]: !isReopenButtonEnabled, [styles.rtl]: isRTL },
+          ]"
           @click="reopenRequest"
           :disabled="!isReopenButtonEnabled"
-          :class="{ 'btn-disabled': !isReopenButtonEnabled, rtl: isRTL }"
           :title="
             !isReopenButtonEnabled && changesMade
               ? isArabic
@@ -353,7 +386,7 @@
                 : 'Reopen request'
           "
         >
-          <span class="btn-icon-modern" :class="{ rtl: isRTL }">
+          <span :class="[styles.btnIconModern, { [styles.rtl]: isRTL }]">
             <svg
               width="16"
               height="16"
@@ -367,11 +400,16 @@
               <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
             </svg>
           </span>
-          <span class="btn-text">{{ isArabic ? 'إعادة فتح الطلب' : 'Re-open Request' }}</span>
+          <span :class="styles.btnText">{{
+            isArabic ? 'إعادة فتح الطلب' : 'Re-open Request'
+          }}</span>
         </button>
 
-        <button class="btn-modern btn-report" @click="generateReport" :class="{ rtl: isRTL }">
-          <span class="btn-icon-modern" :class="{ rtl: isRTL }">
+        <button
+          :class="[styles.btnModern, styles.btnReport, { [styles.rtl]: isRTL }]"
+          @click="generateReport"
+        >
+          <span :class="[styles.btnIconModern, { [styles.rtl]: isRTL }]">
             <svg
               width="16"
               height="16"
@@ -387,7 +425,7 @@
               <polyline points="10,9 9,9 8,9" />
             </svg>
           </span>
-          <span class="btn-text">{{ isArabic ? 'تقرير' : 'Report' }}</span>
+          <span :class="styles.btnText">{{ isArabic ? 'تقرير' : 'Report' }}</span>
         </button>
       </div>
 
@@ -412,11 +450,15 @@
     <!-- Enhanced Error Details Modal -->
     <Teleport to="body">
       <Transition name="modal-fade" appear>
-        <div v-if="showErrorModal" class="enhanced-error-modal-overlay" @click="hideErrorModal">
-          <div class="enhanced-error-modal-backdrop"></div>
+        <div
+          v-if="showErrorModal"
+          :class="styles.enhancedErrorModalOverlay"
+          @click="hideErrorModal"
+        >
+          <div :class="styles.enhancedErrorModalBackdrop"></div>
           <Transition name="modal-slide" appear>
             <div
-              class="enhanced-error-modal-container"
+              :class="styles.enhancedErrorModalContainer"
               @click.stop
               tabindex="-1"
               role="dialog"
@@ -424,10 +466,10 @@
               aria-describedby="error-modal-description"
               aria-modal="true"
             >
-              <div class="enhanced-error-modal-content">
+              <div :class="styles.enhancedErrorModalContent">
                 <!-- Header with icon and gradient -->
-                <div class="enhanced-error-modal-header">
-                  <div class="error-header-icon">
+                <div :class="styles.enhancedErrorModalHeader">
+                  <div :class="styles.errorHeaderIcon">
                     <svg
                       width="24"
                       height="24"
@@ -435,18 +477,18 @@
                       fill="none"
                       stroke="currentColor"
                       stroke-width="2"
-                      class="error-icon-svg"
+                      :class="styles.errorIconSvg"
                     >
                       <circle cx="12" cy="12" r="10"></circle>
                       <line x1="15" y1="9" x2="9" y2="15"></line>
                       <line x1="9" y1="9" x2="15" y2="15"></line>
                     </svg>
                   </div>
-                  <div class="error-header-content">
-                    <h3 class="error-modal-title">
+                  <div :class="styles.errorHeaderContent">
+                    <h3 :class="styles.errorModalTitle">
                       {{ isArabic ? 'أخطاء التحقق من صحة البيانات' : 'Data Validation Errors' }}
                     </h3>
-                    <p class="error-modal-subtitle">
+                    <p :class="styles.errorModalSubtitle">
                       {{
                         isArabic
                           ? `تم العثور على ${currentErrors.length} أخطاء تحتاج إلى إصلاح`
@@ -455,7 +497,7 @@
                     </p>
                   </div>
                   <button
-                    class="enhanced-error-modal-close"
+                    :class="styles.enhancedErrorModalClose"
                     @click="hideErrorModal"
                     :aria-label="isArabic ? 'إغلاق' : 'Close'"
                   >
@@ -474,25 +516,25 @@
                 </div>
 
                 <!-- Enhanced Error List -->
-                <div class="enhanced-error-modal-body">
-                  <div class="error-summary-stats">
-                    <div class="error-stat-item">
-                      <span class="error-stat-number">{{ currentErrors.length }}</span>
-                      <span class="error-stat-label">
+                <div :class="styles.enhancedErrorModalBody">
+                  <div :class="styles.errorSummaryStats">
+                    <div :class="styles.errorStatItem">
+                      <span :class="styles.errorStatNumber">{{ currentErrors.length }}</span>
+                      <span :class="styles.errorStatLabel">
                         {{ isArabic ? 'أخطاء' : 'Errors' }}
                       </span>
                     </div>
                   </div>
 
-                  <div class="error-list-container">
-                    <TransitionGroup name="error-item" tag="div" class="enhanced-error-list">
+                  <div :class="styles.errorListContainer">
+                    <TransitionGroup name="error-item" tag="div" :class="styles.enhancedErrorList">
                       <div
                         v-for="(error, errorIndex) in currentErrors"
                         :key="`error-${errorIndex}`"
-                        class="enhanced-error-item"
+                        :class="styles.enhancedErrorItem"
                         :style="{ animationDelay: `${errorIndex * 100}ms` }"
                       >
-                        <div class="error-item-icon">
+                        <div :class="styles.errorItemIcon">
                           <svg
                             width="16"
                             height="16"
@@ -506,9 +548,9 @@
                             <line x1="12" y1="16" x2="12.01" y2="16"></line>
                           </svg>
                         </div>
-                        <div class="error-item-content">
-                          <span class="error-item-text">{{ error }}</span>
-                          <div class="error-item-type">
+                        <div :class="styles.errorItemContent">
+                          <span :class="styles.errorItemText">{{ error }}</span>
+                          <div :class="styles.errorItemType">
                             {{ getErrorType(error) }}
                           </div>
                         </div>
@@ -518,8 +560,8 @@
                 </div>
 
                 <!-- Enhanced Footer -->
-                <div class="enhanced-error-modal-footer">
-                  <div class="error-help-text">
+                <div :class="styles.enhancedErrorModalFooter">
+                  <div :class="styles.errorHelpText">
                     <svg
                       width="16"
                       height="16"
@@ -540,7 +582,7 @@
                       }}
                     </span>
                   </div>
-                  <button class="enhanced-error-modal-action-btn" @click="hideErrorModal">
+                  <button :class="styles.enhancedErrorModalActionBtn" @click="hideErrorModal">
                     <svg
                       width="16"
                       height="16"
@@ -564,7 +606,14 @@
     <!-- Toast (auto-dismiss) -->
     <Teleport to="body">
       <transition name="fade">
-        <div v-if="toast.show" class="toast" :class="`toast--${toast.type}`" role="alert">
+        <div
+          v-if="toast.show"
+          :class="[
+            styles.toast,
+            styles[`toast${toast.type.charAt(0).toUpperCase() + toast.type.slice(1)}`],
+          ]"
+          role="alert"
+        >
           {{ toast.message }}
         </div>
       </transition>
@@ -598,6 +647,8 @@ import SearchableDropdown from '@/components/SearchableDropdown.vue'
 // Add import for TransferReport
 import TransferReport from '@/components/TransferReport.vue'
 import FuturisticPopup from '@/components/FuturisticPopup.vue'
+// Import CSS module
+import styles from './CostCenterTransferRequest.module.css'
 
 // Extended contract service interface to include missing methods
 interface ContractResponse {
@@ -1752,505 +1803,3 @@ const handleDialogConfirm = () => {
   }
 }
 </script>
-
-<style src="@/styles/CostCenterTransferRequest.css" scoped></style>
-
-<style>
-/* Toast Styles */
-.toast {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 9999;
-  padding: 16px 24px;
-  border-radius: 8px;
-  color: white;
-  font-weight: 500;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  max-width: 400px;
-  word-wrap: break-word;
-}
-
-.toast--success {
-  background-color: #28a745;
-}
-
-.toast--error {
-  background-color: #dc3545;
-}
-
-.toast--warning {
-  background-color: #ffc107;
-  color: #212529;
-}
-
-.toast--info {
-  background-color: #17a2b8;
-}
-
-/* Toast Animation */
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.3s ease;
-}
-
-.fade-enter-from {
-  opacity: 0;
-  transform: translateX(100%);
-}
-
-.fade-leave-to {
-  opacity: 0;
-  transform: translateX(100%);
-}
-
-/* RTL Toast Position */
-.rtl .toast {
-  right: auto;
-  left: 20px;
-}
-
-.rtl .fade-enter-from,
-.rtl .fade-leave-to {
-  transform: translateX(-100%);
-}
-
-/* Add to your existing styles */
-.readonly-input {
-  background-color: #f0f0f0;
-  cursor: not-allowed;
-  border-color: #ddd;
-  color: #666;
-}
-
-.dark-mode .readonly-input {
-  background-color: #444;
-  border-color: #555;
-  color: #aaa;
-}
-
-/* Remove red borders/outlines from buttons */
-.btn-modern,
-.btn-header-create,
-.btn-retry,
-.btn-delete-row,
-.btn-add-row-modern {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-.btn-modern:focus,
-.btn-header-create:focus,
-.btn-retry:focus,
-.btn-delete-row:focus,
-.btn-add-row-modern:focus {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-.btn-modern:active,
-.btn-header-create:active,
-.btn-retry:active,
-.btn-delete-row:active,
-.btn-add-row-modern:active {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-/* Remove any border-right specifically */
-.btn-modern::after,
-.btn-header-create::after,
-.btn-retry::after,
-.btn-delete-row::after,
-.btn-add-row-modern::after {
-  border-right: none !important;
-}
-
-/* Comprehensive removal of pseudo-element red lines */
-.btn-modern::before,
-.btn-modern::after,
-.btn-header-create::before,
-.btn-header-create::after,
-.btn-retry::before,
-.btn-retry::after,
-.btn-delete-row::before,
-.btn-delete-row::after,
-.btn-add-row-modern::before,
-.btn-add-row-modern::after {
-  content: none !important;
-  border: none !important;
-  background: none !important;
-}
-
-/* Force remove all borders from btn-icon-modern */
-.btn-icon-modern {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-  border-top: none !important;
-  border-right: none !important;
-  border-bottom: none !important;
-  border-left: none !important;
-  border-inline: none !important;
-  border-block: none !important;
-  border-inline-start: none !important;
-  border-inline-end: none !important;
-  border-block-start: none !important;
-  border-block-end: none !important;
-}
-
-.btn-icon-modern:focus,
-.btn-icon-modern:active,
-.btn-icon-modern:hover {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-  border-top: none !important;
-  border-right: none !important;
-  border-bottom: none !important;
-  border-left: none !important;
-  border-inline: none !important;
-  border-block: none !important;
-  border-inline-start: none !important;
-  border-inline-end: none !important;
-  border-block-start: none !important;
-  border-block-end: none !important;
-}
-
-.btn-icon-modern::before,
-.btn-icon-modern::after {
-  content: none !important;
-  border: none !important;
-  background: none !important;
-  border-top: none !important;
-  border-right: none !important;
-  border-bottom: none !important;
-  border-left: none !important;
-}
-
-/* Remove any logical border on RTL */
-.rtl .btn-modern,
-.rtl .btn-header-create,
-.rtl .btn-retry,
-.rtl .btn-delete-row,
-.rtl .btn-add-row-modern {
-  border-inline-start: none !important;
-}
-
-/* Force remove all borders from action-buttons-modern */
-.action-buttons-modern {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-  border-top: none !important;
-  border-right: none !important;
-  border-bottom: none !important;
-  border-left: none !important;
-  border-inline: none !important;
-  border-block: none !important;
-  border-inline-start: none !important;
-  border-inline-end: none !important;
-  border-block-start: none !important;
-  border-block-end: none !important;
-}
-
-.action-buttons-modern:focus,
-.action-buttons-modern:active,
-.action-buttons-modern:hover {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-  border-top: none !important;
-  border-right: none !important;
-  border-bottom: none !important;
-  border-left: none !important;
-  border-inline: none !important;
-  border-block: none !important;
-  border-inline-start: none !important;
-  border-inline-end: none !important;
-  border-block-start: none !important;
-  border-block-end: none !important;
-}
-
-.action-buttons-modern::before,
-.action-buttons-modern::after {
-  content: none !important;
-  border: none !important;
-  background: none !important;
-  border-top: none !important;
-  border-right: none !important;
-  border-bottom: none !important;
-  border-left: none !important;
-}
-
-/* RTL specific border removal for action-buttons-modern */
-.rtl .action-buttons-modern {
-  border-inline-start: none !important;
-  border-inline-end: none !important;
-}
-
-/* New style for API data display */
-.api-value-display {
-  padding: 6px 10px;
-  height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  background-color: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-weight: 500;
-  color: #555;
-}
-
-.dark-mode .api-value-display {
-  background-color: #333;
-  border-color: #444;
-  color: #ddd;
-}
-
-/* Status indicator styles */
-.status-indicator {
-  display: inline-block;
-  margin-left: 10px;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: white;
-}
-
-.status-approved {
-  background-color: #28a745;
-}
-
-.status-rejected {
-  background-color: #dc3545;
-}
-
-.status-waiting {
-  background-color: #ffc107;
-  color: #212529;
-}
-
-.status-not-sent {
-  background-color: #6c757d;
-}
-
-/* Button disabled state */
-.btn-disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* SearchableDropdown custom styling for this component */
-.searchable-dropdown {
-  width: 100%;
-}
-
-/* Style for cells that contain dropdowns */
-.dropdown-cell {
-  min-width: 200px;
-  max-width: 280px;
-}
-
-.searchable-dropdown .dropdown-trigger {
-  padding: 8px 12px;
-  border-radius: 6px;
-  min-height: 38px;
-  font-size: 14px;
-}
-
-/* Match dropdown style with table inputs */
-.searchable-dropdown .value-text,
-.searchable-dropdown .placeholder-text {
-  font-size: 14px;
-}
-
-/* Ensure dropdown panels have proper z-index to appear above the table */
-.dropdown-panel-portal {
-  z-index: 999999 !important;
-}
-
-/* Improve dropdown panel styling */
-.searchable-dropdown .dropdown-panel-portal .options-container {
-  max-height: 250px;
-}
-
-/* Improve search input styling */
-.searchable-dropdown .search-input {
-  font-size: 14px;
-}
-
-.dark-mode .searchable-dropdown {
-  --text-color: #f9fafb;
-  --placeholder-color: #9ca3af;
-  --border-color: #4b5563;
-  --background-color: #374151;
-  --hover-background: #4b5563;
-}
-
-/* Maintain consistent dropdown panel width */
-.dropdown-panel-portal {
-  min-width: 280px;
-}
-
-/* Ensure the dropdown panel is visible above other elements */
-.dropdown-overlay {
-  z-index: 999998;
-}
-
-/* Style for disabled dropdowns to match other inputs */
-.searchable-dropdown.disabled .dropdown-trigger {
-  background-color: #f0f0f0;
-  cursor: not-allowed;
-  border-color: #ddd;
-  color: #666;
-  opacity: 0.6;
-}
-
-.dark-mode .searchable-dropdown.disabled .dropdown-trigger {
-  background-color: #444;
-  border-color: #555;
-  color: #aaa;
-}
-
-/* Specific button styles */
-.btn-submit {
-  background-color: #4caf50;
-  color: white;
-}
-
-.btn-submit:hover:not(:disabled) {
-  background-color: #45a049;
-  transform: translateY(-2px);
-}
-
-/* View-only mode status display */
-.view-status-info {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  margin-right: 1rem;
-}
-
-.view-status-info .status-badge {
-  font-size: 0.9rem;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  display: inline-block;
-}
-
-/* End of view-only styles */
-
-.btn-upload {
-  background-color: #2196f3;
-  color: white;
-}
-
-.btn-upload:hover:not(:disabled) {
-  background-color: #1e88e5;
-  transform: translateY(-2px);
-}
-
-.btn-reopen {
-  background-color: #ff9800;
-  color: white;
-}
-
-.btn-reopen:hover:not(:disabled) {
-  background-color: #fb8c00;
-  transform: translateY(-2px);
-}
-
-.btn-report {
-  background-color: #673ab7;
-  color: white;
-}
-
-.btn-report:hover:not(:disabled) {
-  background-color: #5e35b1;
-  transform: translateY(-2px);
-}
-
-/* RTL styles */
-.rtl {
-  direction: rtl;
-  text-align: right;
-}
-
-.rtl .btn-icon-modern {
-  margin-right: 8px;
-  margin-left: 0;
-}
-
-.rtl .btn-text {
-  margin-right: 0;
-  margin-left: 8px;
-}
-
-.rtl .action-buttons-modern {
-  display: flex;
-  flex-direction: row-reverse;
-  align-items: center;
-  justify-content: flex-start;
-}
-
-.rtl .dropdown-cell {
-  text-align: right;
-}
-
-.rtl .number-cell {
-  text-align: left;
-}
-
-.rtl .transfer-table {
-  direction: rtl;
-}
-
-.rtl .transfer-table th,
-.rtl .transfer-table td {
-  text-align: right;
-}
-
-.rtl .transfer-table .action-column {
-  text-align: center;
-}
-
-/* End RTL styles */
-
-/* View-only mode styles */
-.view-status-info {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: auto;
-}
-
-.view-only-badge {
-  padding: 8px 16px;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: white;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-}
-
-.dark-mode .view-only-badge {
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
-  border: 1px solid rgba(79, 70, 229, 0.3);
-}
-
-.rtl .view-status-info {
-  margin-left: 0;
-  margin-right: auto;
-}
-</style>

@@ -95,12 +95,12 @@ const routes = [
     component: () => import('@/views/Accounts_Entity_view.vue'),
     meta: { requiresAuth: true, requiresAdmin: true },
   },
-  {
-    path: '/admin/controller',
-    name: 'Controller',
-    component: () => import('@/views/ControllerPage.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true },
-  },
+  // {
+  //   path: '/admin/controller',
+  //   name: 'Controller',
+  //   component: () => import('@/views/ControllerPage.vue'),
+  //   meta: { requiresAuth: true, requiresAdmin: true },
+  // },
   {
     path: '/admin/user-abilities',
     name: 'UserAbilities',
@@ -137,9 +137,9 @@ router.beforeEach(async (to, from, next) => {
       // Redirect to dashboard if trying to access super admin route without super admin privileges
       next({ name: 'Dashboard' })
     }
-    // Check if route requires admin role and user is not an admin
-    else if (requiresAdmin && authStore.user?.role !== 'admin') {
-      // Redirect to dashboard if trying to access admin route without admin privileges
+    // Check if route requires admin role and user is not an admin or superadmin
+    else if (requiresAdmin && !['admin', 'superadmin'].includes(authStore.user?.role || '')) {
+      // Redirect to dashboard if trying to access admin route without admin/superadmin privileges
       next({ name: 'Dashboard' })
     }
     // If user is authenticated and trying to access login page, redirect to dashboard

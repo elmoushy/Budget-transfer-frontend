@@ -21,7 +21,7 @@
           :class="{ 'dark-theme': isDarkMode }"
           aria-label="Scroll left"
         >
-          <i class="fas fa-chevron-left"></i>
+          <i :class="['fas', isArabic ? 'fa-chevron-right' : 'fa-chevron-left']"></i>
         </button>
 
         <!-- Navigation links -->
@@ -101,7 +101,7 @@
           :class="{ 'dark-theme': isDarkMode }"
           aria-label="Scroll right"
         >
-          <i class="fas fa-chevron-right"></i>
+          <i :class="['fas', isArabic ? 'fa-chevron-left' : 'fa-chevron-right']"></i>
         </button>
       </div>
     </div>
@@ -260,7 +260,7 @@ const routeIdToRouteName: Record<number, string> = {
   9: 'UserManagement',
   10: 'AccountEntityManagement',
   11: 'AccountsEntityView',
-  12: 'Controller',
+  // 12: 'Controller',
   13: 'UserAbilities', // New route for superadmin
 }
 
@@ -268,7 +268,8 @@ const routeIdToRouteName: Record<number, string> = {
 const restrictedRouteIds = [6, 7, 8] // EnhancementsPendingApproval, ContractsPendingApproval, SettlementsPendingApproval
 
 // Mapping for admin routes (these should only show for admin users)
-const adminRouteIds = [9, 10, 11, 12] // User Management, Account-Entity Management, Accounts & Entities, Controller
+const adminRouteIds = [9, 10, 11] // User Management, Account-Entity Management, Accounts & Entities
+// const adminRouteIds = [9, 10, 11, 12] // User Management, Account-Entity Management, Accounts & Entities, Controller
 
 // Mapping for superadmin routes (these should only show for superadmin users)
 const superAdminRouteIds = [13] // User Abilities
