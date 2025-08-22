@@ -775,7 +775,7 @@ const userOptions = computed(() =>
 // Entity options for dropdown
 const entityOptions = computed(() =>
   entities.value.map((entity) => ({
-    value: entity.entity,
+    value: entity.id,
     label: entity.alias_default,
   })),
 )
