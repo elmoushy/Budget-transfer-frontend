@@ -6,9 +6,9 @@ export interface TransferItem {
   from_center?: number | null
   to_center_input?: string
   from_center_input?: string
-  account_code?: string
+  account_code?: string | number
   account_name?: string
-  cost_center_code?: string
+  cost_center_code?: string | number
   cost_center_name?: string
   approved_budget?: number | null
   available_budget?: number | null

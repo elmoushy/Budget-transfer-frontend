@@ -64,6 +64,8 @@
               <th>{{ isArabic ? 'رقم الحساب' : 'Account Code' }}</th>
               <th>{{ isArabic ? 'اسم البند' : 'Cost Center Name' }}</th>
               <th>{{ isArabic ? 'رقم البند' : 'Cost Center Code' }}</th>
+              <th>{{ isArabic ? 'اسم المشروع' : 'Project Name' }}</th>
+              <th>{{ isArabic ? 'رقم المشروع' : 'Project Code' }}</th>
             </tr>
           </thead>
           <tbody>
@@ -164,7 +166,7 @@
               </td>
               <td :class="styles.dropdownCell">
                 <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
-                  {{ item.account_code || '-' }}
+                  {{ getAccountDisplayText(item.account_code) || '-' }}
                 </div>
                 <SearchableDropdown
                   v-else
@@ -198,7 +200,7 @@
               </td>
               <td :class="styles.dropdownCell">
                 <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
-                  {{ item.cost_center_code || '-' }}
+                  {{ getCostCenterDisplayText(item.cost_center_code) || '-' }}
                 </div>
                 <SearchableDropdown
                   v-else
@@ -229,6 +231,20 @@
                   :no-results-text="isArabic ? 'لا توجد نتائج' : 'No results found'"
                 />
               </td>
+              <td :class="styles.nameDisplay">1000000 - Central</td>
+              <td :class="styles.dropdownCell">
+                <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
+                  1000000 - 1000000 - Central
+                </div>
+                <select
+                  v-else
+                  v-model="item.project_code"
+                  :class="[styles.tableInput, { [styles.readonlyInput]: !isScreenEditable }]"
+                  :disabled="!isScreenEditable"
+                >
+                  <option value="1000000 - 1000000 - Central">1000000 - 1000000 - Central</option>
+                </select>
+              </td>
             </tr>
           </tbody>
           <tfoot>
@@ -248,12 +264,12 @@
               <td :class="styles.numberCell">
                 {{ formatNumber(summaryData.approvedBudgetSum) || '-' }}
               </td>
-              <td colspan="4" :class="styles.summaryLabel">
+              <td colspan="6" :class="styles.summaryLabel">
                 {{ isArabic ? 'المجموع الكلي' : 'Overall Sum' }}
               </td>
             </tr>
             <tr v-if="!route.query.viewOnly">
-              <td colspan="11" :class="styles.addRowCell">
+              <td colspan="13" :class="styles.addRowCell">
                 <button
                   :class="[
                     styles.btnModern,
@@ -693,9 +709,9 @@ import type {
 // Add type definitions for error handling
 interface TransferRowData {
   transaction: string | number | null
-  cost_center_code: string | undefined
+  cost_center_code: string | number | undefined
   cost_center_name: string | undefined
-  account_code: string | undefined
+  account_code: string | number | undefined
   account_name: string | undefined
   approved_budget: number
   available_budget: number
@@ -892,16 +908,55 @@ const fetchAccountEntities = async () => {
   }
 }
 
-const getCostCenterName = (code: string | undefined) => {
+const getCostCenterName = (code: string | number | undefined) => {
   if (!code) return ''
-  const entity = costCenterEntities.value.find((e) => e.entity === code)
+  const codeStr = String(code)
+  // Return empty if entities haven't loaded yet
+  if (!costCenterEntities.value || costCenterEntities.value.length === 0) {
+    return ''
+  }
+  const entity = costCenterEntities.value.find((e) => e.entity === codeStr)
   return entity ? entity.alias_default : ''
 }
 
-const getAccountName = (code: string | undefined) => {
+const getAccountName = (code: string | number | undefined) => {
   if (!code) return ''
-  const account = accountEntities.value.find((a) => a.account === code)
+  const codeStr = String(code)
+  // Return empty if entities haven't loaded yet
+  if (!accountEntities.value || accountEntities.value.length === 0) {
+    return ''
+  }
+  const account = accountEntities.value.find((a) => a.account === codeStr)
   return account ? account.alias_default : ''
+}
+
+// Helper functions to get display text for dropdowns in view-only mode
+const getAccountDisplayText = (code: string | number | undefined) => {
+  if (!code) return ''
+  const codeStr = String(code)
+  // Return just the code if entities haven't loaded yet
+  if (!accountEntities.value || accountEntities.value.length === 0) {
+    return codeStr
+  }
+  const account = accountEntities.value.find((a) => a.account === codeStr)
+  if (account && account.alias_default) {
+    return `${account.account} - ${account.alias_default}`
+  }
+  return codeStr
+}
+
+const getCostCenterDisplayText = (code: string | number | undefined) => {
+  if (!code) return ''
+  const codeStr = String(code)
+  // Return just the code if entities haven't loaded yet
+  if (!costCenterEntities.value || costCenterEntities.value.length === 0) {
+    return codeStr
+  }
+  const entity = costCenterEntities.value.find((e) => e.entity === codeStr)
+  if (entity && entity.alias_default) {
+    return `${entity.entity} - ${entity.alias_default}`
+  }
+  return codeStr
 }
 
 // Method to validate number input and handle conversion
@@ -974,6 +1029,10 @@ const initializeInputFields = () => {
       item.approved_budget !== null && item.approved_budget !== undefined
         ? item.approved_budget.toString()
         : ''
+
+    // Initialize hardcoded project fields for frontend-only display
+    item.project_code = '1000000 - 1000000 - Central'
+    item.project_name = '1000000 - Central'
   })
 }
 
@@ -996,6 +1055,8 @@ const addNewRow = () => {
     done: 1,
     financialDataFromApi: false,
     lastChangedField: null, // Track which dropdown was changed last
+    project_code: '1000000 - 1000000 - Central', // Default hardcoded project code
+    project_name: '1000000 - Central', // Default project name
   }
 
   if (isContractMode.value) {
@@ -1305,6 +1366,16 @@ const loadData = async () => {
         currentStatus.value = 'not yet sent for approval' // Default
       }
 
+      // Normalize data types - convert numeric codes to strings
+      contractData.value.forEach((item) => {
+        if (item.cost_center_code && typeof item.cost_center_code === 'number') {
+          item.cost_center_code = String(item.cost_center_code)
+        }
+        if (item.account_code && typeof item.account_code === 'number') {
+          item.account_code = String(item.account_code)
+        }
+      })
+
       // Initialize input fields for contracts
       contractData.value.forEach((item) => {
         item.to_center_input =
@@ -1327,6 +1398,9 @@ const loadData = async () => {
           item.approved_budget !== null && item.approved_budget !== undefined
             ? item.approved_budget.toString()
             : ''
+        // Initialize hardcoded project fields for frontend-only display
+        item.project_code = '1000000 - 1000000 - Central'
+        item.project_name = '1000000 - Central'
       })
 
       // Store a deep copy of the original data for future comparisons
@@ -1357,6 +1431,16 @@ const loadData = async () => {
         apiSummary.value = null
         currentStatus.value = 'not yet sent for approval' // Default
       }
+
+      // Normalize data types - convert numeric codes to strings
+      transferData.value.forEach((item) => {
+        if (item.cost_center_code && typeof item.cost_center_code === 'number') {
+          item.cost_center_code = String(item.cost_center_code)
+        }
+        if (item.account_code && typeof item.account_code === 'number') {
+          item.account_code = String(item.account_code)
+        }
+      })
 
       initializeInputFields() // Initialize input fields after data load
       // Store a deep copy of the original data for future comparisons
