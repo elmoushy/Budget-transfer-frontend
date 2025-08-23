@@ -279,7 +279,7 @@
 }
 
 .navigation-menu.darkTheme .navLinks a {
-  color: #f8e9f0 !important;
+  color: #f8e9f0;
   background: rgba(36, 23, 38, 0.6);
   border: 1px solid rgba(81, 32, 60, 0.4);
   box-shadow:
