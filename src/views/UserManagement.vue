@@ -1003,7 +1003,6 @@ interface UserLevel {
 
 const themeStore = useThemeStore()
 const isArabic = computed(() => themeStore.language === 'ar')
-const isDarkMode = computed(() => themeStore.darkMode)
 
 // Active tab
 type TabType = 'users' | 'levels' | 'assignments'
@@ -1342,6 +1341,21 @@ function closeDeleteModal() {
   transition: all 0.3s ease;
   direction: inherit;
 }
+/* التابلت (شاشات أقل من 1024px) */
+@media (max-width: 1024px) {
+  .modern-table th,
+  .modern-table td {
+    min-width: 220px; /* يخلي الأعمدة أوسع شوية للـScroll */
+  }
+}
+
+/* الموبايل (شاشات أقل من 768px) */
+@media (max-width: 768px) {
+  .modern-table th,
+  .modern-table td {
+    min-width: 200px; /* ممكن تقلل الرقم شوية عشان يناسب الموبايل */
+  }
+}
 
 [dir='rtl'] .unified-page {
   background: linear-gradient(225deg, #f8f6f8 0%, #fff6fa 50%, #f8f6f8 100%);
@@ -1462,7 +1476,6 @@ function closeDeleteModal() {
 }
 
 .page-title {
-  font-size: 2.5rem;
   font-weight: 800;
   margin: 0;
   background: linear-gradient(135deg, #8a2a44 0%, #e14b6a 50%, #6d1a36 100%);
@@ -1472,7 +1485,13 @@ function closeDeleteModal() {
   text-shadow: 0 2px 4px rgba(138, 42, 68, 0.1);
   position: relative;
 }
-
+.page-title {
+  font-size: clamp(1.6rem, 2vw + 1.2rem, 2.5rem); /* موبايل → ديسكتوب */
+  line-height: 1.15;
+}
+.page-subtitle {
+  font-size: clamp(0.95rem, 0.6vw + 0.8rem, 1.1rem);
+}
 .page-title::after {
   content: '';
   position: absolute;
@@ -1554,8 +1573,10 @@ function closeDeleteModal() {
   margin-bottom: 1.5rem;
   padding: 1rem;
   border-radius: 16px;
+  align-items: center;
+  /* نخليها مرنة لو العناوين طويلة */
+  flex-wrap: wrap;
 }
-
 .tab-btn {
   padding: 0.875rem 1.5rem;
   background: transparent;
@@ -1595,6 +1616,7 @@ function closeDeleteModal() {
 
 .dark-theme .tab-btn.active {
   background: linear-gradient(135deg, #a7385c 0%, #e14b6a 100%);
+  color: white;
 }
 
 /* Search section */
@@ -1988,12 +2010,15 @@ function closeDeleteModal() {
 }
 
 .modern-table-wrapper {
-  overflow-x: auto;
-  max-width: 100%;
+  width: 100%;
+  overflow-x: auto;       /* Scroll أفقي */
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch; /* سلاسة على الموبايل */
 }
 
 .modern-table {
-  width: 100%;
+  min-width: 100%;       /* أو أكبر شوية حسب الأعمدة */
+  width: max-content;     /* يخلي الجدول يتمدد */
   border-collapse: collapse;
   background: white;
   font-size: 0.875rem;

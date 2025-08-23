@@ -656,16 +656,7 @@ const sortDirection = ref<'asc' | 'desc'>('asc')
 const activeTab = ref<string>('overview')
 
 // Tab configuration
-const availableTabs = computed(() => [
-  { id: 'overview', label: isArabic.value ? 'نظرة عامة' : 'Overview', icon: 'fas fa-chart-bar' },
-  {
-    id: 'transfers',
-    label: isArabic.value ? 'التحويلات' : 'Transfers',
-    icon: 'fas fa-project-diagram',
-  },
-  { id: 'flows', label: isArabic.value ? 'التدفقات' : 'Flows', icon: 'fas fa-exchange-alt' },
-  { id: 'data', label: isArabic.value ? 'البيانات' : 'Data', icon: 'fas fa-table' },
-])
+
 
 // Computed properties
 const isDarkMode = computed(() => themeStore.darkMode)
@@ -1361,7 +1352,7 @@ watch(
 }
 
 .dark-mode .kpi-value {
-  color: #e14b6a;
+  color: white;
 }
 
 .kpi-label {

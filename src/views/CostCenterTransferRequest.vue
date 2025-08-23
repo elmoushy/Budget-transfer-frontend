@@ -264,12 +264,12 @@
               <td :class="styles.numberCell">
                 {{ formatNumber(summaryData.approvedBudgetSum) || '-' }}
               </td>
-              <td colspan="6" :class="styles.summaryLabel">
+              <td :colspan="isFromEnhancementsPage ? 6 : 6" :class="styles.summaryLabel">
                 {{ isArabic ? 'المجموع الكلي' : 'Overall Sum' }}
               </td>
             </tr>
             <tr v-if="!route.query.viewOnly">
-              <td colspan="13" :class="styles.addRowCell">
+              <td :colspan="isFromEnhancementsPage ? 12 : 13" :class="styles.addRowCell">
                 <button
                   :class="[
                     styles.btnModern,

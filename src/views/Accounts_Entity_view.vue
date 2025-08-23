@@ -993,7 +993,7 @@ export default defineComponent({
 }
 
 .dark-mode .tabs button {
-  color: #e14b6a;
+  color: white;
 }
 
 .dark-mode .tabs button:hover:not(.active) {
@@ -1166,15 +1166,22 @@ export default defineComponent({
 }
 
 .data-table thead th {
-  background: linear-gradient(135deg, #8a2a44 0%, #6d1a36 100%);
-  color: #ffffff;
   text-align: left;
   padding: 1rem;
   font-weight: 600;
   font-size: 0.875rem;
   border: none;
 }
+.data-table thead{
+    background: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%);
 
+}
+.dark-theme .data-table {
+  background: #1e1e2e;
+}
+.dark-theme .data-table thead {
+  background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+}
 .data-table tbody td {
   padding: 0.875rem 1rem;
   border-bottom: 1px solid rgba(138, 42, 68, 0.05);
@@ -1199,7 +1206,40 @@ export default defineComponent({
 .dark-mode .data-table tbody tr:hover {
   background: rgba(225, 75, 106, 0.1);
 }
+.data-table-container {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch; /* سلاسة على الموبايل */
+  max-width: 100%;
+}
 
+/* Scroll عمودي عند امتلاء الجدول */
+.data-table-scrollable {
+  max-height: 400px; /* الطول اللي تحبه */
+  overflow-y: auto;
+}
+
+/* نجبر الجدول يكون أعرض من الكونتينر على الشاشات الصغيرة */
+.data-table th,
+.data-table td {
+  min-width: 180px; /* تزود الرقم لو عايز الأعمدة أوسع */
+  white-space: nowrap; /* يمنع تكسير الكلام ويخلي الجدول يمدد أفقياً */
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .data-table th,
+  .data-table td {
+    min-width: 200px; /* للتابلت */
+  }
+}
+
+@media (max-width: 768px) {
+  .data-table th,
+  .data-table td {
+    min-width: 220px; /* للموبايل */
+  }
+}
 .actions-column {
   width: 120px;
   text-align: center;

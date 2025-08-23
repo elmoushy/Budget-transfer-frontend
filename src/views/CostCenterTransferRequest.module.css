@@ -733,6 +733,8 @@
   overflow: hidden;
   margin-bottom: 20px;
   transition: var(--hover-transition);
+  width: 100%;
+  max-width: 100%;
 }
 
 .cardContainer:hover {
@@ -746,45 +748,65 @@
   background: rgba(30, 41, 59, 0.95);
   border-color: rgba(138, 42, 68, 0.2);
 }
+/* Table container with horizontal scrolling */
+.tableContainer {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on mobile */
+  padding-bottom: 8px; /* Space for scrollbar */
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+}
+
+/* (اختياري) لمنع تكسير النص داخل الخلايا الطويلة */
+.transferTable td {
+  white-space: nowrap; /* يخلي الجدول أوسع => يظهّر الـ scrollbar */
+}
+
+/* (اختياري) لو في خلايا محتاجه تلف السطر جوّاها تحديدًا */
+.wrapCell {
+  white-space: normal !important;
+}
+
+/* (اختياري) تحسين مظهر شريط التمرير */
+.tableContainer::-webkit-scrollbar {
+  height: 10px;
+}
+.tableContainer::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+}
+.tableContainer::-webkit-scrollbar-thumb {
+  background: rgba(138, 42, 68, 0.35);
+  border-radius: 8px;
+}
+.tableContainer:hover::-webkit-scrollbar-thumb {
+  background: rgba(138, 42, 68, 0.55);
+}
 
 /* Transfer Table */
 .transferTable {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 14px;
-  overflow-x: auto;
+  min-width: 1730px; /* Increased to accommodate wider numeric columns */
 }
 
 .transferTable th {
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
-  color: white;
-  padding: 16px 12px;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  color: black;
+  padding: 1rem 0.75rem;
   text-align: center;
   font-weight: 600;
   font-size: 13px;
-  border-bottom: 2px solid var(--primary-dark);
+  border-bottom: 2px solid #e5e7eb;
   position: relative;
   white-space: nowrap;
-}
-
-.transferTable th::before {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  animation: tableShimmer 3s infinite;
-}
-
-@keyframes tableShimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
 }
 
 .transferTable td {
@@ -792,6 +814,14 @@
   border-bottom: 1px solid #e5e7eb;
   vertical-align: middle;
   transition: var(--hover-transition);
+  box-sizing: border-box;
+}
+
+/* Override for numeric cells to prevent truncation */
+.transferTable td.numberCell {
+  overflow: visible;
+  white-space: nowrap;
+  text-overflow: unset;
 }
 
 .transferTable tbody tr {
@@ -825,14 +855,77 @@
 
 .numberCell {
   text-align: right;
-  min-width: 120px;
+  min-width: 130px;
+  max-width: 160px;
+  width: 140px;
   font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
   font-weight: 500;
+  white-space: nowrap;
+  overflow: visible;
 }
 
 .dropdownCell {
-  min-width: 200px;
-  max-width: 280px;
+  min-width: 150px;
+  max-width: 180px;
+  width: 165px;
+}
+
+.nameDisplay {
+  min-width: 120px;
+  max-width: 160px;
+  width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Specific column width adjustments for better fit */
+.transferTable th:nth-child(1), /* Action Column */
+.transferTable td:nth-child(1) {
+  width: 80px;
+  max-width: 80px;
+}
+
+.transferTable th:nth-child(2), /* To */
+.transferTable td:nth-child(2),
+.transferTable th:nth-child(3), /* From (when visible) */
+.transferTable td:nth-child(3) {
+  width: 140px;
+  max-width: 140px;
+  min-width: 130px;
+}
+
+.transferTable th:nth-child(4), /* Encumbrance */
+.transferTable td:nth-child(4),
+.transferTable th:nth-child(5), /* Available Budget */
+.transferTable td:nth-child(5),
+.transferTable th:nth-child(6), /* Actual */
+.transferTable td:nth-child(6),
+.transferTable th:nth-child(7), /* Approved Budget */
+.transferTable td:nth-child(7) {
+  width: 140px;
+  max-width: 140px;
+  min-width: 130px;
+}
+
+.transferTable th:nth-child(8), /* Account Name */
+.transferTable td:nth-child(8),
+.transferTable th:nth-child(10), /* Cost Center Name */
+.transferTable td:nth-child(10),
+.transferTable th:nth-child(12), /* Project Name */
+.transferTable td:nth-child(12) {
+  width: 140px;
+  max-width: 140px;
+}
+
+.transferTable th:nth-child(9), /* Account Code */
+.transferTable td:nth-child(9),
+.transferTable th:nth-child(11), /* Cost Center Code */
+.transferTable td:nth-child(11),
+.transferTable th:nth-child(13), /* Project Code */
+.transferTable td:nth-child(13) {
+  width: 165px;
+  max-width: 165px;
 }
 
 /* Data Row Styles */
@@ -876,6 +969,7 @@
 /* Table Input Styles */
 .tableInput {
   width: 100%;
+  max-width: 100%;
   padding: 10px 12px;
   border: var(--input-border);
   border-radius: 6px;
@@ -885,6 +979,8 @@
   font-family: inherit;
   transition: var(--hover-transition);
   box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tableInput:focus {
@@ -1032,17 +1128,27 @@
 /* Summary Row */
 .summaryRow {
   background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-  border-top: 3px solid var(--primary-color);
+  border-top: 3px solid #e5e7eb;
   font-weight: 600;
+  width: 100%;
+}
+
+.summaryRow td {
+  overflow: visible !important;
+  white-space: nowrap !important;
+  text-overflow: unset !important;
 }
 
 .summaryLabel {
+  width: 100% !important;
   text-align: center;
   color: var(--primary-dark);
   font-size: 15px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  padding: 14px 12px;
+  box-sizing: border-box;
 }
 
 .darkMode .summaryRow {
@@ -1485,6 +1591,7 @@
 
   .transferTable {
     font-size: 12px;
+    min-width: 1500px; /* Increased for wider numeric columns */
   }
 
   .transferTable th,
@@ -1493,12 +1600,70 @@
   }
 
   .numberCell {
-    min-width: 100px;
+    min-width: 110px;
+    max-width: 130px;
+    width: 120px;
+    overflow: visible;
+    white-space: nowrap;
   }
 
   .dropdownCell {
-    min-width: 150px;
-    max-width: 200px;
+    min-width: 140px;
+    max-width: 160px;
+    width: 150px;
+  }
+
+  .nameDisplay {
+    min-width: 110px;
+    max-width: 130px;
+    width: 120px;
+  }
+
+  /* Adjust column widths for mobile */
+  .transferTable th:nth-child(1),
+  .transferTable td:nth-child(1) {
+    width: 70px;
+    max-width: 70px;
+  }
+
+  .transferTable th:nth-child(2),
+  .transferTable td:nth-child(2),
+  .transferTable th:nth-child(3),
+  .transferTable td:nth-child(3) {
+    width: 120px;
+    max-width: 120px;
+  }
+
+  .transferTable th:nth-child(4),
+  .transferTable td:nth-child(4),
+  .transferTable th:nth-child(5),
+  .transferTable td:nth-child(5),
+  .transferTable th:nth-child(6),
+  .transferTable td:nth-child(6),
+  .transferTable th:nth-child(7),
+  .transferTable td:nth-child(7) {
+    width: 120px;
+    max-width: 120px;
+  }
+
+  .transferTable th:nth-child(8),
+  .transferTable td:nth-child(8),
+  .transferTable th:nth-child(10),
+  .transferTable td:nth-child(10),
+  .transferTable th:nth-child(12),
+  .transferTable td:nth-child(12) {
+    width: 120px;
+    max-width: 120px;
+  }
+
+  .transferTable th:nth-child(9),
+  .transferTable td:nth-child(9),
+  .transferTable th:nth-child(11),
+  .transferTable td:nth-child(11),
+  .transferTable th:nth-child(13),
+  .transferTable td:nth-child(13) {
+    width: 150px;
+    max-width: 150px;
   }
 }
 
@@ -1514,6 +1679,21 @@
 
   .transferTable {
     font-size: 11px;
+    min-width: 1400px; /* Increased for wider numeric columns */
+  }
+
+  .transferTable th,
+  .transferTable td {
+    padding: 8px 6px;
+  }
+
+  /* Ensure numeric columns still have adequate width on very small screens */
+  .numberCell {
+    min-width: 100px;
+    max-width: 110px;
+    width: 105px;
+    overflow: visible;
+    white-space: nowrap;
   }
 
   .enhancedErrorModalContainer {

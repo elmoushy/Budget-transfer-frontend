@@ -80,79 +80,8 @@ export const useAuthStore = defineStore('auth', () => {
     // Clear all authentication data
     clearAuth()
 
-    // Show session expired notification with redirect option
-    showSessionExpiredNotification()
-  }
-
-  function showSessionExpiredNotification() {
-    // Create a custom session expiry popup
-    const popup = document.createElement('div')
-    popup.id = 'session-expired-popup'
-    popup.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.7);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-      font-family: Arial, sans-serif;
-    `
-
-    const modal = document.createElement('div')
-    modal.style.cssText = `
-      background: white;
-      padding: 30px;
-      border-radius: 8px;
-      text-align: center;
-      max-width: 400px;
-      margin: 20px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    `
-
-    modal.innerHTML = `
-      <h3 style="margin: 0 0 15px 0; color: #333;">Session Expired</h3>
-      <p style="margin: 0 0 20px 0; color: #666;">Your session has expired. Please log in again to continue.</p>
-      <button id="redirect-to-login" style="
-        background: #007bff;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 16px;
-      ">Go to Login</button>
-    `
-
-    popup.appendChild(modal)
-    document.body.appendChild(popup)
-
-    // Handle the redirect button click
-    const redirectButton = document.getElementById('redirect-to-login')
-    if (redirectButton) {
-      redirectButton.addEventListener('click', () => {
-        // Remove the popup
-        document.body.removeChild(popup)
-
-        // Redirect to login page
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login'
-        }
-      })
-    }
-
-    // Optional: Auto-close popup after 10 seconds and redirect
-    setTimeout(() => {
-      if (document.getElementById('session-expired-popup')) {
-        document.body.removeChild(popup)
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login'
-        }
-      }
-    }, 10000)
+    // Set the reactive flag to show the Vue component notification
+    sessionExpired.value = true
   }
 
   // Helper function to clear authentication data
@@ -273,7 +202,6 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     clearAuth,
     handleSessionExpiry,
-    showSessionExpiredNotification,
     resetSessionExpiredFlag,
     refreshAccessToken,
     changePassword,

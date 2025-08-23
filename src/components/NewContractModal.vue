@@ -92,7 +92,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'submit'])
 
 // Track editor state
-const editorContent = ref('<p>Enter your reason here...</p>')
+const editorContent = ref('')
 const editorError = ref(false)
 const newRequest = ref({
   timePeriod: '',
@@ -167,14 +167,14 @@ function resetForm() {
     timePeriod: '',
     contractReason: '',
   }
-  editorContent.value = '<p>Enter your reason here...</p>'
+  editorContent.value = ''
   editorError.value = false
 }
 
 async function submitForm() {
   // Validate fields
   const isDefaultContent =
-    editorContent.value === '<p>Enter your reason here...</p>' ||
+    editorContent.value === '' ||
     editorContent.value === '<p><br></p>' ||
     editorContent.value === ''
 
