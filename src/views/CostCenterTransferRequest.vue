@@ -62,10 +62,10 @@
               <th>{{ isArabic ? 'الموازنة المعتمدة' : 'Approved Budget' }}</th>
               <th>{{ isArabic ? 'اسم الحساب' : 'Account Name' }}</th>
               <th>{{ isArabic ? 'رقم الحساب' : 'Account Code' }}</th>
-              <th>{{ isArabic ? 'اسم البند' : 'Cost Center Name' }}</th>
-              <th>{{ isArabic ? 'رقم البند' : 'Cost Center Code' }}</th>
               <th>{{ isArabic ? 'اسم المشروع' : 'Project Name' }}</th>
               <th>{{ isArabic ? 'رقم المشروع' : 'Project Code' }}</th>
+              <th>{{ isArabic ? 'اسم البند' : 'Cost Center Name' }}</th>
+              <th>{{ isArabic ? 'رقم البند' : 'Cost Center Code' }}</th>
             </tr>
           </thead>
           <tbody>
@@ -231,10 +231,10 @@
                   :no-results-text="isArabic ? 'لا توجد نتائج' : 'No results found'"
                 />
               </td>
-              <td :class="styles.nameDisplay">1000000 - Central</td>
+              <td :class="styles.nameDisplay">200 - Total International Offices</td>
               <td :class="styles.dropdownCell">
                 <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
-                  1000000 - 1000000 - Central
+                  200 - Total International Offices
                 </div>
                 <select
                   v-else
@@ -242,7 +242,9 @@
                   :class="[styles.tableInput, { [styles.readonlyInput]: !isScreenEditable }]"
                   :disabled="!isScreenEditable"
                 >
-                  <option value="1000000 - 1000000 - Central">1000000 - 1000000 - Central</option>
+                  <option value="200 - Total International Offices">
+                    200 - Total International Offices
+                  </option>
                 </select>
               </td>
             </tr>
@@ -1031,8 +1033,8 @@ const initializeInputFields = () => {
         : ''
 
     // Initialize hardcoded project fields for frontend-only display
-    item.project_code = '1000000 - 1000000 - Central'
-    item.project_name = '1000000 - Central'
+    item.project_code = '200 - Total International Offices'
+    item.project_name = '200 - Total International Offices'
   })
 }
 
@@ -1055,8 +1057,8 @@ const addNewRow = () => {
     done: 1,
     financialDataFromApi: false,
     lastChangedField: null, // Track which dropdown was changed last
-    project_code: '1000000 - 1000000 - Central', // Default hardcoded project code
-    project_name: '1000000 - Central', // Default project name
+    project_code: '200 - Total International Offices', // Default hardcoded project code
+    project_name: '200 - Total International Offices', // Default project name
   }
 
   if (isContractMode.value) {
@@ -1399,8 +1401,8 @@ const loadData = async () => {
             ? item.approved_budget.toString()
             : ''
         // Initialize hardcoded project fields for frontend-only display
-        item.project_code = '1000000 - 1000000 - Central'
-        item.project_name = '1000000 - Central'
+        item.project_code = '200 - Total International Offices'
+        item.project_name = '200 - Total International Offices'
       })
 
       // Store a deep copy of the original data for future comparisons
