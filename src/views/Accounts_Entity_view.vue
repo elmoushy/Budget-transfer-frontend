@@ -7,7 +7,7 @@
             {{ isArabic ? 'الحسابات' : 'Accounts' }}
           </button>
           <button :class="{ active: activeTab === 'entities' }" @click="activeTab = 'entities'">
-            {{ isArabic ? 'الكيانات' : 'Entities' }}
+            {{ isArabic ? 'مشروع' : 'Project' }}
           </button>
         </div>
       </div>
@@ -177,7 +177,7 @@
               <thead>
                 <tr>
                   <!-- <th>{{ isArabic ? 'الرقم التعريفي' : 'ID' }}</th> -->
-                  <th>{{ isArabic ? 'الكيان' : 'Entity' }}</th>
+                  <th>{{ isArabic ? 'مشروع' : 'Project' }}</th>
                   <th>{{ isArabic ? 'الأصل' : 'Parent' }}</th>
                   <th>{{ isArabic ? 'الاسم المختصر' : 'Alias' }}</th>
                   <th class="actions-column">{{ isArabic ? 'الإجراءات' : 'Actions' }}</th>
@@ -1172,9 +1172,8 @@ export default defineComponent({
   font-size: 0.875rem;
   border: none;
 }
-.data-table thead{
-    background: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%);
-
+.data-table thead {
+  background: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%);
 }
 .dark-theme .data-table {
   background: #1e1e2e;
