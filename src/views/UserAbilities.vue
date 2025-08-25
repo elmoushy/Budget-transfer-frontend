@@ -19,8 +19,8 @@
         <p class="page-subtitle">
           {{
             isArabic
-              ? 'إدارة صلاحيات المستخدمين للكيانات المختلفة'
-              : 'Manage user permissions for different entities'
+              ? 'إدارة صلاحيات المستخدمين لمشاريع المختلفة'
+              : 'Manage user permissions for different Projects'
           }}
         </p>
       </div>
@@ -59,11 +59,11 @@
     <div class="search-section glass-panel">
       <div class="search-container">
         <div class="filter-group">
-          <label class="form-label">{{ isArabic ? 'الكيان' : 'Entity' }}</label>
+          <label class="form-label">{{ isArabic ? 'المشروع' : 'Project' }}</label>
           <input
             v-model="filters.entity"
             type="number"
-            :placeholder="isArabic ? 'معرف الكيان' : 'Entity ID'"
+            :placeholder="isArabic ? 'معرف المشروع' : 'Project ID'"
             class="search-input"
           />
         </div>
@@ -189,7 +189,7 @@
             <tr class="table-header-row">
               <th class="th-id">{{ isArabic ? 'المعرف' : 'ID' }}</th>
               <th class="th-user">{{ isArabic ? 'المستخدم' : 'User' }}</th>
-              <th class="th-entity">{{ isArabic ? 'الكيان' : 'Entity' }}</th>
+              <th class="th-entity">{{ isArabic ? 'المشروع' : 'Projects' }}</th>
               <th class="th-type">{{ isArabic ? 'النوع' : 'Type' }}</th>
               <th class="th-actions">{{ isArabic ? 'الإجراءات' : 'Actions' }}</th>
             </tr>
@@ -415,7 +415,7 @@
                           <path d="M6 7H10M6 9H8" stroke="currentColor" stroke-width="1.5" />
                         </svg>
                       </span>
-                      {{ isArabic ? 'معرف الكيان' : 'Entity ID' }} *
+                      {{ isArabic ? 'معرف المشروع' : 'Project ID' }} *
                     </label>
                     <div class="input-wrapper">
                       <SearchableDropdown
@@ -425,13 +425,13 @@
                           loadingEntities
                             ? isArabic
                               ? 'جاري التحميل...'
-                              : 'Loading entities...'
+                              : 'Loading Projects...'
                             : isArabic
-                              ? 'اختر الكيان'
-                              : 'Select Entity'
+                              ? 'اختر المشروع'
+                              : 'Select Project'
                         "
-                        :search-placeholder="isArabic ? 'البحث عن كيان...' : 'Search entities...'"
-                        :no-results-text="isArabic ? 'لا توجد نتائج' : 'No entities found'"
+                        :search-placeholder="isArabic ? 'البحث عن مشروع...' : 'Search Project...'"
+                        :no-results-text="isArabic ? 'لا توجد نتائج' : 'No Projects found'"
                         :disabled="loadingEntities"
                         :is-dark-mode="isDarkMode"
                         :is-rtl="isArabic"
@@ -470,7 +470,7 @@
                         class="no-users-message"
                       >
                         <small class="text-muted">
-                          No entities available - Click reload or check permissions
+                          No Projects available - Click reload or check permissions
                         </small>
                       </div>
                     </div>
@@ -625,7 +625,7 @@
                   <span>{{ selectedAbility?.user }}</span>
                 </div>
                 <div class="detail-item">
-                  <strong>{{ isArabic ? 'الكيان:' : 'Entity:' }}</strong>
+                  <strong>{{ isArabic ? 'المشروع:' : 'Projects:' }}</strong>
                   <span>{{ selectedAbility?.entity }}</span>
                 </div>
                 <div class="detail-item">
@@ -835,13 +835,13 @@ const loadUsers = async () => {
 const loadEntities = async () => {
   try {
     loadingEntities.value = true
-    console.log('Loading entities from API...')
+    console.log('Loading Projects from API...')
     const response = await apiService.accountEntities.getEntities()
     entities.value = response.data || []
-    console.log('Entities loaded successfully:', entities.value)
+    console.log('Projects loaded successfully:', entities.value)
   } catch (error) {
-    console.error('Error loading entities:', error)
-    showMessage(isArabic.value ? 'خطأ في تحميل الكيانات' : 'Error loading entities', 'error')
+    console.error('Error loading Projects:', error)
+    showMessage(isArabic.value ? 'خطأ في تحميل المشاريع' : 'Error loading Projects', 'error')
   } finally {
     loadingEntities.value = false
   }
@@ -880,7 +880,7 @@ const submitForm = async () => {
   }
 
   if (!form.value.entity || form.value.entity === 0) {
-    showMessage(isArabic.value ? 'يرجى اختيار كيان' : 'Please select an entity', 'error')
+    showMessage(isArabic.value ? 'يرجى اختيار مشروع' : 'Please select an Projects', 'error')
     return
   }
 

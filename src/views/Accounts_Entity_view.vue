@@ -133,20 +133,20 @@
       <!-- Entities Tab -->
       <div v-if="activeTab === 'entities'" class="entities-tab">
         <div class="header-actions">
-          <h2>{{ isArabic ? 'إدارة الكيانات' : 'Entities Management' }}</h2>
+          <h2>{{ isArabic ? 'إدارة المشاريع' : 'Projects Management' }}</h2>
           <div class="actions">
             <div class="search-box">
               <input
                 type="text"
                 v-model="entitySearchQuery"
-                :placeholder="isArabic ? 'بحث في الكيانات...' : 'Search entities...'"
+                :placeholder="isArabic ? 'بحث في المشاريع...' : 'Search Projects...'"
                 @input="filterEntities"
               />
               <i class="fas fa-search"></i>
             </div>
             <button class="btn-add" @click="showEntityModal = true">
               <i class="fas fa-plus"></i>
-              {{ isArabic ? 'إضافة كيان' : 'Add Entity' }}
+              {{ isArabic ? 'إضافة مشروع' : 'Add Project' }}
             </button>
           </div>
         </div>
@@ -154,7 +154,7 @@
         <div class="data-table-container">
           <div v-if="entitiesLoading" class="loading-container">
             <div class="loading-spinner"></div>
-            <p>{{ isArabic ? 'جاري تحميل البيانات...' : 'Loading entities...' }}</p>
+            <p>{{ isArabic ? 'جاري تحميل البيانات...' : 'Loading Projects...' }}</p>
           </div>
 
           <div v-else>
@@ -162,8 +162,8 @@
               <span class="item-count">
                 {{
                   isArabic
-                    ? `إجمالي الكيانات: ${filteredEntities.length}`
-                    : `Total Entities: ${filteredEntities.length}`
+                    ? `إجمالي المشاريع: ${filteredEntities.length}`
+                    : `Total Projects: ${filteredEntities.length}`
                 }}
               </span>
               <span v-if="filteredEntities.length !== entities.length" class="filtered-info">
@@ -186,7 +186,7 @@
               <tbody>
                 <tr v-if="filteredEntities.length === 0">
                   <td colspan="5" class="no-data">
-                    {{ isArabic ? 'لا توجد بيانات للعرض' : 'No entities data to display' }}
+                    {{ isArabic ? 'لا توجد بيانات للعرض' : 'No Projects data to display' }}
                   </td>
                 </tr>
                 <tr v-for="entity in paginatedEntities" :key="entity.id">
@@ -319,11 +319,11 @@
             {{
               isEditMode
                 ? isArabic
-                  ? 'تعديل الكيان'
-                  : 'Edit Entity'
+                  ? 'تعديل المشروع'
+                  : 'Edit Project'
                 : isArabic
-                  ? 'إضافة كيان جديد'
-                  : 'Add New Entity'
+                  ? 'إضافة مشروع جديد'
+                  : 'Add New Project'
             }}
           </h3>
           <button @click="closeEntityModal" class="close-btn">×</button>
@@ -331,14 +331,14 @@
         <div class="modal-body">
           <form @submit.prevent="submitEntityForm">
             <div class="form-group">
-              <label for="entity-code">{{ isArabic ? 'رمز الكيان' : 'Entity Code' }}</label>
+              <label for="entity-code">{{ isArabic ? 'رمز المشروع' : 'Project Code' }}</label>
               <input
                 id="entity-code"
                 v-model="entityForm.entity"
                 type="text"
                 required
                 :disabled="isEditMode"
-                :placeholder="isArabic ? 'أدخل رمز الكيان' : 'Enter entity code'"
+                :placeholder="isArabic ? 'أدخل رمز المشروع' : 'Enter Projects code'"
               />
             </div>
             <div class="form-group">
@@ -551,9 +551,9 @@ export default defineComponent({
         // Reset pagination when new data is loaded
         currentEntityPage.value = 1
       } catch (error) {
-        console.error('Error fetching entities:', error)
+        console.error('Error fetching Projects:', error)
         showToast(
-          isArabic.value ? 'حدث خطأ أثناء جلب بيانات الكيانات' : 'Error fetching entities data',
+          isArabic.value ? 'حدث خطأ أثناء جلب بيانات المشاريع' : 'Error fetching Projects data',
           'error',
         )
       } finally {
@@ -689,8 +689,8 @@ export default defineComponent({
     const confirmDeleteEntity = (entity: Entity) => {
       selectedEntity.value = entity
       confirmMessage.value = isArabic.value
-        ? `هل أنت متأكد من رغبتك في حذف الكيان: ${entity.entity}؟`
-        : `Are you sure you want to delete entity: ${entity.entity}?`
+        ? `هل أنت متأكد من رغبتك في حذف المشروع: ${entity.entity}؟`
+        : `Are you sure you want to delete Projects: ${entity.entity}?`
       deleteItemType.value = 'entity'
       showConfirmDialog.value = true
     }
@@ -705,7 +705,7 @@ export default defineComponent({
             alias_default: entityForm.alias_default,
           })
 
-          showToast(isArabic.value ? 'تم تحديث الكيان بنجاح' : 'Entity updated successfully')
+          showToast(isArabic.value ? 'تم تحديث المشروع بنجاح' : 'Projects updated successfully')
         } else {
           // Create new entity
           await apiService.accountEntities.createEntity({
@@ -714,15 +714,15 @@ export default defineComponent({
             alias_default: entityForm.alias_default,
           })
 
-          showToast(isArabic.value ? 'تم إنشاء الكيان بنجاح' : 'Entity created successfully')
+          showToast(isArabic.value ? 'تم إنشاء المشروع بنجاح' : 'Projects created successfully')
         }
 
         // Refresh entities data and close modal
         await fetchEntities()
         closeEntityModal()
       } catch (error) {
-        console.error('Error saving entity:', error)
-        showToast(isArabic.value ? 'حدث خطأ أثناء حفظ الكيان' : 'Error saving entity', 'error')
+        console.error('Error saving Projects:', error)
+        showToast(isArabic.value ? 'حدث خطأ أثناء حفظ المشروع' : 'Error saving Projects', 'error')
       }
     }
 
@@ -730,12 +730,12 @@ export default defineComponent({
       try {
         if (selectedEntity.value) {
           await apiService.accountEntities.deleteEntity(selectedEntity.value.id)
-          showToast(isArabic.value ? 'تم حذف الكيان بنجاح' : 'Entity deleted successfully')
+          showToast(isArabic.value ? 'تم حذف المشروع بنجاح' : 'Projects deleted successfully')
           await fetchEntities()
         }
       } catch (error) {
         console.error('Error deleting entity:', error)
-        showToast(isArabic.value ? 'حدث خطأ أثناء حذف الكيان' : 'Error deleting entity', 'error')
+        showToast(isArabic.value ? 'حدث خطأ أثناء حذف المشروع' : 'Error deleting Projects', 'error')
       }
     }
 

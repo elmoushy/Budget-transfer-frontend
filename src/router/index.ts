@@ -22,10 +22,10 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
-    path: '/enhancements',
+    path: '/enhancement',
     name: 'Enhancements',
     component: () => import('@/views/UnifiedTransfers.vue'),
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true , requiresBudgetPrivilege: true },
   },
   {
     path: '/settlements',
@@ -84,14 +84,14 @@ const routes = [
     meta: { requiresAuth: true, requiresAdmin: true },
   },
   {
-    path: '/admin/account-entity-management',
-    name: 'AccountEntityManagement',
+    path: '/admin/account-Project-management',
+    name: 'AccountProjectManagement',
     component: () => import('@/views/AccountEntityManagement.vue'),
     meta: { requiresAuth: true, requiresAdmin: true },
   },
   {
-    path: '/admin/accounts-entity-view',
-    name: 'AccountsEntityView',
+    path: '/admin/accounts-Project-view',
+    name: 'AccountsProjectView',
     component: () => import('@/views/Accounts_Entity_view.vue'),
     meta: { requiresAuth: true, requiresAdmin: true },
   },
@@ -128,36 +128,49 @@ router.beforeEach(async (to, from, next) => {
     const requiresAdmin = to.meta.requiresAdmin === true
     const requiresSuperAdmin = to.meta.requiresSuperAdmin === true
 
-    // Check if route requires authentication and user is not authenticated
+    // --- سياسات الوصول الإضافية ---
+    const isBasicUser = authStore.user?.role === 'user' && authStore.userLevel === 1
+    const noBudgetPrivilege = authStore.user?.role === 'user' && authStore.userLevel === 1 // أو استخدم !authStore.user?.can_transfer_budget لو هتعتمد على الصلاحية دي
+
+    // أسماء الراوتس الممنوعة على الـ basic user level=1
+    const blockedForBasicUser = new Set([
+      'Enhancements',                 // /enhancement
+      'EnhancementsPendingApproval',  // /transfers-pending-approval
+      'ContractsPendingApproval',     // /contracts-pending-approval
+      'SettlementsPendingApproval',   // /settlements-pending-approval
+    ])
+
+    // منع التعزيزات لو مفيش صلاحية نقل ميزانية (اختياري حسب سياستك)
+    const blockedIfNoBudgetPrivilege = new Set(['Enhancements'])
+
+    // --- حراسة المصادقة والأدوار الافتراضية ---
     if (requiresAuth && !authStore.isAuthenticated) {
-      next({ name: 'Login' })
+      return next({ name: 'Login' })
+    } else if (requiresSuperAdmin && authStore.user?.role !== 'superadmin') {
+      return next({ name: 'Dashboard' })
+    } else if (requiresAdmin && !['admin', 'superadmin'].includes(authStore.user?.role || '')) {
+      return next({ name: 'Dashboard' })
+    } else if (authStore.isAuthenticated && to.name === 'Login') {
+      return next({ name: 'Dashboard' })
     }
-    // Check if route requires super admin role and user is not a super admin
-    else if (requiresSuperAdmin && authStore.user?.role !== 'superadmin') {
-      // Redirect to dashboard if trying to access super admin route without super admin privileges
-      next({ name: 'Dashboard' })
+
+    // --- سياسات المنع المخصّصة ---
+    // 1) منع صفحات معينة عن الـ basic user
+    if (isBasicUser && blockedForBasicUser.has(String(to.name))) {
+      return next({ name: 'Dashboard' })
     }
-    // Check if route requires admin role and user is not an admin or superadmin
-    else if (requiresAdmin && !['admin', 'superadmin'].includes(authStore.user?.role || '')) {
-      // Redirect to dashboard if trying to access admin route without admin/superadmin privileges
-      next({ name: 'Dashboard' })
+
+    // 2) منع صفحة التعزيزات لو مفيش صلاحية نقل ميزانية
+    if (noBudgetPrivilege && blockedIfNoBudgetPrivilege.has(String(to.name))) {
+      return next({ name: 'Dashboard' })
     }
-    // If user is authenticated and trying to access login page, redirect to dashboard
-    else if (authStore.isAuthenticated && to.name === 'Login') {
-      next({ name: 'Dashboard' })
-    }
-    // Otherwise, allow navigation
-    else {
-      next()
-    }
+
+    // المرور بشكل طبيعي
+    return next()
   } catch (error) {
     console.error('Navigation guard error:', error)
-    // Fallback navigation to prevent infinite loops
-    if (to.name !== 'Login') {
-      next({ name: 'Login' })
-    } else {
-      next()
-    }
+    if (to.name !== 'Login') return next({ name: 'Login' })
+    return next()
   }
 })
 

@@ -871,7 +871,7 @@ const fetchCostCenterEntities = async () => {
       costCenterEntities.value = response.data.data
     }
   } catch (err) {
-    console.error('Failed to fetch cost center entities:', err)
+    console.error('Failed to fetch cost center Projects:', err)
     costCenterEntitiesError.value = true
   } finally {
     costCenterEntitiesLoading.value = false
@@ -895,7 +895,7 @@ const fetchAccountEntities = async () => {
       accountEntities.value = response.data.data
     }
   } catch (err) {
-    console.error('Failed to fetch account entities:', err)
+    console.error('Failed to fetch account Projects:', err)
     accountEntitiesError.value = true
   } finally {
     accountEntitiesLoading.value = false
