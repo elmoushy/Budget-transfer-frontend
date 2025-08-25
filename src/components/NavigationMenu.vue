@@ -154,6 +154,8 @@ const routesData = ref<RouteData[]>([
   { id: 11, english_name: 'Accounts & Projects', arabic_name: 'الحسابات والمشاريع' },
   { id: 12, english_name: 'Control', arabic_name: 'التحكم' },
   { id: 13, english_name: 'User Abilities', arabic_name: 'صلاحيات المستخدمين' },
+  { id: 14, english_name: 'Audit Logs', arabic_name: 'السجلات' },
+
 ])
 const isLoading = ref(false)
 
@@ -261,16 +263,17 @@ const routeIdToRouteName: Record<number, string> = {
   11: 'AccountsProjectView',
   // 12: 'Controller',
   13: 'UserAbilities', // New route for superadmin
+  14: 'Logs', // New route for logs
 }
 
 // Routes to hide when user_level = 1
 
 // Mapping for admin routes (these should only show for admin users)
-const adminRouteIds = [9, 10, 11] // User Management, Account-Project Management, Accounts & Projects
+const adminRouteIds = [9, 10, 11, 14]  // User Management, Account-Project Management, Accounts & Projects
 // const adminRouteIds = [9, 10, 11, 12] // User Management, Account-Project Management, Accounts & Projects, Controller
 
 // Mapping for superadmin routes (these should only show for superadmin users)
-const superAdminRouteIds = [13] // User Abilities
+const superAdminRouteIds = [13, 14]// User Abilities
 
 // Create computed properties for menu items based on hardcoded data
 

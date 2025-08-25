@@ -107,6 +107,12 @@ const routes = [
     component: () => import('@/views/UserAbilities.vue'),
     meta: { requiresAuth: true, requiresSuperAdmin: true },
   },
+  {
+  path: '/admin/logs',
+  name: 'Logs',
+  component: () => import('@/views/Logs.vue'),
+  meta: { requiresAuth: true, requiresAdmin: true }, // يسمح لـ admin & superadmin
+},
   // Catch-all route for 404
   {
     path: '/:pathMatch(.*)*',
