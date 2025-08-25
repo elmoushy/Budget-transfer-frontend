@@ -1,7 +1,7 @@
 <!-- AccountEntityManagement.vue -->
 <template>
   <div class="account-entity-management" :class="{ 'dark-mode': isDarkMode }">
-    <h1>{{ isArabic ? 'إدارة الحسابات والكيانات' : 'Account-Entity Management' }}</h1>
+    <h1>{{ isArabic ? 'إدارة الحسابات و المشاريع' : 'Account-Project Management' }}</h1>
 
     <div class="filter-section">
       <div class="filter-container">
@@ -135,7 +135,7 @@
               <span class="info-value">{{ editingLimit.account }}</span>
             </div>
             <div class="info-row">
-              <span class="info-label">{{ isArabic ? 'الكيان:' : 'Entity:' }}</span>
+              <span class="info-label">{{ isArabic ? 'المشروع:' : 'Project:' }}</span>
               <span class="info-value">{{ selectedCostCenter }}</span>
             </div>
           </div>
@@ -263,7 +263,7 @@ async function fetchEntities() {
     const response = await apiService.accountEntities.getEntities()
     entities.value = response.data
   } catch (error) {
-    console.error('Error fetching entities:', error)
+    console.error('Error fetching Projects:', error)
   } finally {
     loading.value = false
   }

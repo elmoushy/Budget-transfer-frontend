@@ -148,10 +148,10 @@ const routesData = ref<RouteData[]>([
   { id: 9, english_name: 'User Management', arabic_name: 'إدارة المستخدمين' },
   {
     id: 10,
-    english_name: 'Account-Entity Management',
-    arabic_name: 'إدارة الحسابات والكيانات',
+    english_name: 'Account-Project Management',
+    arabic_name: 'إدارة الحسابات والمشاريع',
   },
-  { id: 11, english_name: 'Accounts & Entities', arabic_name: 'الحسابات والكيانات' },
+  { id: 11, english_name: 'Accounts & Projects', arabic_name: 'الحسابات والمشاريع' },
   { id: 12, english_name: 'Control', arabic_name: 'التحكم' },
   { id: 13, english_name: 'User Abilities', arabic_name: 'صلاحيات المستخدمين' },
 ])
@@ -257,8 +257,8 @@ const routeIdToRouteName: Record<number, string> = {
   7: 'ContractsPendingApproval',
   8: 'SettlementsPendingApproval',
   9: 'UserManagement',
-  10: 'AccountEntityManagement',
-  11: 'AccountsEntityView',
+  10: 'AccountProjectManagement',
+  11: 'AccountsProjectView',
   // 12: 'Controller',
   13: 'UserAbilities', // New route for superadmin
 }
@@ -267,43 +267,41 @@ const routeIdToRouteName: Record<number, string> = {
 const restrictedRouteIds = [6, 7, 8] // EnhancementsPendingApproval, ContractsPendingApproval, SettlementsPendingApproval
 
 // Mapping for admin routes (these should only show for admin users)
-const adminRouteIds = [9, 10, 11] // User Management, Account-Entity Management, Accounts & Entities
-// const adminRouteIds = [9, 10, 11, 12] // User Management, Account-Entity Management, Accounts & Entities, Controller
+const adminRouteIds = [9, 10, 11] // User Management, Account-Project Management, Accounts & Projects
+// const adminRouteIds = [9, 10, 11, 12] // User Management, Account-Project Management, Accounts & Projects, Controller
 
 // Mapping for superadmin routes (these should only show for superadmin users)
 const superAdminRouteIds = [13] // User Abilities
 
 // Create computed properties for menu items based on hardcoded data
+const hideEnhancementsForBasicUser = computed(() =>
+  authStore.user?.role === 'user' && authStore.userLevel === 1
+)
 const menuItems = computed(() => {
-  if (isLoading.value || !routesData.value.length) {
-    return []
-  }
+  if (isLoading.value || !routesData.value.length) return []
 
   return routesData.value
     .filter((route) => {
-      // Exclude admin routes from regular menu
-      if (adminRouteIds.includes(route.id)) {
-        return false
-      }
+      // إخفاء روابط الأدمن من المينيو العادية
+      if (adminRouteIds.includes(route.id)) return false
 
-      // Exclude superadmin routes from regular menu
-      if (superAdminRouteIds.includes(route.id)) {
-        return false
-      }
+      // إخفاء روابط السوبر أدمن من المينيو العادية
+      if (superAdminRouteIds.includes(route.id)) return false
 
-      // Hide restricted routes if user_level is 1
-      if (authStore.userLevel === 1 && restrictedRouteIds.includes(route.id)) {
-        return false
-      }
+      // إخفاء مسارات محددة لو userLevel = 1
+      if (authStore.userLevel === 1 && restrictedRouteIds.includes(route.id)) return false
+
+      // 👈 الشرط المطلوب: لو المستخدم user و level=1 اخفي Additional Fund Request (id:5)
+      if (hideEnhancementsForBasicUser.value && route.id === 5) return false
 
       return routeIdToRouteName[route.id]
     })
-    .sort((a, b) => a.id - b.id) // Sort by ID to maintain consistent order
+    .sort((a, b) => a.id - b.id)
     .map((route) => ({
       label: isArabic.value ? route.arabic_name : route.english_name,
       route: routeIdToRouteName[route.id],
     }))
-    .filter((item) => item.route) // Ensure we have a valid route
+    .filter((item) => item.route)
 })
 
 const adminMenuItems = computed(() => {
@@ -366,4 +364,7 @@ watch(currentRoute, () => {
     scrollToActiveItem()
   })
 })
+
+
+
 </script>
