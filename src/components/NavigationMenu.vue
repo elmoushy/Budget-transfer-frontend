@@ -264,7 +264,6 @@ const routeIdToRouteName: Record<number, string> = {
 }
 
 // Routes to hide when user_level = 1
-const restrictedRouteIds = [6, 7, 8] // EnhancementsPendingApproval, ContractsPendingApproval, SettlementsPendingApproval
 
 // Mapping for admin routes (these should only show for admin users)
 const adminRouteIds = [9, 10, 11] // User Management, Account-Project Management, Accounts & Projects
@@ -274,26 +273,41 @@ const adminRouteIds = [9, 10, 11] // User Management, Account-Project Management
 const superAdminRouteIds = [13] // User Abilities
 
 // Create computed properties for menu items based on hardcoded data
-const hideEnhancementsForBasicUser = computed(() =>
-  authStore.user?.role === 'user' && authStore.userLevel === 1
-)
+
+// helpers
+const isUser = computed(() => authStore.user?.role === 'user')
+const userLevel = computed(() => Number(authStore.userLevel)) // لو جاية سترنج هنحوّلها لرقم
+
+const routesForLevel1 = [2, 3, 4, 5]
+const routesForLevel234 = [2, 6, 7, 8]
+
 const menuItems = computed(() => {
   if (isLoading.value || !routesData.value.length) return []
 
+  // ✅ شروط اليوزر بس
+  if (isUser.value) {
+    const idsToShow =
+      userLevel.value === 1
+        ? routesForLevel1
+        : [2, 3, 4].includes(userLevel.value)
+          ? routesForLevel234
+          : routesForLevel1 // fallback لو level مش متوقع
+
+    return routesData.value
+      .filter((route) => idsToShow.includes(route.id) && routeIdToRouteName[route.id])
+      .sort((a, b) => a.id - b.id)
+      .map((route) => ({
+        label: isArabic.value ? route.arabic_name : route.english_name,
+        route: routeIdToRouteName[route.id],
+      }))
+      .filter((item) => item.route)
+  }
+
+  // 🔽 باقي الأدوار (أدمن/سوبرأدمن...) — القائمة العادية بدون عناصر الأدمن في الجزء العام
   return routesData.value
     .filter((route) => {
-      // إخفاء روابط الأدمن من المينيو العادية
       if (adminRouteIds.includes(route.id)) return false
-
-      // إخفاء روابط السوبر أدمن من المينيو العادية
       if (superAdminRouteIds.includes(route.id)) return false
-
-      // إخفاء مسارات محددة لو userLevel = 1
-      if (authStore.userLevel === 1 && restrictedRouteIds.includes(route.id)) return false
-
-      // 👈 الشرط المطلوب: لو المستخدم user و level=1 اخفي Additional Fund Request (id:5)
-      if (hideEnhancementsForBasicUser.value && route.id === 5) return false
-
       return routeIdToRouteName[route.id]
     })
     .sort((a, b) => a.id - b.id)
@@ -303,6 +317,7 @@ const menuItems = computed(() => {
     }))
     .filter((item) => item.route)
 })
+
 
 const adminMenuItems = computed(() => {
   if (isLoading.value || !routesData.value.length) {

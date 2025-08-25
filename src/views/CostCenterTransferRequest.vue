@@ -1,4 +1,78 @@
 <template>
+
+      <!-- Confirmation Modal -->
+    <div v-if="showConfirmModal" class="modal-overlay" @click="closeConfirmModal">
+      <div class="modal-container" :class="{ 'dark-mode': isDarkMode }" @click.stop>
+        <div class="modal-header">
+          <h2>{{ confirmModalTitle }}</h2>
+          <button class="close-modal" @click="closeConfirmModal">×</button>
+        </div>
+        <div class="modal-body">
+          <p>{{ confirmModalMessage }}</p>
+
+          <!-- Rejection reason textarea -->
+          <div v-if="confirmModalType === 'reject'" class="reason-container">
+            <label for="rejection-reason" class="reason-label">
+              {{ isArabic ? 'سبب الرفض:' : 'Rejection Reason:' }}
+            </label>
+            <textarea
+              id="rejection-reason"
+              v-model="rejectionReason"
+              :placeholder="
+                isArabic ? 'يرجى ذكر سبب الرفض...' : 'Please provide a reason for rejection...'
+              "
+              class="reason-textarea"
+              rows="3"
+            ></textarea>
+            <p v-if="showReasonError" class="reason-error">
+              {{ isArabic ? 'سبب الرفض مطلوب' : 'Rejection reason is required' }}
+            </p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" @click="closeConfirmModal">
+            {{ isArabic ? 'إلغاء' : 'Cancel' }}
+          </button>
+          <button
+            :class="confirmModalType === 'approve' ? 'btn-approve' : 'btn-reject'"
+            @click="confirmAction"
+            :disabled="isProcessingAction"
+          >
+            {{
+              isProcessingAction
+                ? isArabic
+                  ? 'جاري المعالجة...'
+                  : 'Processing...'
+                : confirmModalType === 'approve'
+                  ? isArabic
+                    ? 'موافقة'
+                    : 'Approve'
+                  : isArabic
+                    ? 'رفض'
+                    : 'Reject'
+            }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div v-if="showErrorModal" class="modal-overlay" @click="closeErrorModal">
+      <div class="modal-container error-modal" :class="{ 'dark-mode': isDarkMode }" @click.stop>
+        <div class="modal-header">
+          <h2>{{ isArabic ? 'خطأ' : 'Error' }}</h2>
+          <button class="close-modal" @click="closeErrorModal">×</button>
+        </div>
+        <div class="modal-body">
+          <p>{{ errorMessage }}</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" @click="closeErrorModal">
+            {{ isArabic ? 'إغلاق' : 'Close' }}
+          </button>
+        </div>
+      </div>
+    </div>
   <div
     :class="[styles.transferRequestPage, { [styles.darkMode]: isDarkMode, [styles.rtl]: isRTL }]"
   >
@@ -37,8 +111,17 @@
       <div :class="styles.viewStatusInfo" v-if="route.query.viewOnly === 'true'">
         <span :class="styles.viewOnlyBadge">{{ isArabic ? 'عرض فقط' : 'View Only' }}</span>
       </div>
-    </div>
 
+
+    </div>
+   <div :class="styles.actionbuttonsgroup" v-if="route.query.viewOnly === 'true'">
+<button :class="styles.approvebtn" @click="approveThis" title="Approve">
+  <CheckIcon />
+</button>
+<button :class="styles.rejectbtn" @click="rejectThis" title="Reject">
+  <XIcon />
+</button>
+      </div>
     <!-- Loading state -->
     <div v-if="loading" :class="styles.loadingContainer">
       <div :class="styles.loadingSpinner"></div>
@@ -244,10 +327,10 @@
                   :no-results-text="isArabic ? 'لا توجد نتائج' : 'No results found'"
                 />
               </td>
-              <td :class="styles.nameDisplay">200 - Total International Offices</td>
+              <td :class="styles.nameDisplay">10 - Total Abu Dhabi Offices</td>
               <td :class="styles.dropdownCell">
                 <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
-                  200 - Total International Offices
+                  10 - Total Abu Dhabi Offices
                 </div>
                 <select
                   v-else
@@ -255,8 +338,8 @@
                   :class="[styles.tableInput, { [styles.readonlyInput]: !isScreenEditable }]"
                   :disabled="!isScreenEditable"
                 >
-                  <option value="200 - Total International Offices">
-                    200 - Total International Offices
+                  <option value="10 - Total Abu Dhabi Offices">
+                    10 - Total Abu Dhabi Offices
                   </option>
                 </select>
               </td>
@@ -639,6 +722,7 @@
       @confirm="handleDialogConfirm"
     />
   </div>
+
 </template>
 
 <script setup lang="ts">
@@ -647,7 +731,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore } from '@/stores/themeStore'
 import { useAuthStore } from '@/stores/authStore'
 import axios from 'axios'
-import transferService from '@/services/TransferService'
+import transferService, { type RowData } from '@/services/TransferService'
 import contractService from '@/services/contractService'
 import FileUploadModal from '@/components/FileUploadModal.vue'
 import { useNavigationStore } from '@/stores/navigationStore'
@@ -697,6 +781,8 @@ import type {
   CostCenterEntity,
   AccountEntity,
 } from '@/types/CostCenterTransferRequest'
+import { CheckIcon, XIcon } from 'lucide-vue-next'
+import TransfersFlowService from '@/services/TransfersFlowService'
 
 // Add type definitions for error handling
 interface TransferRowData {
@@ -1025,8 +1111,8 @@ const initializeInputFields = () => {
         : ''
 
     // Initialize hardcoded project fields for frontend-only display
-    item.project_code = '200 - Total International Offices'
-    item.project_name = '200 - Total International Offices'
+    item.project_code = '10 - Total Abu Dhabi Offices'
+    item.project_name = '10 - Total Abu Dhabi Offices'
   })
 }
 
@@ -1049,8 +1135,8 @@ const addNewRow = () => {
     done: 1,
     financialDataFromApi: false,
     lastChangedField: null, // Track which dropdown was changed last
-    project_code: '200 - Total International Offices', // Default hardcoded project code
-    project_name: '200 - Total International Offices', // Default project name
+    project_code: '10 - Total Abu Dhabi Offices', // Default hardcoded project code
+    project_name: '10 - Total Abu Dhabi Offices', // Default project name
   }
 
   if (isContractMode.value) {
@@ -1393,8 +1479,8 @@ const loadData = async () => {
             ? item.approved_budget.toString()
             : ''
         // Initialize hardcoded project fields for frontend-only display
-        item.project_code = '200 - Total International Offices'
-        item.project_name = '200 - Total International Offices'
+        item.project_code = '10 - Total Abu Dhabi Offices'
+        item.project_name = '10 - Total Abu Dhabi Offices'
       })
 
       // Store a deep copy of the original data for future comparisons
@@ -2058,4 +2144,496 @@ onMounted(() => {
   setupColumnResizing()
   restoreColumnWidths()
 })
+
+// نبني "row" بسيط بس فيه الـ ID المطلوب
+const currentApprovalRow = computed<Partial<RowData>>(() => ({
+  transaction_id: Number(transactionId.value ?? 0),
+}));
+
+function approveThis() {
+  // لو مفيش ID فعلي، نمنع الإجراء
+  if (!currentApprovalRow.value.transaction_id) {
+    showToast(isArabic.value ? 'لا يوجد معاملة حالية' : 'No current transaction', 'warning');
+    return;
+  }
+  showConfirmationModal('approve', [currentApprovalRow.value as RowData]);
+}
+
+function rejectThis() {
+  if (!currentApprovalRow.value.transaction_id) {
+    showToast(isArabic.value ? 'لا يوجد معاملة حالية' : 'No current transaction', 'warning');
+    return;
+  }
+  showConfirmationModal('reject', [currentApprovalRow.value as RowData]);
+}
+
+// ───────────────────────────────────────────────────────────── Confirmation Modal
+const showConfirmModal = ref(false)
+const confirmModalType = ref<'approve' | 'reject'>('approve')
+const confirmModalTitle = ref('')
+const confirmModalMessage = ref('')
+const rowsToProcess = ref<RowData[]>([])
+const rejectionReason = ref('')
+const showReasonError = ref(false)
+
+function showConfirmationModal(type: 'approve' | 'reject', rowsToAction: RowData[]) {
+  confirmModalType.value = type
+  rowsToProcess.value = rowsToAction
+  // Reset rejection reason and error state when opening modal
+  rejectionReason.value = ''
+  showReasonError.value = false
+
+  if (type === 'approve') {
+    confirmModalTitle.value = isArabic.value
+      ? 'تمت الموافقة بنجاح'
+      : 'Approval Submitted Successfully'
+
+    confirmModalMessage.value = isArabic.value
+      ? 'شكرًا لك. تم تقديم الموافقة الخاصة بك بنجاح، وستستمر العملية إلى الخطوة التالية.'
+      : 'Thank you. Your approval has been submitted successfully, and the process will continue to the next step.'
+  } else {
+    confirmModalTitle.value = isArabic.value ? 'تم الرفض بنجاح' : 'Rejection Submitted Successfully'
+
+    confirmModalMessage.value = isArabic.value
+      ? 'شكرًا لك. تم تقديم رفضك بنجاح، وستستمر العملية إلى الخطوة التالية.'
+      : 'Thank you. Your rejection has been submitted successfully, and the process will continue to the next step.'
+  }
+
+  showConfirmModal.value = true
+}
+
+
+function closeConfirmModal() {
+  showConfirmModal.value = false
+}
+
+function closeErrorModal() {
+  showErrorModal.value = false
+}
+
+const isProcessingAction = ref(false)
+const errorMessage = ref('')
+async function confirmAction() {
+  // For rejection, validate that a reason was provided
+  if (confirmModalType.value === 'reject' && !rejectionReason.value.trim()) {
+    showReasonError.value = true
+    return
+  }
+
+  try {
+    isProcessingAction.value = true
+
+    const transactionIds = rowsToProcess.value.map((row) => row.transaction_id)
+    const decision = confirmModalType.value === 'approve' ? 2 : 3
+    const reasons =
+      confirmModalType.value === 'reject'
+        ? transactionIds.map(() => rejectionReason.value.trim())
+        : []
+
+    await TransfersFlowService.approveRejectTransfers(transactionIds, decision, reasons)
+await loadData()
+
+    // Success - refresh the data
+    closeConfirmModal()
+
+    // Show success message (you can implement a toast notification here)
+    const actionText =
+      confirmModalType.value === 'approve'
+        ? isArabic.value
+          ? 'الموافقة'
+          : 'approval'
+        : isArabic.value
+          ? 'الرفض'
+          : 'rejection'
+
+    const successMessage = isArabic.value
+      ? `تم ${actionText} بنجاح`
+      : `${actionText.charAt(0).toUpperCase() + actionText.slice(1)} successful`
+      await router.push('/transfers-pending-approval')
+
+    console.log(successMessage) // Replace with toast notification if available
+  } catch (error) {
+    console.error('Error processing action:', error)
+    errorMessage.value = isArabic.value
+      ? 'حدث خطأ أثناء معالجة الطلب. يرجى المحاولة مرة أخرى.'
+      : 'An error occurred while processing the request. Please try again.'
+    showErrorModal.value = true
+  } finally {
+    isProcessingAction.value = false
+  }
+}
+
+
 </script>
+<style scoped>
+
+
+
+
+/* Action buttons at top */
+.btn-approve,
+.btn-reject {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-approve {
+  background: rgba(34, 197, 94, 0.1);
+  color: #059669;
+  border: 2px solid rgba(34, 197, 94, 0.2);
+}
+
+.btn-reject {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  border: 2px solid rgba(239, 68, 68, 0.2);
+}
+
+.btn-approve:hover {
+  background: #059669;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
+.btn-reject:hover {
+  background: #dc2626;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.btn-approve:disabled,
+.btn-reject:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Loading container */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.loader {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(225, 75, 106, 0.2);
+  border-left-color: #e14b6a;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+.dark-mode .loader {
+  border-color: rgba(225, 75, 106, 0.3);
+  border-left-color: #e14b6a;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.no-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: #8a2a44;
+  font-style: italic;
+}
+
+.dark-mode .no-results {
+  color: #e14b6a;
+}
+
+/* Modal styles - keep existing */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.modal-container {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  transform: scale(0.9);
+  animation: modalEnter 0.3s ease forwards;
+}
+
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e5e5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #f8f6f8, #fff6fa);
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #6d1a36;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.close-modal {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #8a2a44;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.close-modal:hover {
+  background: rgba(138, 42, 68, 0.1);
+  color: #6d1a36;
+}
+
+.modal-body {
+  padding: 24px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.modal-footer {
+  padding: 20px 24px;
+  border-top: 1px solid #e5e5e5;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  background: #fafafa;
+}
+
+.btn-secondary {
+  padding: 10px 20px;
+  border: 2px solid #e4c9d6;
+  background: white;
+  color: #6d1a36;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: #f5f5f5;
+  border-color: #d1b3c4;
+}
+
+/* Dark mode modal */
+.dark-mode.modal-container {
+  background: #241726;
+  color: #f8e9f0;
+}
+
+.dark-mode .modal-header {
+  background: linear-gradient(135deg, #2d1b32, #241726);
+  border-bottom-color: #51203c;
+}
+
+.dark-mode .modal-header h2 {
+  color: #f8e9f0;
+}
+
+.dark-mode .close-modal {
+  color: #e14b6a;
+}
+
+.dark-mode .close-modal:hover {
+  background: rgba(225, 75, 106, 0.2);
+  color: #f8e9f0;
+}
+
+.dark-mode .modal-footer {
+  background: #1a1623;
+  border-top-color: #51203c;
+}
+
+.dark-mode .btn-secondary {
+  background: #2d1b32;
+  border-color: #51203c;
+  color: #f8e9f0;
+}
+
+.dark-mode .btn-secondary:hover {
+  background: #362040;
+  border-color: #6d3a56;
+}
+
+.error-modal .modal-header {
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+}
+
+.dark-mode .error-modal .modal-header {
+  background: linear-gradient(135deg, #451a1a, #3f1515);
+}
+
+/* Rejection reason styles */
+.reason-container {
+  margin-top: 20px;
+}
+
+.reason-label {
+  display: block;
+  font-weight: 600;
+  color: #6d1a36;
+  margin-bottom: 8px;
+}
+
+.reason-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e4c9d6;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 80px;
+  transition: all 0.3s ease;
+}
+
+.reason-textarea:focus {
+  outline: none;
+  border-color: #e14b6a;
+  box-shadow: 0 0 0 3px rgba(225, 75, 106, 0.1);
+}
+
+.dark-mode .reason-textarea {
+  background: rgba(36, 23, 38, 0.9);
+  border-color: #51203c;
+  color: #f8e9f0;
+}
+
+.dark-mode .reason-textarea::placeholder {
+  color: #a87394;
+}
+
+.dark-mode .reason-label {
+  color: #f8e9f0;
+}
+
+.reason-error {
+  color: #dc2626;
+  font-size: 12px;
+  margin-top: 6px;
+  animation: shake 0.5s ease-in-out;
+}
+
+.dark-mode .reason-error {
+  color: #f87171;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-2px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .pagination-wrapper {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .pagination-info {
+    justify-content: center;
+  }
+
+  .modern-table {
+    font-size: 0.75rem;
+  }
+
+  .modern-table th,
+  .modern-table td {
+    padding: 0.5rem 0.25rem;
+  }
+
+  .action-buttons-group {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}
+
+/* RTL support */
+[dir='rtl'] .search-icon {
+  left: auto;
+  right: 12px;
+}
+
+[dir='rtl'] .input-search {
+  padding: 12px 44px 12px 16px;
+}
+
+[dir='rtl'] .clear-search {
+  left: 12px;
+  right: auto;
+}
+
+[dir='rtl'] .modal-footer {
+  justify-content: flex-start;
+}
+</style>
