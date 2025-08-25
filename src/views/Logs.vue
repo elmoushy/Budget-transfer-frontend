@@ -147,10 +147,10 @@ const logs = ref<LogItem[]>([
   { id: 1, user: 'admin22', request: 'get', field: 'summary', oldData: '-', newData: 'fetched full row (transaction_id=342, total_from=1000, total_to=1000, balanced=true)', updatedAt: '2025-08-25 14:00:00' },
 
   // ADD transfer 402 (Admin1)
-  { id: 2, user: 'Admin1', request: 'add', field: 'transfers', oldData: '-', newData: 'row added (transfer_id=402, cc=2000000, from=1000.00 → to=0.00)', updatedAt: '2025-08-25 14:05:00' },
+  { id: 2, user: 'Admin1', request: 'add', field: 'transfers', oldData: '-', newData: 'row added (transfer_id=402, cc=2000000, from=1000.00 to=0.00)', updatedAt: '2025-08-25 14:05:00' },
 
   // ADD transfer 401 (finance head)
-  { id: 3, user: 'finance head', request: 'add', field: 'transfers', oldData: '-', newData: 'row added (transfer_id=401, cc=2100000, from=0.00 → to=1000.00)', updatedAt: '2025-08-25 14:06:00' },
+  { id: 3, user: 'finance head', request: 'add', field: 'transfers', oldData: '-', newData: 'row added (transfer_id=401, cc=2100000, from=0.00 to=1000.00)', updatedAt: '2025-08-25 14:06:00' },
 
   // GET transfer row (user1)
   { id: 4, user: 'user1', request: 'get', field: 'transfers[0]', oldData: '-', newData: 'fetched full row (transfer_id=402)', updatedAt: '2025-08-25 14:10:00' },
@@ -168,7 +168,7 @@ const logs = ref<LogItem[]>([
   { id: 8, user: 'admin4', request: 'delete', field: 'transfers', oldData: 'row deleted (transfer_id=401, cc=2100000)', newData: '-', updatedAt: '2025-08-25 14:20:00' },
 
   // ADD another transfer row (george - superadmin)
-  { id: 9, user: 'george', request: 'add', field: 'transfers', oldData: '-', newData: 'row added (transfer_id=403, cc=2200000, from=500 → to=500)', updatedAt: '2025-08-25 14:22:00' },
+  { id: 9, user: 'george', request: 'add', field: 'transfers', oldData: '-', newData: 'row added (transfer_id=403, cc=2200000, from=500 to=500)', updatedAt: '2025-08-25 14:22:00' },
 
   // GET all transfers (unithead)
   { id: 10, user: 'unithead', request: 'get', field: 'transfers', oldData: '-', newData: 'fetched full table (rows=2)', updatedAt: '2025-08-25 14:25:00' },
@@ -452,7 +452,7 @@ async function refreshData() {
   position: relative;
 }
 .page-title {
-  font-size: clamp(1.6rem, 2vw + 1.2rem, 2.5rem); /* موبايل → ديسكتوب */
+  font-size: clamp(1.6rem, 2vw + 1.2rem, 2.5rem); /* موبايل ديسكتوب */
   line-height: 1.15;
 }
 .page-subtitle {
