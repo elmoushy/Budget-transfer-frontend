@@ -682,17 +682,20 @@ function showConfirmationModal(type: 'approve' | 'reject', rowsToAction: RowData
   rejectionReason.value = ''
   showReasonError.value = false
 
-  const count = rowsToAction.length
   if (type === 'approve') {
-    confirmModalTitle.value = isArabic.value ? 'تأكيد الموافقة' : 'Confirm Approval'
+    confirmModalTitle.value = isArabic.value
+      ? 'تمت الموافقة بنجاح'
+      : 'Approval Submitted Successfully'
+
     confirmModalMessage.value = isArabic.value
-      ? `هل أنت متأكد من موافقتك على ${count} من المناقلات؟`
-      : `Are you sure you want to approve ${count} transfer request${count === 1 ? '' : 's'}?`
+      ? 'شكرًا لك. تم تقديم الموافقة الخاصة بك بنجاح، وستستمر العملية إلى الخطوة التالية.'
+      : 'Thank you. Your approval has been submitted successfully, and the process will continue to the next step.'
   } else {
-    confirmModalTitle.value = isArabic.value ? 'تأكيد الرفض' : 'Confirm Rejection'
+    confirmModalTitle.value = isArabic.value ? 'تم الرفض بنجاح' : 'Rejection Submitted Successfully'
+
     confirmModalMessage.value = isArabic.value
-      ? `هل أنت متأكد من رفضك لـ ${count} من المناقلات؟`
-      : `Are you sure you want to reject ${count} transfer request${count === 1 ? '' : 's'}?`
+      ? 'شكرًا لك. تم تقديم رفضك بنجاح، وستستمر العملية إلى الخطوة التالية.'
+      : 'Thank you. Your rejection has been submitted successfully, and the process will continue to the next step.'
   }
 
   showConfirmModal.value = true

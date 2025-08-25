@@ -3,18 +3,16 @@
     :class="[styles.transferRequestPage, { [styles.darkMode]: isDarkMode, [styles.rtl]: isRTL }]"
   >
     <div :class="styles.pageHeader">
-      <!-- Replaced title with error message when unbalanced -->
-      <div v-if="apiSummary && !apiSummary.balanced" :class="styles.balanceErrorMessage">
-        <span :class="styles.errorText">
-          {{
-            isArabic
-              ? 'الميزان غير متوازن. يرجى مراجعة قيم التحويل.'
-              : 'Unbalanced transfer. Please review your transfer values.'
-          }}
-        </span>
-      </div>
       <!-- Only show action buttons if not in view-only mode -->
       <div :class="styles.headerActions" v-if="!route.query.viewOnly">
+        <button
+          :class="[styles.btnHeaderSecondary]"
+          @click="resetColumnWidths"
+          :title="isArabic ? 'إعادة تعيين عرض الأعمدة' : 'Reset Column Widths'"
+        >
+          <span :class="styles.btnIcon">⟲</span>
+          {{ isArabic ? 'إعادة تعيين الأعمدة' : 'Reset Columns' }}
+        </button>
         <button
           :class="[styles.btnHeaderCreate, { [styles.btnDisabled]: !isSaveButtonEnabled }]"
           @click="createTransfer"
@@ -25,6 +23,16 @@
           {{ isSaving ? (isArabic ? 'جاري الحفظ...' : 'Saving...') : isArabic ? 'حفظ' : 'Save' }}
         </button>
       </div>
+      <div v-if="apiSummary && !apiSummary.balanced" :class="styles.balanceErrorMessage">
+        <span :class="styles.errorText">
+          {{
+            isArabic
+              ? 'الميزان غير متوازن. يرجى مراجعة قيم التحويل.'
+              : 'Unbalanced transfer. Please review your transfer values.'
+          }}
+        </span>
+      </div>
+
       <!-- Show status info if in view-only mode -->
       <div :class="styles.viewStatusInfo" v-if="route.query.viewOnly === 'true'">
         <span :class="styles.viewOnlyBadge">{{ isArabic ? 'عرض فقط' : 'View Only' }}</span>
@@ -49,7 +57,12 @@
     <!-- Data display -->
     <div v-else :class="styles.dataContainer">
       <!-- Table -->
-      <div :class="[styles.cardContainer, styles.tableContainer]">
+      <div
+        :class="[styles.cardContainer, styles.tableContainer]"
+        :data-tooltip="
+          isArabic ? 'يمكنك تغيير عرض الأعمدة بسحب الحافة اليمنى' : 'Drag column edges to resize'
+        "
+      >
         <table :class="styles.transferTable">
           <thead>
             <tr>
@@ -488,7 +501,7 @@
                 <!-- Header with icon and gradient -->
                 <div :class="styles.enhancedErrorModalHeader">
                   <div :class="styles.errorHeaderIcon">
-                    <svg
+                    <!-- <svg
                       width="24"
                       height="24"
                       viewBox="0 0 24 24"
@@ -500,19 +513,19 @@
                       <circle cx="12" cy="12" r="10"></circle>
                       <line x1="15" y1="9" x2="9" y2="15"></line>
                       <line x1="9" y1="9" x2="15" y2="15"></line>
-                    </svg>
+                    </svg> -->
                   </div>
                   <div :class="styles.errorHeaderContent">
                     <h3 :class="styles.errorModalTitle">
                       {{ isArabic ? 'أخطاء التحقق من صحة البيانات' : 'Data Validation Errors' }}
                     </h3>
-                    <p :class="styles.errorModalSubtitle">
+                    <!-- <p :class="styles.errorModalSubtitle">
                       {{
                         isArabic
-                          ? `تم العثور على ${currentErrors.length} أخطاء تحتاج إلى إصلاح`
-                          : `Found ${currentErrors.length} errors that need to be fixed`
+                          ? `تم العثور على ${currentErrors.length} ${currentErrors.length === 1 ? 'خطأ' : 'أخطاء'} تحتاج إلى إصلاح`
+                          : `Found ${currentErrors.length} ${currentErrors.length === 1 ? 'error' : 'errors'} that need${currentErrors.length === 1 ? 's' : ''} to be fixed`
                       }}
-                    </p>
+                    </p> -->
                   </div>
                   <button
                     :class="styles.enhancedErrorModalClose"
@@ -536,12 +549,20 @@
                 <!-- Enhanced Error List -->
                 <div :class="styles.enhancedErrorModalBody">
                   <div :class="styles.errorSummaryStats">
-                    <div :class="styles.errorStatItem">
+                    <!-- <div :class="styles.errorStatItem">
                       <span :class="styles.errorStatNumber">{{ currentErrors.length }}</span>
                       <span :class="styles.errorStatLabel">
-                        {{ isArabic ? 'أخطاء' : 'Errors' }}
+                        {{
+                          isArabic
+                            ? currentErrors.length === 1
+                              ? 'خطأ'
+                              : 'أخطاء'
+                            : currentErrors.length === 1
+                              ? 'Error'
+                              : 'Errors'
+                        }}
                       </span>
-                    </div>
+                    </div> -->
                   </div>
 
                   <div :class="styles.errorListContainer">
@@ -567,8 +588,8 @@
                           </svg>
                         </div>
                         <div :class="styles.errorItemContent">
-                          <span :class="styles.errorItemText">{{ error }}</span>
-                          <div :class="styles.errorItemType">
+                          <span :class="styles.errorItemText">{{ formatErrorMessage(error) }}</span>
+                          <div v-if="getErrorType(error)" :class="styles.errorItemType">
                             {{ getErrorType(error) }}
                           </div>
                         </div>
@@ -579,39 +600,8 @@
 
                 <!-- Enhanced Footer -->
                 <div :class="styles.enhancedErrorModalFooter">
-                  <div :class="styles.errorHelpText">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                      <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                    </svg>
-                    <span>
-                      {{
-                        isArabic
-                          ? 'قم بإصلاح هذه الأخطاء قبل المتابعة'
-                          : 'Please fix these errors before proceeding'
-                      }}
-                    </span>
-                  </div>
                   <button :class="styles.enhancedErrorModalActionBtn" @click="hideErrorModal">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <path d="M9 18l6-6-6-6" />
-                    </svg>
-                    <span>{{ isArabic ? 'فهمت' : 'Got it' }}</span>
+                    <span>{{ isArabic ? 'إغلاق' : 'Close' }}</span>
                   </button>
                 </div>
               </div>
@@ -848,7 +838,9 @@ const isReopenButtonEnabled = computed(() => {
   if (changesMade.value) {
     return false
   }
-  return currentStatus.value === 'is rejected'
+  // Check for various possible rejected status values
+  const status = currentStatus.value?.toLowerCase()
+  return status === 'is rejected' || status === 'rejected' || status === 'reject'
 })
 
 const isUploadButtonEnabled = computed(() => {
@@ -1150,10 +1142,7 @@ const createTransfer = async () => {
         },
       })
 
-      showToast(
-        isArabic.value ? 'تم إنشاء النقل بنجاح' : 'Transfer created successfully',
-        'success',
-      )
+      showToast(isArabic.value ? 'تم إنشاء النقل بنجاح' : 'Transfer Saved', 'success')
     }
 
     await loadData()
@@ -1353,10 +1342,13 @@ const loadData = async () => {
         // Extract status from summary or status object
         if (contractResponse.summary.status) {
           currentStatus.value = contractResponse.summary.status
+          console.log('Contract Status loaded:', currentStatus.value)
         } else if (contractResponse.status && contractResponse.status.status) {
           currentStatus.value = contractResponse.status.status
+          console.log('Contract Status loaded (from status object):', currentStatus.value)
         } else {
           currentStatus.value = 'not yet sent for approval' // Default
+          console.log('Contract Status set to default:', currentStatus.value)
         }
 
         // Set contractData to the transfers array
@@ -1421,8 +1413,10 @@ const loadData = async () => {
         const summary = responseWithSummary.summary
         if (summary?.status) {
           currentStatus.value = summary.status
+          console.log('Transfer Status loaded:', currentStatus.value)
         } else {
           currentStatus.value = 'not yet sent for approval' // Default
+          console.log('Transfer Status set to default:', currentStatus.value)
         }
 
         // Set transferData to the transfers array
@@ -1706,7 +1700,13 @@ const handleUploadSuccess = () => {
 
 // Enhanced error modal methods
 const getErrorType = (error: string): string => {
-  if (error.toLowerCase().includes('required') || error.toLowerCase().includes('مطلوب')) {
+  // Handle specific validation errors with better labels
+  if (
+    error.toLowerCase().includes('from value must be less') ||
+    error.toLowerCase().includes('greater than')
+  ) {
+    return isArabic.value ? 'خطأ في التحقق من القيمة' : 'Validation Error'
+  } else if (error.toLowerCase().includes('required') || error.toLowerCase().includes('مطلوب')) {
     return isArabic.value ? 'حقل مطلوب' : 'Required Field'
   } else if (error.toLowerCase().includes('invalid') || error.toLowerCase().includes('غير صحيح')) {
     return isArabic.value ? 'قيمة غير صحيحة' : 'Invalid Value'
@@ -1715,7 +1715,29 @@ const getErrorType = (error: string): string => {
   } else if (error.toLowerCase().includes('budget') || error.toLowerCase().includes('ميزانية')) {
     return isArabic.value ? 'خطأ في الميزانية' : 'Budget Error'
   }
-  return isArabic.value ? 'خطأ عام' : 'General Error'
+  // Remove generic "General Error" - return empty for cleaner UI
+  return ''
+}
+
+// Helper function to improve error message readability
+const formatErrorMessage = (error: string): string => {
+  // Fix common grammatical issues in error messages
+  let formattedError = error
+
+  // Fix the specific grammar issue mentioned
+  if (error.includes('from value must be less or equal actual value')) {
+    formattedError = isArabic.value
+      ? 'قيمة "من" لا يمكن أن تكون أكبر من قيمة "الفعلي"'
+      : 'The "From" value cannot be greater than the "Actual" value'
+  } else if (error.includes('greater than')) {
+    // Handle other "greater than" related errors
+    formattedError = error.replace(/greater than/g, 'greater than the')
+  }
+
+  // Add proper spacing and capitalization
+  formattedError = formattedError.charAt(0).toUpperCase() + formattedError.slice(1)
+
+  return formattedError
 }
 
 // Add these new methods after the existing methods in the script setup section
@@ -1888,4 +1910,152 @@ const handleDialogConfirm = () => {
     dialog.resolve = null
   }
 }
+
+// Column Resizing Functionality
+const setupColumnResizing = () => {
+  nextTick(() => {
+    const table = document.querySelector(`.${styles.transferTable}`) as HTMLTableElement
+    if (!table) return
+
+    const headers = table.querySelectorAll('th') as NodeListOf<HTMLTableHeaderCellElement>
+
+    headers.forEach((header) => {
+      let isResizing = false
+      let startX = 0
+      let startWidth = 0
+
+      const handleMouseDown = (e: MouseEvent) => {
+        // Check if the click is near the right edge (resize handle area)
+        const headerRect = header.getBoundingClientRect()
+        const isNearRightEdge = e.clientX >= headerRect.right - 10
+
+        if (isNearRightEdge) {
+          e.preventDefault()
+          isResizing = true
+          startX = e.clientX
+          startWidth = header.offsetWidth
+
+          header.classList.add('resizing')
+          table.classList.add('resizing')
+          document.body.style.cursor = 'col-resize'
+          document.body.style.userSelect = 'none'
+
+          document.addEventListener('mousemove', handleMouseMove)
+          document.addEventListener('mouseup', handleMouseUp)
+        }
+      }
+
+      const handleMouseMove = (e: MouseEvent) => {
+        if (!isResizing) return
+
+        const diff = e.clientX - startX
+        const newWidth = Math.max(80, startWidth + diff) // Minimum width of 80px
+        const maxWidth = 500 // Maximum width of 500px
+
+        header.style.width = Math.min(newWidth, maxWidth) + 'px'
+      }
+
+      const handleMouseUp = () => {
+        if (!isResizing) return
+
+        isResizing = false
+        header.classList.remove('resizing')
+        table.classList.remove('resizing')
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+
+        // Save column widths to localStorage for persistence
+        saveColumnWidths()
+      }
+
+      // Change cursor when hovering over resize area
+      const handleMouseMove_Header = (e: MouseEvent) => {
+        const headerRect = header.getBoundingClientRect()
+        const isNearRightEdge = e.clientX >= headerRect.right - 10
+
+        if (isNearRightEdge) {
+          header.style.cursor = 'col-resize'
+        } else {
+          header.style.cursor = 'default'
+        }
+      }
+
+      header.addEventListener('mousedown', handleMouseDown)
+      header.addEventListener('mousemove', handleMouseMove_Header)
+    })
+  })
+}
+
+// Save column widths to localStorage
+const saveColumnWidths = () => {
+  const table = document.querySelector(`.${styles.transferTable}`) as HTMLTableElement
+  if (!table) return
+
+  const headers = table.querySelectorAll('th') as NodeListOf<HTMLTableHeaderCellElement>
+  const widths: number[] = []
+
+  headers.forEach((header) => {
+    widths.push(header.offsetWidth)
+  })
+
+  localStorage.setItem('transferTable_columnWidths', JSON.stringify(widths))
+}
+
+// Restore column widths from localStorage
+const restoreColumnWidths = () => {
+  nextTick(() => {
+    const table = document.querySelector(`.${styles.transferTable}`) as HTMLTableElement
+    if (!table) return
+
+    const savedWidths = localStorage.getItem('transferTable_columnWidths')
+    if (!savedWidths) return
+
+    try {
+      const widths = JSON.parse(savedWidths) as number[]
+      const headers = table.querySelectorAll('th') as NodeListOf<HTMLTableHeaderCellElement>
+
+      headers.forEach((header, index) => {
+        if (widths[index]) {
+          header.style.width = widths[index] + 'px'
+        }
+      })
+    } catch (error) {
+      console.warn('Failed to restore column widths:', error)
+    }
+  })
+}
+
+// Reset column widths to default
+const resetColumnWidths = () => {
+  const table = document.querySelector(`.${styles.transferTable}`) as HTMLTableElement
+  if (!table) return
+
+  const headers = table.querySelectorAll('th') as NodeListOf<HTMLTableHeaderCellElement>
+  headers.forEach((header) => {
+    header.style.width = ''
+  })
+
+  localStorage.removeItem('transferTable_columnWidths')
+}
+
+// Watch for data changes to setup column resizing
+watch(
+  [transferData, contractData],
+  () => {
+    if (!loading.value) {
+      setupColumnResizing()
+      restoreColumnWidths()
+    }
+  },
+  { flush: 'post' },
+)
+
+// Setup column resizing on mount
+onMounted(() => {
+  setupColumnResizing()
+  restoreColumnWidths()
+})
 </script>
