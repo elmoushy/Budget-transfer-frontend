@@ -213,7 +213,6 @@ export async function fetchDashboard<T extends DashboardData>(
     }
 
     const url = `${API_BASE_URL}${ENDPOINTS.BUDGET.DASHBOARD}?${params.toString()}`
-    console.log('📊 Fetching dashboard data:', { type, url })
 
     if (type === 'all') {
       // For 'all' type, expect nested response with both normal and smart data
@@ -221,11 +220,18 @@ export async function fetchDashboard<T extends DashboardData>(
         await axios.get(url, config)
       console.log('📊 Dashboard response (all):', response.data)
       return response.data.smart as T // Return the smart data for 'all' type
+    } else if (type === 'normal') {
+      // For 'normal' type, expect response.data.normal
+      const response: AxiosResponse<{ normal: NormalDashboard }> = await axios.get(url, config)
+      console.log('📊 Dashboard response (normal):', response.data.normal)
+      return response.data.normal as T
+    } else if (type === 'smart') {
+      // For 'smart' type, expect response.data.smart
+      const response: AxiosResponse<{ smart: AllOrSmartDashboard }> = await axios.get(url, config)
+      console.log('📊 Dashboard response (smart):', response.data.smart)
+      return response.data.smart as T
     } else {
-      // For 'normal' and 'smart' types, expect direct response structure
-      const response: AxiosResponse<T> = await axios.get(url, config)
-      console.log('📊 Dashboard response (' + type + '):', response.data)
-      return response.data
+      throw new Error('Unknown dashboard type')
     }
   } catch (error) {
     if (axios.isAxiosError(error)) {

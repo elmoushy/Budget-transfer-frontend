@@ -25,6 +25,8 @@ export const useBudgetDashboardStore = defineStore('budgetDashboard', () => {
     return cache.value.get(currentType.value) || null
   })
 
+
+
   const currentLastFetched = computed(() => {
     return lastFetched.value.get(currentType.value) || null
   })
@@ -36,6 +38,7 @@ export const useBudgetDashboardStore = defineStore('budgetDashboard', () => {
   const normalData = computed((): NormalDashboard | null => {
     return isNormalMode.value ? (currentData.value as NormalDashboard) : null
   })
+
 
   const flowData = computed((): AllOrSmartDashboard | null => {
     const result =

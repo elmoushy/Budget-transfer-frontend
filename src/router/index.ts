@@ -140,7 +140,6 @@ router.beforeEach(async (to, from, next) => {
 
     // أسماء الراوتس الممنوعة على الـ basic user level=1
     const blockedForBasicUser = new Set([
-      'Enhancements',                 // /enhancement
       'EnhancementsPendingApproval',  // /transfers-pending-approval
       'ContractsPendingApproval',     // /contracts-pending-approval
       'SettlementsPendingApproval',   // /settlements-pending-approval
@@ -166,10 +165,10 @@ router.beforeEach(async (to, from, next) => {
       return next({ name: 'Dashboard' })
     }
 
-    // 2) منع صفحة التعزيزات لو مفيش صلاحية نقل ميزانية
-    if (noBudgetPrivilege && blockedIfNoBudgetPrivilege.has(String(to.name))) {
-      return next({ name: 'Dashboard' })
-    }
+    // // 2) منع صفحة التعزيزات لو مفيش صلاحية نقل ميزانية
+    // if (noBudgetPrivilege && blockedIfNoBudgetPrivilege.has(String(to.name))) {
+    //   return next({ name: 'Dashboard' })
+    // }
 
     // المرور بشكل طبيعي
     return next()

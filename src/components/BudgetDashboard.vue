@@ -108,7 +108,7 @@
           </h2>
           <div class="kpi-grid">
             <!-- Normal Mode KPIs -->
-            <template v-if="isNormalMode && normalData">
+            <template v-if="isNormalMode && normalData ">
               <div class="kpi-card glass-card">
                 <div class="kpi-icon">
                   <i class="fas fa-exchange-alt"></i>
@@ -211,6 +211,8 @@
             {{ isArabic ? 'الحساب:' : 'Account:' }}
             {{ flowData.applied_filters.account_code || (isArabic ? 'الكل' : 'All') }}
           </div>
+
+      
         </div>
 
         <!-- Overview Section -->
@@ -670,6 +672,9 @@ const isSmartMode = computed(() => dashboardStore.isSmartMode)
 const normalData = computed(() => dashboardStore.normalData)
 const flowData = computed(() => dashboardStore.flowData)
 const lastFetched = computed(() => dashboardStore.currentLastFetched)
+
+console.log("normalData",normalData.value,"normalData");
+
 
 const isAuthError = computed(
   () => error.value?.includes('Authentication') || error.value?.includes('401'),
