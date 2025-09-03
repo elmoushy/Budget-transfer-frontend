@@ -25,8 +25,6 @@ export const useBudgetDashboardStore = defineStore('budgetDashboard', () => {
     return cache.value.get(currentType.value) || null
   })
 
-
-
   const currentLastFetched = computed(() => {
     return lastFetched.value.get(currentType.value) || null
   })
@@ -39,18 +37,43 @@ export const useBudgetDashboardStore = defineStore('budgetDashboard', () => {
     return isNormalMode.value ? (currentData.value as NormalDashboard) : null
   })
 
-
   const flowData = computed((): AllOrSmartDashboard | null => {
-    const result =
-      isAllMode.value || isSmartMode.value ? (currentData.value as AllOrSmartDashboard) : null
+    if (!isAllMode.value && !isSmartMode.value) {
+      return null
+    }
+
+    const data = currentData.value
+    if (!data) {
+      console.log('🌊 flowData computed: no current data')
+      return null
+    }
+
+    // Ensure the data has the expected structure for flow data
+    const flowDataObj = data as AllOrSmartDashboard
+    if (!flowDataObj.filtered_combinations) {
+      console.log('🌊 flowData computed: missing filtered_combinations, initializing empty array')
+      flowDataObj.filtered_combinations = []
+    }
+    if (!flowDataObj.cost_center_totals) {
+      console.log('🌊 flowData computed: missing cost_center_totals, initializing empty array')
+      flowDataObj.cost_center_totals = []
+    }
+    if (!flowDataObj.account_code_totals) {
+      console.log('🌊 flowData computed: missing account_code_totals, initializing empty array')
+      flowDataObj.account_code_totals = []
+    }
+
     console.log('🌊 flowData computed:', {
       isAllMode: isAllMode.value,
       isSmartMode: isSmartMode.value,
       currentType: currentType.value,
-      currentData: currentData.value,
-      result: result,
+      hasFilteredCombinations: Array.isArray(flowDataObj.filtered_combinations),
+      filteredCombinationsLength: flowDataObj.filtered_combinations?.length || 0,
+      hasCostCenterTotals: Array.isArray(flowDataObj.cost_center_totals),
+      hasAccountCodeTotals: Array.isArray(flowDataObj.account_code_totals),
     })
-    return result
+
+    return flowDataObj
   })
 
   // Actions
@@ -90,7 +113,8 @@ export const useBudgetDashboardStore = defineStore('budgetDashboard', () => {
           !data ||
           (type === 'normal'
             ? (data as NormalDashboard).total_transfers === 0
-            : (data as AllOrSmartDashboard).filtered_combinations?.length === 0),
+            : !(data as AllOrSmartDashboard).filtered_combinations ||
+              (data as AllOrSmartDashboard).filtered_combinations.length === 0),
       })
 
       error.value = null
@@ -147,7 +171,7 @@ export const useBudgetDashboardStore = defineStore('budgetDashboard', () => {
       return result
     } else {
       const data = currentData.value as AllOrSmartDashboard
-      const result = data.filtered_combinations.length === 0
+      const result = !data.filtered_combinations || data.filtered_combinations.length === 0
       console.log(
         '🔍 isEmpty (flow mode):',
         result,

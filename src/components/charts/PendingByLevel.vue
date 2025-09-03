@@ -20,7 +20,7 @@ import {
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend)
 
 interface Props {
-  pendingByLevel: Record<string, number>
+  pendingByLevel?: Record<string, number>
 }
 
 const props = defineProps<Props>()
@@ -30,6 +30,7 @@ let chartInstance: Chart | null = null
 
 const createChart = () => {
   if (!chartRef.value) return
+  if (!props.pendingByLevel || Object.keys(props.pendingByLevel).length === 0) return
 
   // Sort levels naturally (Level1, Level2, etc.)
   const sortedEntries = Object.entries(props.pendingByLevel).sort(([a], [b]) =>
@@ -101,6 +102,7 @@ const createChart = () => {
 
 const updateChart = () => {
   if (!chartInstance) return
+  if (!props.pendingByLevel || Object.keys(props.pendingByLevel).length === 0) return
 
   const sortedEntries = Object.entries(props.pendingByLevel).sort(([a], [b]) =>
     a.localeCompare(b, undefined, { numeric: true }),

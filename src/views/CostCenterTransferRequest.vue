@@ -1,6 +1,6 @@
 <template>
-
-      <!-- Confirmation Modal -->
+  <div class="cost-center-transfer-request-root">
+    <!-- Confirmation Modal -->
     <div v-if="showConfirmModal" class="modal-overlay" @click="closeConfirmModal">
       <div class="modal-container" :class="{ 'dark-mode': isDarkMode }" @click.stop>
         <div class="modal-header">
@@ -73,518 +73,517 @@
         </div>
       </div>
     </div>
-  <div
-    :class="[styles.transferRequestPage, { [styles.darkMode]: isDarkMode, [styles.rtl]: isRTL }]"
-  >
-    <div :class="styles.pageHeader">
-      <!-- Only show action buttons if not in view-only mode -->
-      <div :class="styles.headerActions" v-if="!route.query.viewOnly">
-        <button
-          :class="[styles.btnHeaderSecondary]"
-          @click="resetColumnWidths"
-          :title="isArabic ? 'إعادة تعيين عرض الأعمدة' : 'Reset Column Widths'"
-        >
-          <span :class="styles.btnIcon">⟲</span>
-          {{ isArabic ? 'إعادة تعيين الأعمدة' : 'Reset Columns' }}
-        </button>
-        <button
-          :class="[styles.btnHeaderCreate, { [styles.btnDisabled]: !isSaveButtonEnabled }]"
-          @click="createTransfer"
-          :disabled="!isSaveButtonEnabled"
-        >
-          <span :class="styles.btnIcon" v-if="!isSaving">✓</span>
-          <span :class="[styles.btnIcon, styles.loadingSpinner]" v-if="isSaving"></span>
-          {{ isSaving ? (isArabic ? 'جاري الحفظ...' : 'Saving...') : isArabic ? 'حفظ' : 'Save' }}
-        </button>
-      </div>
-      <div v-if="apiSummary && !apiSummary.balanced" :class="styles.balanceErrorMessage">
-        <span :class="styles.errorText">
-          {{
-            isArabic
-              ? 'الميزان غير متوازن. يرجى مراجعة قيم التحويل.'
-              : 'Unbalanced transfer. Please review your transfer values.'
-          }}
-        </span>
-      </div>
-
-      <!-- Show status info if in view-only mode -->
-      <div :class="styles.viewStatusInfo" v-if="route.query.viewOnly === 'true'">
-        <span :class="styles.viewOnlyBadge">{{ isArabic ? 'عرض فقط' : 'View Only' }}</span>
-      </div>
-
-
-    </div>
-   <div :class="styles.actionbuttonsgroup" v-if="route.query.viewOnly === 'true'">
-<button :class="styles.approvebtn" @click="approveThis" title="Approve">
-  <CheckIcon />
-</button>
-<button :class="styles.rejectbtn" @click="rejectThis" title="Reject">
-  <XIcon />
-</button>
-      </div>
-    <!-- Loading state -->
-    <div v-if="loading" :class="styles.loadingContainer">
-      <div :class="styles.loadingSpinner"></div>
-      <p>{{ isArabic ? 'جاري التحميل...' : 'Loading...' }}</p>
-    </div>
-
-    <!-- Error state -->
-    <div v-else-if="error" :class="styles.errorContainer">
-      <div :class="styles.errorIcon">!</div>
-      <p>{{ isArabic ? 'حدث خطأ أثناء تحميل البيانات' : 'Error loading data' }}</p>
-      <button :class="styles.btnRetry" @click="loadData">
-        {{ isArabic ? 'إعادة المحاولة' : 'Retry' }}
-      </button>
-    </div>
-
-    <!-- Data display -->
-    <div v-else :class="styles.dataContainer">
-      <!-- Table -->
-      <div
-        :class="[styles.cardContainer, styles.tableContainer]"
-        :data-tooltip="
-          isArabic ? 'يمكنك تغيير عرض الأعمدة بسحب الحافة اليمنى' : 'Drag column edges to resize'
-        "
-      >
-        <table :class="styles.transferTable">
-          <thead>
-            <tr>
-              <th :class="styles.actionColumn" v-if="!route.query.viewOnly"></th>
-              <th>{{ isArabic ? 'إلى' : 'To' }}</th>
-              <th v-if="!isFromEnhancementsPage">{{ isArabic ? 'من' : 'From' }}</th>
-              <th>{{ isArabic ? 'حقًا ماليًا' : 'Encumbrance' }}</th>
-              <th>{{ isArabic ? 'الموازنة المتاحة' : 'Available Budget' }}</th>
-              <th>{{ isArabic ? 'الحالى' : 'Actual' }}</th>
-              <th>{{ isArabic ? 'الموازنة المعتمدة' : 'Approved Budget' }}</th>
-              <th>{{ isArabic ? 'اسم الحساب' : 'Account Name' }}</th>
-              <th>{{ isArabic ? 'رقم الحساب' : 'Account Code' }}</th>
-              <th>{{ isArabic ? 'اسم المشروع' : 'Project Name' }}</th>
-              <th>{{ isArabic ? 'رقم المشروع' : 'Project Code' }}</th>
-              <th>{{ isArabic ? 'اسم البند' : 'Cost Center Name' }}</th>
-              <th>{{ isArabic ? 'رقم البند' : 'Cost Center Code' }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(item, index) in currentData"
-              :key="(item.transfer_id || item.contract_id || index) as string"
-              :class="[
-                styles.dataRow,
-                {
-                  [styles.rowError]: item.validation_errors && item.validation_errors.length > 0,
-                  [styles.rowValid]: !item.validation_errors || item.validation_errors.length === 0,
-                },
-              ]"
-            >
-              <td :class="styles.actionColumn" v-if="!route.query.viewOnly">
-                <button
-                  :class="[styles.btnDeleteRow, { [styles.btnDisabled]: !isScreenEditable }]"
-                  @click="deleteRow(index)"
-                  title="Delete Row"
-                  :disabled="!isScreenEditable"
-                >
-                  <span :class="styles.deleteIcon">×</span>
-                </button>
-                <!-- Replace tooltip with click-based error display -->
-                <div
-                  v-if="item.validation_errors && item.validation_errors.length > 0"
-                  :class="styles.validationErrorIndicator"
-                  @click="showErrorDetails(item.validation_errors)"
-                >
-                  <span :class="styles.errorIconSmall">!</span>
-                </div>
-                <div v-else :class="styles.validationSuccessIndicator">
-                  <span :class="styles.successIconSmall">✓</span>
-                </div>
-              </td>
-              <td :class="styles.numberCell">
-                <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
-                  {{ formatNumber(item.to_center_input) || '-' }}
-                </div>
-                <input
-                  v-else
-                  type="text"
-                  v-model="item.to_center_input"
-                  :class="[
-                    styles.tableInput,
-                    styles.numberInput,
-                    { [styles.readonlyInput]: !isScreenEditable },
-                  ]"
-                  @input="validateNumberInput(item, 'to_center')"
-                  :placeholder="isArabic ? 'إلى' : 'To'"
-                  :readonly="!isScreenEditable"
-                />
-              </td>
-              <td v-if="!isFromEnhancementsPage" :class="styles.numberCell">
-                <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
-                  {{ formatNumber(item.from_center_input) || '-' }}
-                </div>
-                <input
-                  v-else
-                  type="text"
-                  v-model="item.from_center_input"
-                  :class="[
-                    styles.tableInput,
-                    styles.numberInput,
-                    { [styles.readonlyInput]: !isScreenEditable },
-                  ]"
-                  @input="validateNumberInput(item, 'from_center')"
-                  :placeholder="isArabic ? 'من' : 'From'"
-                  :readonly="!isScreenEditable"
-                />
-              </td>
-              <td :class="styles.numberCell">
-                <!-- Display-only for Encumbrance -->
-                <div :class="styles.nameDisplay">
-                  {{ formatNumber(item.encumbrance) || '-' }}
-                </div>
-              </td>
-              <td :class="styles.numberCell">
-                <!-- Display-only for Available Budget -->
-                <div :class="styles.nameDisplay">
-                  {{ formatNumber(item.available_budget) || '-' }}
-                </div>
-              </td>
-              <td :class="styles.numberCell">
-                <!-- Display-only for Actual -->
-                <div :class="styles.nameDisplay">
-                  {{ formatNumber(item.actual) || '-' }}
-                </div>
-              </td>
-              <td :class="styles.numberCell">
-                <!-- Display-only for Approved Budget -->
-                <div :class="styles.nameDisplay">
-                  {{ formatNumber(item.approved_budget) || '-' }}
-                </div>
-              </td>
-              <td :class="styles.nameDisplay">
-                {{ item.account_name || getAccountName(item.account_code) || '-' }}
-              </td>
-              <td :class="styles.dropdownCell">
-                <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
-                  {{ getAccountDisplayText(item.account_code) || '-' }}
-                </div>
-                <SearchableDropdown
-                  v-else
-                  v-model="item.account_code"
-                  :options="
-                    accountEntities.map((account) => ({
-                      value: account.account,
-                      label: account.alias_default
-                        ? `${account.account} - ${account.alias_default}`
-                        : account.account,
-                    }))
-                  "
-                  :placeholder="
-                    accountEntitiesLoading
-                      ? isArabic
-                        ? 'جاري التحميل...'
-                        : 'Loading...'
-                      : isArabic
-                        ? 'اختر رقم الحساب'
-                        : 'Select Account'
-                  "
-                  :disabled="!isScreenEditable || accountEntitiesLoading"
-                  :is-dark-mode="isDarkMode"
-                  :is-rtl="isRTL"
-                  :search-placeholder="isArabic ? 'البحث في الحسابات...' : 'Search accounts...'"
-                  :no-results-text="isArabic ? 'لا توجد نتائج' : 'No results found'"
-                />
-              </td>
-              <td :class="styles.nameDisplay">
-                {{ item.cost_center_name || getCostCenterName(item.cost_center_code) || '-' }}
-              </td>
-              <td :class="styles.dropdownCell">
-                <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
-                  {{ getCostCenterDisplayText(item.cost_center_code) || '-' }}
-                </div>
-                <SearchableDropdown
-                  v-else
-                  v-model="item.cost_center_code"
-                  :options="
-                    costCenterEntities.map((entity) => ({
-                      value: entity.entity,
-                      label: entity.alias_default
-                        ? `${entity.entity} - ${entity.alias_default}`
-                        : entity.entity,
-                    }))
-                  "
-                  :placeholder="
-                    costCenterEntitiesLoading
-                      ? isArabic
-                        ? 'جاري التحميل...'
-                        : 'Loading...'
-                      : isArabic
-                        ? 'اختر رقم البند'
-                        : 'Select Cost Center'
-                  "
-                  :disabled="!isScreenEditable || costCenterEntitiesLoading"
-                  :is-dark-mode="isDarkMode"
-                  :is-rtl="isRTL"
-                  :search-placeholder="
-                    isArabic ? 'البحث في مراكز التكلفة...' : 'Search cost centers...'
-                  "
-                  :no-results-text="isArabic ? 'لا توجد نتائج' : 'No results found'"
-                />
-              </td>
-              <td :class="styles.nameDisplay">10 - Total Abu Dhabi Offices</td>
-              <td :class="styles.dropdownCell">
-                <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
-                  10 - Total Abu Dhabi Offices
-                </div>
-                <select
-                  v-else
-                  v-model="item.project_code"
-                  :class="[styles.tableInput, { [styles.readonlyInput]: !isScreenEditable }]"
-                  :disabled="!isScreenEditable"
-                >
-                  <option value="10 - Total Abu Dhabi Offices">
-                    10 - Total Abu Dhabi Offices
-                  </option>
-                </select>
-              </td>
-            </tr>
-          </tbody>
-          <tfoot>
-            <tr :class="styles.summaryRow">
-              <td v-if="!route.query.viewOnly"></td>
-              <td :class="styles.numberCell">{{ formatNumber(summaryData.toSum) || '-' }}</td>
-              <td v-if="!isFromEnhancementsPage" :class="styles.numberCell">
-                {{ formatNumber(summaryData.fromSum) || '-' }}
-              </td>
-              <td :class="styles.numberCell">
-                {{ formatNumber(summaryData.encumbranceSum) || '-' }}
-              </td>
-              <td :class="styles.numberCell">
-                {{ formatNumber(summaryData.availableBudgetSum) || '-' }}
-              </td>
-              <td :class="styles.numberCell">{{ formatNumber(summaryData.actualSum) || '-' }}</td>
-              <td :class="styles.numberCell">
-                {{ formatNumber(summaryData.approvedBudgetSum) || '-' }}
-              </td>
-              <td :colspan="isFromEnhancementsPage ? 6 : 6" :class="styles.summaryLabel">
-                {{ isArabic ? 'المجموع الكلي' : 'Overall Sum' }}
-              </td>
-            </tr>
-            <tr v-if="!route.query.viewOnly">
-              <td :colspan="isFromEnhancementsPage ? 12 : 13" :class="styles.addRowCell">
-                <button
-                  :class="[
-                    styles.btnModern,
-                    styles.btnAddRowModern,
-                    { [styles.btnDisabled]: !isScreenEditable },
-                  ]"
-                  @click="addNewRow"
-                  :disabled="!isScreenEditable"
-                >
-                  <span :class="styles.btnIconModern">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <line x1="12" y1="5" x2="12" y2="19"></line>
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                  </span>
-                  <span :class="styles.btnText">{{
-                    isArabic ? 'إضافة صف جديد' : 'Add New Row'
-                  }}</span>
-                </button>
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-
-      <!-- Total rows info -->
-      <div :class="styles.totalInfo">
-        {{ isArabic ? `المجموع ${currentData.length}` : `Total ${currentData.length}` }}
-      </div>
-
-      <!-- Action buttons - hidden in view-only mode -->
-      <div
-        :class="[styles.actionButtonsModern, { [styles.rtl]: isRTL }]"
-        v-if="!route.query.viewOnly"
-      >
-        <button
-          :class="[
-            styles.btnModern,
-            styles.btnSubmit,
-            { [styles.btnDisabled]: !isSubmitButtonEnabled, [styles.rtl]: isRTL },
-          ]"
-          @click="submitRequest"
-          :disabled="!isSubmitButtonEnabled"
-          :title="
-            !isSubmitButtonEnabled
-              ? !currentData || currentData.length === 0
-                ? isArabic
-                  ? 'لا توجد بيانات للتقديم'
-                  : 'No data to submit'
-                : changesMade
-                  ? isArabic
-                    ? 'يجب حفظ التغييرات أولاً'
-                    : 'Please save changes first'
-                  : isArabic
-                    ? 'غير متاح للتقديم'
-                    : 'Not available for submission'
-              : isArabic
-                ? 'تقديم الطلب'
-                : 'Submit request'
-          "
-        >
-          <span :class="[styles.btnIconModern, { [styles.rtl]: isRTL }]">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              :style="{ transform: isRTL ? 'scaleX(-1)' : 'none' }"
-            >
-              <path d="M9 18l6-6-6-6" />
-            </svg>
+    <div
+      :class="[styles.transferRequestPage, { [styles.darkMode]: isDarkMode, [styles.rtl]: isRTL }]"
+    >
+      <div :class="styles.pageHeader">
+        <!-- Only show action buttons if not in view-only mode -->
+        <div :class="styles.headerActions" v-if="!route.query.viewOnly">
+          <button
+            :class="[styles.btnHeaderSecondary]"
+            @click="resetColumnWidths"
+            :title="isArabic ? 'إعادة تعيين عرض الأعمدة' : 'Reset Column Widths'"
+          >
+            <span :class="styles.btnIcon">⟲</span>
+            {{ isArabic ? 'إعادة تعيين الأعمدة' : 'Reset Columns' }}
+          </button>
+          <button
+            :class="[styles.btnHeaderCreate, { [styles.btnDisabled]: !isSaveButtonEnabled }]"
+            @click="createTransfer"
+            :disabled="!isSaveButtonEnabled"
+          >
+            <span :class="styles.btnIcon" v-if="!isSaving">✓</span>
+            <span :class="[styles.btnIcon, styles.loadingSpinner]" v-if="isSaving"></span>
+            {{ isSaving ? (isArabic ? 'جاري الحفظ...' : 'Saving...') : isArabic ? 'حفظ' : 'Save' }}
+          </button>
+        </div>
+        <div v-if="apiSummary && !apiSummary.balanced" :class="styles.balanceErrorMessage">
+          <span :class="styles.errorText">
+            {{
+              isArabic
+                ? 'الميزان غير متوازن. يرجى مراجعة قيم التحويل.'
+                : 'Unbalanced transfer. Please review your transfer values.'
+            }}
           </span>
-          <span :class="styles.btnText">{{ isArabic ? 'تقديم' : 'Submit' }}</span>
-        </button>
+        </div>
 
-        <button
-          v-if="!route.query.viewOnly"
-          :class="[
-            styles.btnModern,
-            styles.btnUpload,
-            { [styles.btnDisabled]: !isUploadButtonEnabled, [styles.rtl]: isRTL },
-          ]"
-          @click="uploadFile"
-          :disabled="!isUploadButtonEnabled"
-        >
-          <span :class="[styles.btnIconModern, { [styles.rtl]: isRTL }]">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7,10 12,15 17,10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-          </span>
-          <span :class="styles.btnText">{{
-            isArabic ? 'رفع ملف المناقلة' : 'Upload Transfer File'
-          }}</span>
+        <!-- Show status info if in view-only mode -->
+        <div :class="styles.viewStatusInfo" v-if="route.query.viewOnly === 'true'">
+          <span :class="styles.viewOnlyBadge">{{ isArabic ? 'عرض فقط' : 'View Only' }}</span>
+        </div>
+      </div>
+      <div :class="styles.actionbuttonsgroup" v-if="route.query.viewOnly === 'true'">
+        <button :class="styles.approvebtn" @click="approveThis" title="Approve">
+          <CheckIcon />
         </button>
-
-        <button
-          v-if="!route.query.viewOnly"
-          :class="[
-            styles.btnModern,
-            styles.btnReopen,
-            { [styles.btnDisabled]: !isReopenButtonEnabled, [styles.rtl]: isRTL },
-          ]"
-          @click="reopenRequest"
-          :disabled="!isReopenButtonEnabled"
-          :title="
-            !isReopenButtonEnabled && changesMade
-              ? isArabic
-                ? 'يجب حفظ التغييرات أولاً'
-                : 'Please save changes first'
-              : isArabic
-                ? 'إعادة فتح الطلب'
-                : 'Reopen request'
-          "
-        >
-          <span :class="[styles.btnIconModern, { [styles.rtl]: isRTL }]">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              :style="{ transform: isRTL ? 'scaleX(-1)' : 'none' }"
-            >
-              <path d="M1 4v6h6" />
-              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-            </svg>
-          </span>
-          <span :class="styles.btnText">{{
-            isArabic ? 'إعادة فتح الطلب' : 'Re-open Request'
-          }}</span>
+        <button :class="styles.rejectbtn" @click="rejectThis" title="Reject">
+          <XIcon />
         </button>
+      </div>
+      <!-- Loading state -->
+      <div v-if="loading" :class="styles.loadingContainer">
+        <div :class="styles.loadingSpinner"></div>
+        <p>{{ isArabic ? 'جاري التحميل...' : 'Loading...' }}</p>
+      </div>
 
-        <button
-          :class="[styles.btnModern, styles.btnReport, { [styles.rtl]: isRTL }]"
-          @click="generateReport"
-        >
-          <span :class="[styles.btnIconModern, { [styles.rtl]: isRTL }]">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14,2 14,8 20,8" />
-              <line x1="16" y1="13" x2="8" y2="13" />
-              <line x1="16" y1="17" x2="8" y2="17" />
-              <polyline points="10,9 9,9 8,9" />
-            </svg>
-          </span>
-          <span :class="styles.btnText">{{ isArabic ? 'تقرير' : 'Report' }}</span>
+      <!-- Error state -->
+      <div v-else-if="error" :class="styles.errorContainer">
+        <div :class="styles.errorIcon">!</div>
+        <p>{{ isArabic ? 'حدث خطأ أثناء تحميل البيانات' : 'Error loading data' }}</p>
+        <button :class="styles.btnRetry" @click="loadData">
+          {{ isArabic ? 'إعادة المحاولة' : 'Retry' }}
         </button>
       </div>
 
-      <!-- Use the new File Upload Modal component without apiBaseUrl prop -->
-      <FileUploadModal
-        :show="showFileModal"
-        :is-arabic="isArabic"
-        :transaction-id="transactionId"
-        :auth-token="authStore.token"
-        @close="closeFileModal"
-        @upload-success="handleUploadSuccess"
-      />
-
-      <!-- Add TransferReport Component -->
-      <TransferReport
-        :show="showReportModal"
-        :transaction-id="transactionId"
-        @close="closeReportModal"
-      />
-    </div>
-
-    <!-- Enhanced Error Details Modal -->
-    <Teleport to="body">
-      <Transition name="modal-fade" appear>
+      <!-- Data display -->
+      <div v-else :class="styles.dataContainer">
+        <!-- Table -->
         <div
-          v-if="showErrorModal"
-          :class="styles.enhancedErrorModalOverlay"
-          @click="hideErrorModal"
+          :class="[styles.cardContainer, styles.tableContainer]"
+          :data-tooltip="
+            isArabic ? 'يمكنك تغيير عرض الأعمدة بسحب الحافة اليمنى' : 'Drag column edges to resize'
+          "
         >
-          <div :class="styles.enhancedErrorModalBackdrop"></div>
-          <Transition name="modal-slide" appear>
-            <div
-              :class="styles.enhancedErrorModalContainer"
-              @click.stop
-              tabindex="-1"
-              role="dialog"
-              aria-labelledby="error-modal-title"
-              aria-describedby="error-modal-description"
-              aria-modal="true"
-            >
-              <div :class="styles.enhancedErrorModalContent">
-                <!-- Header with icon and gradient -->
-                <div :class="styles.enhancedErrorModalHeader">
-                  <div :class="styles.errorHeaderIcon">
-                    <!-- <svg
+          <table :class="styles.transferTable">
+            <thead>
+              <tr>
+                <th :class="styles.actionColumn" v-if="!route.query.viewOnly"></th>
+                <th>{{ isArabic ? 'إلى' : 'To' }}</th>
+                <th v-if="!isFromEnhancementsPage">{{ isArabic ? 'من' : 'From' }}</th>
+                <th>{{ isArabic ? 'حقًا ماليًا' : 'Encumbrance' }}</th>
+                <th>{{ isArabic ? 'الموازنة المتاحة' : 'Available Budget' }}</th>
+                <th>{{ isArabic ? 'الحالى' : 'Actual' }}</th>
+                <th>{{ isArabic ? 'الموازنة المعتمدة' : 'Approved Budget' }}</th>
+                <th>{{ isArabic ? 'اسم الحساب' : 'Account Name' }}</th>
+                <th>{{ isArabic ? 'رقم الحساب' : 'Account Code' }}</th>
+                <th>{{ isArabic ? 'اسم المشروع' : 'Project Name' }}</th>
+                <th>{{ isArabic ? 'رقم المشروع' : 'Project Code' }}</th>
+                <th>{{ isArabic ? 'اسم البند' : 'Cost Center Name' }}</th>
+                <th>{{ isArabic ? 'رقم البند' : 'Cost Center Code' }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(item, index) in currentData"
+                :key="(item.transfer_id || item.contract_id || index) as string"
+                :class="[
+                  styles.dataRow,
+                  {
+                    [styles.rowError]: item.validation_errors && item.validation_errors.length > 0,
+                    [styles.rowValid]:
+                      !item.validation_errors || item.validation_errors.length === 0,
+                  },
+                ]"
+              >
+                <td :class="styles.actionColumn" v-if="!route.query.viewOnly">
+                  <button
+                    :class="[styles.btnDeleteRow, { [styles.btnDisabled]: !isScreenEditable }]"
+                    @click="deleteRow(index)"
+                    title="Delete Row"
+                    :disabled="!isScreenEditable"
+                  >
+                    <span :class="styles.deleteIcon">×</span>
+                  </button>
+                  <!-- Replace tooltip with click-based error display -->
+                  <div
+                    v-if="item.validation_errors && item.validation_errors.length > 0"
+                    :class="styles.validationErrorIndicator"
+                    @click="showErrorDetails(item.validation_errors)"
+                  >
+                    <span :class="styles.errorIconSmall">!</span>
+                  </div>
+                  <div v-else :class="styles.validationSuccessIndicator">
+                    <span :class="styles.successIconSmall">✓</span>
+                  </div>
+                </td>
+                <td :class="styles.numberCell">
+                  <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
+                    {{ formatNumber(item.to_center_input) || '-' }}
+                  </div>
+                  <input
+                    v-else
+                    type="text"
+                    v-model="item.to_center_input"
+                    :class="[
+                      styles.tableInput,
+                      styles.numberInput,
+                      { [styles.readonlyInput]: !isScreenEditable },
+                    ]"
+                    @input="validateNumberInput(item, 'to_center')"
+                    :placeholder="isArabic ? 'إلى' : 'To'"
+                    :readonly="!isScreenEditable"
+                  />
+                </td>
+                <td v-if="!isFromEnhancementsPage" :class="styles.numberCell">
+                  <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
+                    {{ formatNumber(item.from_center_input) || '-' }}
+                  </div>
+                  <input
+                    v-else
+                    type="text"
+                    v-model="item.from_center_input"
+                    :class="[
+                      styles.tableInput,
+                      styles.numberInput,
+                      { [styles.readonlyInput]: !isScreenEditable },
+                    ]"
+                    @input="validateNumberInput(item, 'from_center')"
+                    :placeholder="isArabic ? 'من' : 'From'"
+                    :readonly="!isScreenEditable"
+                  />
+                </td>
+                <td :class="styles.numberCell">
+                  <!-- Display-only for Encumbrance -->
+                  <div :class="styles.nameDisplay">
+                    {{ formatNumber(item.encumbrance) || '-' }}
+                  </div>
+                </td>
+                <td :class="styles.numberCell">
+                  <!-- Display-only for Available Budget -->
+                  <div :class="styles.nameDisplay">
+                    {{ formatNumber(item.available_budget) || '-' }}
+                  </div>
+                </td>
+                <td :class="styles.numberCell">
+                  <!-- Display-only for Actual -->
+                  <div :class="styles.nameDisplay">
+                    {{ formatNumber(item.actual) || '-' }}
+                  </div>
+                </td>
+                <td :class="styles.numberCell">
+                  <!-- Display-only for Approved Budget -->
+                  <div :class="styles.nameDisplay">
+                    {{ formatNumber(item.approved_budget) || '-' }}
+                  </div>
+                </td>
+                <td :class="styles.nameDisplay">
+                  {{ item.account_name || getAccountName(item.account_code) || '-' }}
+                </td>
+                <td :class="styles.dropdownCell">
+                  <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
+                    {{ getAccountDisplayText(item.account_code) || '-' }}
+                  </div>
+                  <SearchableDropdown
+                    v-else
+                    v-model="item.account_code"
+                    :options="
+                      accountEntities.map((account) => ({
+                        value: account.account,
+                        label: account.alias_default
+                          ? `${account.account} - ${account.alias_default}`
+                          : account.account,
+                      }))
+                    "
+                    :placeholder="
+                      accountEntitiesLoading
+                        ? isArabic
+                          ? 'جاري التحميل...'
+                          : 'Loading...'
+                        : isArabic
+                          ? 'اختر رقم الحساب'
+                          : 'Select Account'
+                    "
+                    :disabled="!isScreenEditable || accountEntitiesLoading"
+                    :is-dark-mode="isDarkMode"
+                    :is-rtl="isRTL"
+                    :search-placeholder="isArabic ? 'البحث في الحسابات...' : 'Search accounts...'"
+                    :no-results-text="isArabic ? 'لا توجد نتائج' : 'No results found'"
+                  />
+                </td>
+                <td :class="styles.nameDisplay">
+                  {{ item.cost_center_name || getCostCenterName(item.cost_center_code) || '-' }}
+                </td>
+                <td :class="styles.dropdownCell">
+                  <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
+                    {{ getCostCenterDisplayText(item.cost_center_code) || '-' }}
+                  </div>
+                  <SearchableDropdown
+                    v-else
+                    v-model="item.cost_center_code"
+                    :options="
+                      costCenterEntities.map((entity) => ({
+                        value: entity.entity,
+                        label: entity.alias_default
+                          ? `${entity.entity} - ${entity.alias_default}`
+                          : entity.entity,
+                      }))
+                    "
+                    :placeholder="
+                      costCenterEntitiesLoading
+                        ? isArabic
+                          ? 'جاري التحميل...'
+                          : 'Loading...'
+                        : isArabic
+                          ? 'اختر رقم البند'
+                          : 'Select Cost Center'
+                    "
+                    :disabled="!isScreenEditable || costCenterEntitiesLoading"
+                    :is-dark-mode="isDarkMode"
+                    :is-rtl="isRTL"
+                    :search-placeholder="
+                      isArabic ? 'البحث في مراكز التكلفة...' : 'Search cost centers...'
+                    "
+                    :no-results-text="isArabic ? 'لا توجد نتائج' : 'No results found'"
+                  />
+                </td>
+                <td :class="styles.nameDisplay">10 - Total Abu Dhabi Offices</td>
+                <td :class="styles.dropdownCell">
+                  <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
+                    10 - Total Abu Dhabi Offices
+                  </div>
+                  <select
+                    v-else
+                    v-model="item.project_code"
+                    :class="[styles.tableInput, { [styles.readonlyInput]: !isScreenEditable }]"
+                    :disabled="!isScreenEditable"
+                  >
+                    <option value="10 - Total Abu Dhabi Offices">
+                      10 - Total Abu Dhabi Offices
+                    </option>
+                  </select>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr :class="styles.summaryRow">
+                <td v-if="!route.query.viewOnly"></td>
+                <td :class="styles.numberCell">{{ formatNumber(summaryData.toSum) || '-' }}</td>
+                <td v-if="!isFromEnhancementsPage" :class="styles.numberCell">
+                  {{ formatNumber(summaryData.fromSum) || '-' }}
+                </td>
+                <td :class="styles.numberCell">
+                  {{ formatNumber(summaryData.encumbranceSum) || '-' }}
+                </td>
+                <td :class="styles.numberCell">
+                  {{ formatNumber(summaryData.availableBudgetSum) || '-' }}
+                </td>
+                <td :class="styles.numberCell">{{ formatNumber(summaryData.actualSum) || '-' }}</td>
+                <td :class="styles.numberCell">
+                  {{ formatNumber(summaryData.approvedBudgetSum) || '-' }}
+                </td>
+                <td :colspan="isFromEnhancementsPage ? 6 : 6" :class="styles.summaryLabel">
+                  {{ isArabic ? 'المجموع الكلي' : 'Overall Sum' }}
+                </td>
+              </tr>
+              <tr v-if="!route.query.viewOnly">
+                <td :colspan="isFromEnhancementsPage ? 12 : 13" :class="styles.addRowCell">
+                  <button
+                    :class="[
+                      styles.btnModern,
+                      styles.btnAddRowModern,
+                      { [styles.btnDisabled]: !isScreenEditable },
+                    ]"
+                    @click="addNewRow"
+                    :disabled="!isScreenEditable"
+                  >
+                    <span :class="styles.btnIconModern">
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                      </svg>
+                    </span>
+                    <span :class="styles.btnText">{{
+                      isArabic ? 'إضافة صف جديد' : 'Add New Row'
+                    }}</span>
+                  </button>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Total rows info -->
+        <div :class="styles.totalInfo">
+          {{ isArabic ? `المجموع ${currentData.length}` : `Total ${currentData.length}` }}
+        </div>
+
+        <!-- Action buttons - hidden in view-only mode -->
+        <div
+          :class="[styles.actionButtonsModern, { [styles.rtl]: isRTL }]"
+          v-if="!route.query.viewOnly"
+        >
+          <button
+            :class="[
+              styles.btnModern,
+              styles.btnSubmit,
+              { [styles.btnDisabled]: !isSubmitButtonEnabled, [styles.rtl]: isRTL },
+            ]"
+            @click="submitRequest"
+            :disabled="!isSubmitButtonEnabled"
+            :title="
+              !isSubmitButtonEnabled
+                ? !currentData || currentData.length === 0
+                  ? isArabic
+                    ? 'لا توجد بيانات للتقديم'
+                    : 'No data to submit'
+                  : changesMade
+                    ? isArabic
+                      ? 'يجب حفظ التغييرات أولاً'
+                      : 'Please save changes first'
+                    : isArabic
+                      ? 'غير متاح للتقديم'
+                      : 'Not available for submission'
+                : isArabic
+                  ? 'تقديم الطلب'
+                  : 'Submit request'
+            "
+          >
+            <span :class="[styles.btnIconModern, { [styles.rtl]: isRTL }]">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                :style="{ transform: isRTL ? 'scaleX(-1)' : 'none' }"
+              >
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </span>
+            <span :class="styles.btnText">{{ isArabic ? 'تقديم' : 'Submit' }}</span>
+          </button>
+
+          <button
+            v-if="!route.query.viewOnly"
+            :class="[
+              styles.btnModern,
+              styles.btnUpload,
+              { [styles.btnDisabled]: !isUploadButtonEnabled, [styles.rtl]: isRTL },
+            ]"
+            @click="uploadFile"
+            :disabled="!isUploadButtonEnabled"
+          >
+            <span :class="[styles.btnIconModern, { [styles.rtl]: isRTL }]">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7,10 12,15 17,10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            </span>
+            <span :class="styles.btnText">{{
+              isArabic ? 'رفع ملف المناقلة' : 'Upload Transfer File'
+            }}</span>
+          </button>
+
+          <button
+            v-if="!route.query.viewOnly"
+            :class="[
+              styles.btnModern,
+              styles.btnReopen,
+              { [styles.btnDisabled]: !isReopenButtonEnabled, [styles.rtl]: isRTL },
+            ]"
+            @click="reopenRequest"
+            :disabled="!isReopenButtonEnabled"
+            :title="
+              !isReopenButtonEnabled && changesMade
+                ? isArabic
+                  ? 'يجب حفظ التغييرات أولاً'
+                  : 'Please save changes first'
+                : isArabic
+                  ? 'إعادة فتح الطلب'
+                  : 'Reopen request'
+            "
+          >
+            <span :class="[styles.btnIconModern, { [styles.rtl]: isRTL }]">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                :style="{ transform: isRTL ? 'scaleX(-1)' : 'none' }"
+              >
+                <path d="M1 4v6h6" />
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+              </svg>
+            </span>
+            <span :class="styles.btnText">{{
+              isArabic ? 'إعادة فتح الطلب' : 'Re-open Request'
+            }}</span>
+          </button>
+
+          <button
+            :class="[styles.btnModern, styles.btnReport, { [styles.rtl]: isRTL }]"
+            @click="generateReport"
+          >
+            <span :class="[styles.btnIconModern, { [styles.rtl]: isRTL }]">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14,2 14,8 20,8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <polyline points="10,9 9,9 8,9" />
+              </svg>
+            </span>
+            <span :class="styles.btnText">{{ isArabic ? 'تقرير' : 'Report' }}</span>
+          </button>
+        </div>
+
+        <!-- Use the new File Upload Modal component without apiBaseUrl prop -->
+        <FileUploadModal
+          :show="showFileModal"
+          :is-arabic="isArabic"
+          :transaction-id="transactionId"
+          :auth-token="authStore.token"
+          @close="closeFileModal"
+          @upload-success="handleUploadSuccess"
+        />
+
+        <!-- Add TransferReport Component -->
+        <TransferReport
+          :show="showReportModal"
+          :transaction-id="transactionId"
+          @close="closeReportModal"
+        />
+      </div>
+
+      <!-- Enhanced Error Details Modal -->
+      <Teleport to="body">
+        <Transition name="modal-fade" appear>
+          <div
+            v-if="showErrorModal"
+            :class="styles.enhancedErrorModalOverlay"
+            @click="hideErrorModal"
+          >
+            <div :class="styles.enhancedErrorModalBackdrop"></div>
+            <Transition name="modal-slide" appear>
+              <div
+                :class="styles.enhancedErrorModalContainer"
+                @click.stop
+                tabindex="-1"
+                role="dialog"
+                aria-labelledby="error-modal-title"
+                aria-describedby="error-modal-description"
+                aria-modal="true"
+              >
+                <div :class="styles.enhancedErrorModalContent">
+                  <!-- Header with icon and gradient -->
+                  <div :class="styles.enhancedErrorModalHeader">
+                    <div :class="styles.errorHeaderIcon">
+                      <!-- <svg
                       width="24"
                       height="24"
                       viewBox="0 0 24 24"
@@ -597,42 +596,42 @@
                       <line x1="15" y1="9" x2="9" y2="15"></line>
                       <line x1="9" y1="9" x2="15" y2="15"></line>
                     </svg> -->
-                  </div>
-                  <div :class="styles.errorHeaderContent">
-                    <h3 :class="styles.errorModalTitle">
-                      {{ isArabic ? 'أخطاء التحقق من صحة البيانات' : 'Data Validation Errors' }}
-                    </h3>
-                    <!-- <p :class="styles.errorModalSubtitle">
+                    </div>
+                    <div :class="styles.errorHeaderContent">
+                      <h3 :class="styles.errorModalTitle">
+                        {{ isArabic ? 'أخطاء التحقق من صحة البيانات' : 'Data Validation Errors' }}
+                      </h3>
+                      <!-- <p :class="styles.errorModalSubtitle">
                       {{
                         isArabic
                           ? `تم العثور على ${currentErrors.length} ${currentErrors.length === 1 ? 'خطأ' : 'أخطاء'} تحتاج إلى إصلاح`
                           : `Found ${currentErrors.length} ${currentErrors.length === 1 ? 'error' : 'errors'} that need${currentErrors.length === 1 ? 's' : ''} to be fixed`
                       }}
                     </p> -->
-                  </div>
-                  <button
-                    :class="styles.enhancedErrorModalClose"
-                    @click="hideErrorModal"
-                    :aria-label="isArabic ? 'إغلاق' : 'Close'"
-                  >
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
+                    </div>
+                    <button
+                      :class="styles.enhancedErrorModalClose"
+                      @click="hideErrorModal"
+                      :aria-label="isArabic ? 'إغلاق' : 'Close'"
                     >
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                  </button>
-                </div>
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                    </button>
+                  </div>
 
-                <!-- Enhanced Error List -->
-                <div :class="styles.enhancedErrorModalBody">
-                  <div :class="styles.errorSummaryStats">
-                    <!-- <div :class="styles.errorStatItem">
+                  <!-- Enhanced Error List -->
+                  <div :class="styles.enhancedErrorModalBody">
+                    <div :class="styles.errorSummaryStats">
+                      <!-- <div :class="styles.errorStatItem">
                       <span :class="styles.errorStatNumber">{{ currentErrors.length }}</span>
                       <span :class="styles.errorStatLabel">
                         {{
@@ -646,83 +645,89 @@
                         }}
                       </span>
                     </div> -->
-                  </div>
+                    </div>
 
-                  <div :class="styles.errorListContainer">
-                    <TransitionGroup name="error-item" tag="div" :class="styles.enhancedErrorList">
-                      <div
-                        v-for="(error, errorIndex) in currentErrors"
-                        :key="`error-${errorIndex}`"
-                        :class="styles.enhancedErrorItem"
-                        :style="{ animationDelay: `${errorIndex * 100}ms` }"
+                    <div :class="styles.errorListContainer">
+                      <TransitionGroup
+                        name="error-item"
+                        tag="div"
+                        :class="styles.enhancedErrorList"
                       >
-                        <div :class="styles.errorItemIcon">
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                          >
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="8" x2="12" y2="12"></line>
-                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                          </svg>
-                        </div>
-                        <div :class="styles.errorItemContent">
-                          <span :class="styles.errorItemText">{{ formatErrorMessage(error) }}</span>
-                          <div v-if="getErrorType(error)" :class="styles.errorItemType">
-                            {{ getErrorType(error) }}
+                        <div
+                          v-for="(error, errorIndex) in currentErrors"
+                          :key="`error-${errorIndex}`"
+                          :class="styles.enhancedErrorItem"
+                          :style="{ animationDelay: `${errorIndex * 100}ms` }"
+                        >
+                          <div :class="styles.errorItemIcon">
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                            >
+                              <circle cx="12" cy="12" r="10"></circle>
+                              <line x1="12" y1="8" x2="12" y2="12"></line>
+                              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                          </div>
+                          <div :class="styles.errorItemContent">
+                            <span :class="styles.errorItemText">{{
+                              formatErrorMessage(error)
+                            }}</span>
+                            <div v-if="getErrorType(error)" :class="styles.errorItemType">
+                              {{ getErrorType(error) }}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </TransitionGroup>
+                      </TransitionGroup>
+                    </div>
+                  </div>
+
+                  <!-- Enhanced Footer -->
+                  <div :class="styles.enhancedErrorModalFooter">
+                    <button :class="styles.enhancedErrorModalActionBtn" @click="hideErrorModal">
+                      <span>{{ isArabic ? 'إغلاق' : 'Close' }}</span>
+                    </button>
                   </div>
                 </div>
-
-                <!-- Enhanced Footer -->
-                <div :class="styles.enhancedErrorModalFooter">
-                  <button :class="styles.enhancedErrorModalActionBtn" @click="hideErrorModal">
-                    <span>{{ isArabic ? 'إغلاق' : 'Close' }}</span>
-                  </button>
-                </div>
               </div>
-            </div>
-          </Transition>
-        </div>
-      </Transition>
-    </Teleport>
+            </Transition>
+          </div>
+        </Transition>
+      </Teleport>
 
-    <!-- Toast (auto-dismiss) -->
-    <Teleport to="body">
-      <transition name="fade">
-        <div
-          v-if="toast.show"
-          :class="[
-            styles.toast,
-            styles[`toast${toast.type.charAt(0).toUpperCase() + toast.type.slice(1)}`],
-          ]"
-          role="alert"
-        >
-          {{ toast.message }}
-        </div>
-      </transition>
-    </Teleport>
+      <!-- Toast (auto-dismiss) -->
+      <Teleport to="body">
+        <transition name="fade">
+          <div
+            v-if="toast.show"
+            :class="[
+              styles.toast,
+              styles[`toast${toast.type.charAt(0).toUpperCase() + toast.type.slice(1)}`],
+            ]"
+            role="alert"
+          >
+            {{ toast.message }}
+          </div>
+        </transition>
+      </Teleport>
 
-    <!-- Dialog/Popup (needs confirm or timed) -->
-    <FuturisticPopup
-      v-model:show="dialog.show"
-      :type="dialog.type"
-      :title="dialog.title"
-      :message="dialog.message"
-      :timer="dialog.timer"
-      :showConfirmButton="dialog.needConfirm"
-      :confirmButtonText="isArabic ? 'موافق' : 'OK'"
-      @confirm="handleDialogConfirm"
-    />
+      <!-- Dialog/Popup (needs confirm or timed) -->
+      <FuturisticPopup
+        v-model:show="dialog.show"
+        :type="dialog.type"
+        :title="dialog.title"
+        :message="dialog.message"
+        :timer="dialog.timer"
+        :showConfirmButton="dialog.needConfirm"
+        :confirmButtonText="isArabic ? 'موافق' : 'OK'"
+        @confirm="handleDialogConfirm"
+      />
+    </div>
   </div>
-
 </template>
 
 <script setup lang="ts">
@@ -2148,23 +2153,23 @@ onMounted(() => {
 // نبني "row" بسيط بس فيه الـ ID المطلوب
 const currentApprovalRow = computed<Partial<RowData>>(() => ({
   transaction_id: Number(transactionId.value ?? 0),
-}));
+}))
 
 function approveThis() {
   // لو مفيش ID فعلي، نمنع الإجراء
   if (!currentApprovalRow.value.transaction_id) {
-    showToast(isArabic.value ? 'لا يوجد معاملة حالية' : 'No current transaction', 'warning');
-    return;
+    showToast(isArabic.value ? 'لا يوجد معاملة حالية' : 'No current transaction', 'warning')
+    return
   }
-  showConfirmationModal('approve', [currentApprovalRow.value as RowData]);
+  showConfirmationModal('approve', [currentApprovalRow.value as RowData])
 }
 
 function rejectThis() {
   if (!currentApprovalRow.value.transaction_id) {
-    showToast(isArabic.value ? 'لا يوجد معاملة حالية' : 'No current transaction', 'warning');
-    return;
+    showToast(isArabic.value ? 'لا يوجد معاملة حالية' : 'No current transaction', 'warning')
+    return
   }
-  showConfirmationModal('reject', [currentApprovalRow.value as RowData]);
+  showConfirmationModal('reject', [currentApprovalRow.value as RowData])
 }
 
 // ───────────────────────────────────────────────────────────── Confirmation Modal
@@ -2202,7 +2207,6 @@ function showConfirmationModal(type: 'approve' | 'reject', rowsToAction: RowData
   showConfirmModal.value = true
 }
 
-
 function closeConfirmModal() {
   showConfirmModal.value = false
 }
@@ -2231,7 +2235,7 @@ async function confirmAction() {
         : []
 
     await TransfersFlowService.approveRejectTransfers(transactionIds, decision, reasons)
-await loadData()
+    await loadData()
 
     // Success - refresh the data
     closeConfirmModal()
@@ -2249,7 +2253,7 @@ await loadData()
     const successMessage = isArabic.value
       ? `تم ${actionText} بنجاح`
       : `${actionText.charAt(0).toUpperCase() + actionText.slice(1)} successful`
-      await router.push('/transfers-pending-approval')
+    await router.push('/transfers-pending-approval')
 
     console.log(successMessage) // Replace with toast notification if available
   } catch (error) {
@@ -2262,13 +2266,14 @@ await loadData()
     isProcessingAction.value = false
   }
 }
-
-
 </script>
 <style scoped>
-
-
-
+/* Root container to ensure single root element for transitions */
+.cost-center-transfer-request-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
 
 /* Action buttons at top */
 .btn-approve,

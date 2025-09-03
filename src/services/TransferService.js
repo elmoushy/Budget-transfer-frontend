@@ -35,29 +35,29 @@ export default {
       throw new Error('Authentication token not found')
     }
 
+    // Build query parameters including code, pagination, and optional search
     const params = {
       page: page.toString(),
       page_size: PAGE_SIZE.toString(),
+      code: 'FAR', // FAR code for transfers
+    }
+
+    // Add search parameter if provided
+    if (searchQuery.trim()) {
+      params.search = searchQuery.trim()
     }
 
     // Common headers for all requests
     const headers = {
       Authorization: `Bearer ${authStore.token}`,
       Accept: 'application/json',
-      'Content-Type': 'application/json',
     }
 
-    // Always include "FAR" as the code in the request body
-    // If there's a search query, include it as well
-    const requestBody = searchQuery.trim()
-      ? { code: 'FAR', search: searchQuery.trim() }
-      : { code: 'FAR' }
-
     try {
-      // Always use POST for both listing and searching
-      const response = await axios.post(`${API_BASE_URL}${API_ENDPOINT}`, requestBody, {
+      // Use GET method with all parameters in query string
+      const response = await axios.get(`${API_BASE_URL}${API_ENDPOINT}`, {
         headers,
-        params, // Pagination params still go in URL
+        params, // All parameters go in URL query string
       })
 
       return response.data

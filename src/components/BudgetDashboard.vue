@@ -108,7 +108,7 @@
           </h2>
           <div class="kpi-grid">
             <!-- Normal Mode KPIs -->
-            <template v-if="isNormalMode && normalData ">
+            <template v-if="isNormalMode && normalData">
               <div class="kpi-card glass-card">
                 <div class="kpi-icon">
                   <i class="fas fa-exchange-alt"></i>
@@ -211,8 +211,6 @@
             {{ isArabic ? 'الحساب:' : 'Account:' }}
             {{ flowData.applied_filters.account_code || (isArabic ? 'الكل' : 'All') }}
           </div>
-
-      
         </div>
 
         <!-- Overview Section -->
@@ -267,7 +265,10 @@
           <div class="charts-grid">
             <div class="chart-card glass-card">
               <h3>{{ isArabic ? 'المعلقة حسب المستوى' : 'Pending by Level' }}</h3>
-              <PendingByLevel :pending-by-level="normalData.pending_transfers_by_level" />
+              <PendingByLevel
+                v-if="normalData?.pending_transfers_by_level"
+                :pending-by-level="normalData.pending_transfers_by_level"
+              />
             </div>
 
             <div class="chart-card glass-card">
@@ -448,7 +449,10 @@
             <div class="charts-grid">
               <div class="chart-card">
                 <h3>{{ isArabic ? 'المعلقة حسب المستوى' : 'Pending by Level' }}</h3>
-                <PendingByLevel :pending-by-level="normalData.pending_transfers_by_level" />
+                <PendingByLevel
+                  v-if="normalData?.pending_transfers_by_level"
+                  :pending-by-level="normalData.pending_transfers_by_level"
+                />
               </div>
 
               <div class="chart-card">
@@ -659,7 +663,6 @@ const activeTab = ref<string>('overview')
 
 // Tab configuration
 
-
 // Computed properties
 const isDarkMode = computed(() => themeStore.darkMode)
 const isArabic = computed(() => themeStore.language === 'ar')
@@ -673,9 +676,6 @@ const normalData = computed(() => dashboardStore.normalData)
 const flowData = computed(() => dashboardStore.flowData)
 const lastFetched = computed(() => dashboardStore.currentLastFetched)
 
-console.log("normalData",normalData.value,"normalData");
-
-
 const isAuthError = computed(
   () => error.value?.includes('Authentication') || error.value?.includes('401'),
 )
@@ -687,32 +687,47 @@ const timelineData = computed(() => {
 })
 
 const costCenterGrouped = computed(() => {
-  if (!flowData.value?.cost_center_totals) return { labels: [], toSeries: [], fromSeries: [] }
+  if (!flowData.value?.cost_center_totals || !Array.isArray(flowData.value.cost_center_totals))
+    return { labels: [], toSeries: [], fromSeries: [] }
   return toGroupedTotals(flowData.value.cost_center_totals, 'cost_center_code')
 })
 
 const accountCodeGrouped = computed(() => {
-  if (!flowData.value?.account_code_totals) return { labels: [], toSeries: [], fromSeries: [] }
+  if (!flowData.value?.account_code_totals || !Array.isArray(flowData.value.account_code_totals))
+    return { labels: [], toSeries: [], fromSeries: [] }
   return toGroupedTotals(flowData.value.account_code_totals, 'account_code')
 })
 
 const heatmapCells = computed(() => {
-  if (!flowData.value?.filtered_combinations) return []
+  if (
+    !flowData.value?.filtered_combinations ||
+    !Array.isArray(flowData.value.filtered_combinations)
+  )
+    return []
   return toHeatmapCells(flowData.value.filtered_combinations)
 })
 
 const sankeyData = computed(() => {
-  if (!flowData.value?.filtered_combinations) return { nodes: [], links: [] }
+  if (
+    !flowData.value?.filtered_combinations ||
+    !Array.isArray(flowData.value.filtered_combinations)
+  )
+    return { nodes: [], links: [] }
   return toSankey(flowData.value.filtered_combinations)
 })
 
 const flowTotals = computed(() => {
-  if (!flowData.value?.cost_center_totals) return { totalFrom: 0, totalTo: 0, net: 0 }
+  if (!flowData.value?.cost_center_totals || !Array.isArray(flowData.value.cost_center_totals))
+    return { totalFrom: 0, totalTo: 0, net: 0 }
   return calculateTotalSums(flowData.value.cost_center_totals)
 })
 
 const sortedTableData = computed(() => {
-  if (!flowData.value?.filtered_combinations) return []
+  if (
+    !flowData.value?.filtered_combinations ||
+    !Array.isArray(flowData.value.filtered_combinations)
+  )
+    return []
 
   const dataWithNet = flowData.value.filtered_combinations.map((row) => ({
     ...row,

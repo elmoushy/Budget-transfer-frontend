@@ -285,23 +285,23 @@ export default {
      */
     fetchTransfers: async (searchQuery = '', page = 1) => {
       try {
+        // Build query parameters including code, pagination, and optional search
         const params = {
           page: page.toString(),
           page_size: PAGINATION.PAGE_SIZE.toString(),
+          code: 'FAR', // FAR code for transfers
         }
 
-        const requestBody = searchQuery.trim()
-          ? { code: 'FAR', search: searchQuery.trim() }
-          : { code: 'FAR' }
+        // Add search parameter if provided
+        if (searchQuery.trim()) {
+          params.search = searchQuery.trim()
+        }
 
-        const response = await axios.post(
-          `${API_BASE_URL}${ENDPOINTS.BUDGET.TRANSFERS_LIST}`,
-          requestBody,
-          {
-            headers: getAuthHeaders(),
-            params, // Pagination params still go in URL
-          },
-        )
+        // Use GET method with all parameters in query string
+        const response = await axios.get(`${API_BASE_URL}${ENDPOINTS.BUDGET.TRANSFERS_LIST}`, {
+          headers: getAuthHeaders(),
+          params, // All parameters go in URL query string
+        })
 
         return response.data
       } catch (error) {
