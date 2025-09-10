@@ -2301,7 +2301,7 @@ async function confirmAction() {
     isProcessingAction.value = true
 
     const transactionIds = rowsToProcess.value.map((row) => row.transaction_id)
-    const decision = confirmModalType.value === 'approve' ? 2 : 3
+    const decision = confirmModalType.value === 'approve' ? "approve" : "reject"
     const reasons =
       confirmModalType.value === 'reject'
         ? transactionIds.map(() => rejectionReason.value.trim())

@@ -36,7 +36,7 @@ declare const TransfersFlowService: {
   ): Promise<{ results: FlowData[]; count: number }>
   approveRejectTransfers(
     transactionIds: number[],
-    decision: number,
+    decision: string,
     reasons?: string[],
   ): Promise<ApiResponse<unknown>>
 }
