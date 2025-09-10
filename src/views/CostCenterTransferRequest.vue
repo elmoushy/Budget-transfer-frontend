@@ -1309,6 +1309,7 @@ const createTransfer = async () => {
         cost_center_name: item.cost_center_name,
         account_code: item.account_code,
         account_name: item.account_name,
+        project_code: item.project_code,
         approved_budget: toSafeNumber(item.approved_budget),
         available_budget: toSafeNumber(item.available_budget),
         to_center: toSafeNumber(item.to_center),
