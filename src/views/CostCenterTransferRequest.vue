@@ -154,6 +154,8 @@
                 <th>{{ isArabic ? 'الموازنة المتاحة' : 'Available Budget' }}</th>
                 <th>{{ isArabic ? 'الحالى' : 'Actual' }}</th>
                 <th>{{ isArabic ? 'الموازنة المعتمدة' : 'Approved Budget' }}</th>
+                <th>{{ isArabic ? 'فترة البيانات' : 'As of Period' }}</th>
+                <th>{{ isArabic ? 'أخرى حتى تاريخه' : 'Other YTD' }}</th>
                 <th>{{ isArabic ? 'اسم الحساب' : 'Account Name' }}</th>
                 <th>{{ isArabic ? 'رقم الحساب' : 'Account Code' }}</th>
                 <th>{{ isArabic ? 'اسم المشروع' : 'Project Name' }}</th>
@@ -196,6 +198,7 @@
                     <span :class="styles.successIconSmall">✓</span>
                   </div>
                 </td>
+
                 <td :class="styles.numberCell">
                   <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
                     {{ formatNumber(item.to_center_input) || '-' }}
@@ -214,6 +217,7 @@
                     :readonly="!isScreenEditable"
                   />
                 </td>
+
                 <td v-if="!isFromEnhancementsPage" :class="styles.numberCell">
                   <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
                     {{ formatNumber(item.from_center_input) || '-' }}
@@ -257,25 +261,32 @@
                   </div>
                 </td>
                 <td :class="styles.nameDisplay">
+                  {{ item.as_of_period || '-' }}
+                </td>
+                <td :class="styles.numberCell">
+                  <div :class="styles.nameDisplay">
+                    {{ formatNumber(Number(item.other_ytd) || 0) || '-' }}
+                  </div>
+                </td>
+                <td :class="styles.nameDisplay">
                   {{ item.account_name || getAccountName(item.account_code) || '-' }}
                 </td>
+
                 <td :class="styles.dropdownCell">
                   <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
-                    {{ getAccountDisplayText(item.account_code) || '-' }}
+                    {{ item.account_code || '-' }}
                   </div>
                   <SearchableDropdown
                     v-else
                     v-model="item.account_code"
                     :options="
-                      accountEntities.map((account) => ({
-                        value: account.account,
-                        label: account.alias_default
-                          ? `${account.account} - ${account.alias_default}`
-                          : account.account,
+                      segments.segment2.map((segment) => ({
+                        value: segment,
+                        label: segment,
                       }))
                     "
                     :placeholder="
-                      accountEntitiesLoading
+                      segmentsLoading
                         ? isArabic
                           ? 'جاري التحميل...'
                           : 'Loading...'
@@ -283,7 +294,7 @@
                           ? 'اختر رقم الحساب'
                           : 'Select Account'
                     "
-                    :disabled="!isScreenEditable || accountEntitiesLoading"
+                    :disabled="!isScreenEditable || segmentsLoading"
                     :is-dark-mode="isDarkMode"
                     :is-rtl="isRTL"
                     :search-placeholder="isArabic ? 'البحث في الحسابات...' : 'Search accounts...'"
@@ -291,25 +302,57 @@
                   />
                 </td>
                 <td :class="styles.nameDisplay">
-                  {{ item.cost_center_name || getCostCenterName(item.cost_center_code) || '-' }}
+                  {{ item.project_name || item.project_code || '-' }}
                 </td>
+
                 <td :class="styles.dropdownCell">
                   <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
-                    {{ getCostCenterDisplayText(item.cost_center_code) || '-' }}
+                    {{ item.project_code || '-' }}
+                  </div>
+                  <SearchableDropdown
+                    v-else
+                    v-model="item.project_code"
+                    :options="
+                      segments.segment3.map((segment) => ({
+                        value: segment,
+                        label: segment,
+                      }))
+                    "
+                    :placeholder="
+                      segmentsLoading
+                        ? isArabic
+                          ? 'جاري التحميل...'
+                          : 'Loading...'
+                        : isArabic
+                          ? 'اختر رقم المشروع'
+                          : 'Select Project'
+                    "
+                    :disabled="!isScreenEditable || segmentsLoading"
+                    :is-dark-mode="isDarkMode"
+                    :is-rtl="isRTL"
+                    :search-placeholder="isArabic ? 'البحث في المشاريع...' : 'Search projects...'"
+                    :no-results-text="isArabic ? 'لا توجد نتائج' : 'No results found'"
+                  />
+                </td>
+                <td :class="styles.nameDisplay">
+                  {{ item.cost_center_name || getCostCenterName(item.cost_center_code) || '-' }}
+                </td>
+
+                <td :class="styles.dropdownCell">
+                  <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
+                    {{ item.cost_center_code || '-' }}
                   </div>
                   <SearchableDropdown
                     v-else
                     v-model="item.cost_center_code"
                     :options="
-                      costCenterEntities.map((entity) => ({
-                        value: entity.entity,
-                        label: entity.alias_default
-                          ? `${entity.entity} - ${entity.alias_default}`
-                          : entity.entity,
+                      segments.segment1.map((segment) => ({
+                        value: segment,
+                        label: segment,
                       }))
                     "
                     :placeholder="
-                      costCenterEntitiesLoading
+                      segmentsLoading
                         ? isArabic
                           ? 'جاري التحميل...'
                           : 'Loading...'
@@ -317,7 +360,7 @@
                           ? 'اختر رقم البند'
                           : 'Select Cost Center'
                     "
-                    :disabled="!isScreenEditable || costCenterEntitiesLoading"
+                    :disabled="!isScreenEditable || segmentsLoading"
                     :is-dark-mode="isDarkMode"
                     :is-rtl="isRTL"
                     :search-placeholder="
@@ -325,22 +368,6 @@
                     "
                     :no-results-text="isArabic ? 'لا توجد نتائج' : 'No results found'"
                   />
-                </td>
-                <td :class="styles.nameDisplay">10 - Total Abu Dhabi Offices</td>
-                <td :class="styles.dropdownCell">
-                  <div v-if="route.query.viewOnly === 'true'" :class="styles.nameDisplay">
-                    10 - Total Abu Dhabi Offices
-                  </div>
-                  <select
-                    v-else
-                    v-model="item.project_code"
-                    :class="[styles.tableInput, { [styles.readonlyInput]: !isScreenEditable }]"
-                    :disabled="!isScreenEditable"
-                  >
-                    <option value="10 - Total Abu Dhabi Offices">
-                      10 - Total Abu Dhabi Offices
-                    </option>
-                  </select>
                 </td>
               </tr>
             </tbody>
@@ -361,12 +388,16 @@
                 <td :class="styles.numberCell">
                   {{ formatNumber(summaryData.approvedBudgetSum) || '-' }}
                 </td>
-                <td :colspan="isFromEnhancementsPage ? 6 : 6" :class="styles.summaryLabel">
+                <td></td>
+                <td :class="styles.numberCell">
+                  {{ formatNumber(summaryData.otherYtdSum) || '-' }}
+                </td>
+                <td :colspan="isFromEnhancementsPage ? 4 : 8" :class="styles.summaryLabel">
                   {{ isArabic ? 'المجموع الكلي' : 'Overall Sum' }}
                 </td>
               </tr>
               <tr v-if="!route.query.viewOnly">
-                <td :colspan="isFromEnhancementsPage ? 12 : 13" :class="styles.addRowCell">
+                <td :colspan="isFromEnhancementsPage ? 14 : 15" :class="styles.addRowCell">
                   <button
                     :class="[
                       styles.btnModern,
@@ -823,6 +854,18 @@ const accountEntities = ref<AccountEntity[]>([])
 const accountEntitiesLoading = ref(false)
 const accountEntitiesError = ref(false)
 
+// Add new state for segments
+const segments = ref<{
+  segment1: string[]
+  segment2: string[]
+  segment3: string[]
+}>({
+  segment1: [],
+  segment2: [],
+  segment3: [],
+})
+const segmentsLoading = ref(false)
+
 // New ref to store the original data snapshot
 const originalData = ref<TransferItem[]>([])
 
@@ -872,6 +915,10 @@ const summaryData = computed(() => {
     actualSum: data.reduce((sum, item) => sum + (parseFloat(String(item.actual || 0)) || 0), 0),
     approvedBudgetSum: data.reduce(
       (sum, item) => sum + (parseFloat(String(item.approved_budget || 0)) || 0),
+      0,
+    ),
+    otherYtdSum: data.reduce(
+      (sum, item) => sum + (parseFloat(String(item.other_ytd || 0)) || 0),
       0,
     ),
   }
@@ -993,6 +1040,98 @@ const fetchAccountEntities = async () => {
   }
 }
 
+// Methods for segments dropdown
+const fetchSegments = async () => {
+  segmentsLoading.value = true
+
+  try {
+    const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+    const response = await axios.get(`${BASE_URL}/api/accounts-entities/balance-report/segments/`, {
+      headers: {
+        Authorization: `Bearer ${authStore.token}`,
+      },
+    })
+
+    if (response.data && response.data.success && response.data.data) {
+      segments.value = {
+        segment1: response.data.data.segment1 || [],
+        segment2: response.data.data.segment2 || [],
+        segment3: response.data.data.segment3 || [],
+      }
+    }
+  } catch (err) {
+    console.error('Failed to fetch segments:', err)
+  } finally {
+    segmentsLoading.value = false
+  }
+}
+
+// Method to fetch financial data based on segments
+const fetchFinancialData = async (item: TransferItem) => {
+  // Check if all three segments are selected
+  if (!item.cost_center_code || !item.account_code || !item.project_code) {
+    // If any segment is missing, clear the financial data
+    item.encumbrance = 0
+    item.available_budget = 0
+    item.actual = 0
+    item.approved_budget = 0
+    return
+  }
+
+  try {
+    const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+    const response = await axios.get(
+      `${BASE_URL}/api/accounts-entities/balance-report/financial-data/`,
+      {
+        params: {
+          segment1: item.cost_center_code, // Cost Center Code
+          segment2: item.account_code, // Account Code
+          segment3: item.project_code, // Project Code
+        },
+        headers: {
+          Authorization: `Bearer ${authStore.token}`,
+        },
+      },
+    )
+
+    if (response.data && response.data.success && response.data.data) {
+      const data = response.data.data
+
+      item.as_of_period = data.latest_record.as_of_period || ''
+
+      item.other_ytd = data.latest_record.other_ytd || 0
+
+      // Update financial fields with API data
+      item.encumbrance = toSafeNumber(data.latest_record.encumbrance_ytd || 0)
+      item.available_budget = toSafeNumber(data.latest_record.funds_available_asof || 0)
+      item.actual = toSafeNumber(data.latest_record.actual_ytd || 0)
+      item.approved_budget = toSafeNumber(data.latest_record.budget_ytd || 0)
+
+      // Update the input fields to reflect the new values
+      item.encumbrance_input = item.encumbrance.toString()
+      item.available_budget_input = item.available_budget.toString()
+      item.actual_input = item.actual.toString()
+      item.approved_budget_input = item.approved_budget.toString()
+
+      // Mark that changes have been made
+      checkForChanges()
+    } else {
+      // If no data found, set to 0
+      item.encumbrance = 0
+      item.available_budget = 0
+      item.actual = 0
+      item.approved_budget = 0
+    }
+  } catch (err) {
+    console.error('Failed to fetch financial data:', err)
+    // On error, set financial data to 0
+    item.encumbrance = 0
+    item.available_budget = 0
+    item.actual = 0
+    item.approved_budget = 0
+  }
+}
+
 const getCostCenterName = (code: string | number | undefined) => {
   if (!code) return ''
   const codeStr = String(code)
@@ -1013,35 +1152,6 @@ const getAccountName = (code: string | number | undefined) => {
   }
   const account = accountEntities.value.find((a) => a.account === codeStr)
   return account ? account.alias_default : ''
-}
-
-// Helper functions to get display text for dropdowns in view-only mode
-const getAccountDisplayText = (code: string | number | undefined) => {
-  if (!code) return ''
-  const codeStr = String(code)
-  // Return just the code if entities haven't loaded yet
-  if (!accountEntities.value || accountEntities.value.length === 0) {
-    return codeStr
-  }
-  const account = accountEntities.value.find((a) => a.account === codeStr)
-  if (account && account.alias_default) {
-    return `${account.account} - ${account.alias_default}`
-  }
-  return codeStr
-}
-
-const getCostCenterDisplayText = (code: string | number | undefined) => {
-  if (!code) return ''
-  const codeStr = String(code)
-  // Return just the code if entities haven't loaded yet
-  if (!costCenterEntities.value || costCenterEntities.value.length === 0) {
-    return codeStr
-  }
-  const entity = costCenterEntities.value.find((e) => e.entity === codeStr)
-  if (entity && entity.alias_default) {
-    return `${entity.entity} - ${entity.alias_default}`
-  }
-  return codeStr
 }
 
 // Method to validate number input and handle conversion
@@ -1116,8 +1226,8 @@ const initializeInputFields = () => {
         : ''
 
     // Initialize hardcoded project fields for frontend-only display
-    item.project_code = '10 - Total Abu Dhabi Offices'
-    item.project_name = '10 - Total Abu Dhabi Offices'
+    item.project_code = '-'
+    item.project_name = '-'
   })
 }
 
@@ -1140,8 +1250,10 @@ const addNewRow = () => {
     done: 1,
     financialDataFromApi: false,
     lastChangedField: null, // Track which dropdown was changed last
-    project_code: '10 - Total Abu Dhabi Offices', // Default hardcoded project code
-    project_name: '10 - Total Abu Dhabi Offices', // Default project name
+    project_code: '', // Initialize with empty string
+    project_name: '', // Initialize with empty string
+    as_of_period: '', // Initialize with empty string
+    other_ytd: 0, // Initialize with 0
   }
 
   if (isContractMode.value) {
@@ -1378,12 +1490,19 @@ watch(
   (newCodes, oldCodes) => {
     if (newCodes && oldCodes) {
       newCodes.forEach((newCode, index) => {
-        if (newCode !== oldCodes[index] && newCode) {
+        if (newCode !== oldCodes[index]) {
           const item = currentData.value[index]
           if (item) {
-            item.account_name = getAccountName(newCode)
-            item.lastChangedField = 'account_code'
-            fetchPivotFundDetails(item)
+            if (newCode) {
+              // Set account name to the code value (segment2)
+              item.account_name = String(newCode)
+              item.lastChangedField = 'account_code'
+            } else {
+              // Clear account name if code is cleared
+              item.account_name = ''
+            }
+            // Fetch financial data when account code changes (or is cleared)
+            fetchFinancialData(item)
           }
         }
       })
@@ -1397,12 +1516,44 @@ watch(
   (newCodes, oldCodes) => {
     if (newCodes && oldCodes) {
       newCodes.forEach((newCode, index) => {
-        if (newCode !== oldCodes[index] && newCode) {
+        if (newCode !== oldCodes[index]) {
           const item = currentData.value[index]
           if (item) {
-            item.cost_center_name = getCostCenterName(newCode)
-            item.lastChangedField = 'cost_center_code'
-            fetchPivotFundDetails(item)
+            if (newCode) {
+              // Set cost center name to the code value (segment1)
+              item.cost_center_name = String(newCode)
+              item.lastChangedField = 'cost_center_code'
+            } else {
+              // Clear cost center name if code is cleared
+              item.cost_center_name = ''
+            }
+            // Fetch financial data when cost center code changes (or is cleared)
+            fetchFinancialData(item)
+          }
+        }
+      })
+    }
+  },
+  { deep: true },
+)
+
+watch(
+  () => currentData.value.map((item) => item.project_code),
+  (newCodes, oldCodes) => {
+    if (newCodes && oldCodes) {
+      newCodes.forEach((newCode, index) => {
+        if (newCode !== oldCodes[index]) {
+          const item = currentData.value[index]
+          if (item) {
+            if (newCode) {
+              // Set project name to the code value (segment3)
+              item.project_name = String(newCode)
+            } else {
+              // Clear project name if code is cleared
+              item.project_name = ''
+            }
+            // Fetch financial data when project code changes (or is cleared)
+            fetchFinancialData(item)
           }
         }
       })
@@ -1718,12 +1869,14 @@ onMounted(() => {
     loadData()
     fetchCostCenterEntities() // Fetch cost center entities on mount
     fetchAccountEntities() // Fetch account entities on mount
+    fetchSegments() // Fetch segments on mount
   } else {
     // If no transaction ID, start with an empty form
     transferData.value = []
     addNewRow()
     fetchCostCenterEntities()
     fetchAccountEntities()
+    fetchSegments() // Fetch segments on mount
   }
 
   // Clean up on unmount
@@ -1829,88 +1982,6 @@ const formatErrorMessage = (error: string): string => {
   formattedError = formattedError.charAt(0).toUpperCase() + formattedError.slice(1)
 
   return formattedError
-}
-
-// Add these new methods after the existing methods in the script setup section
-const fetchPivotFundDetails = async (item: TransferItem) => {
-  // Only fetch if both cost center and account codes are set
-  if (!item.cost_center_code || !item.account_code) {
-    return
-  }
-
-  try {
-    const response = await transferService.getPivotFundDetails(
-      item.cost_center_code,
-      item.account_code,
-    )
-
-    // Check if the response contains "Pivot fund not found" message
-    if (response && (response as { message?: string }).message === 'Pivot fund not found.') {
-      // Reset financial values but keep the cost center and account selections
-      item.actual = 0
-      item.available_budget = 0
-      item.approved_budget = 0
-      item.encumbrance = 0
-      item.financialDataFromApi = false
-
-      // Alert the user about the missing data
-      showToast(
-        isArabic.value
-          ? `لا توجد بيانات مالية لهذا التحديد. المركز: ${item.cost_center_code}, الحساب: ${item.account_code}`
-          : `No financial data found for Cost Center: ${item.cost_center_code}, Account: ${item.account_code}`,
-        'warning',
-      )
-
-      // Mark that changes have been made
-      checkForChanges()
-    } else if (response && (response as { data?: Record<string, unknown> }).data) {
-      // Update financial fields with retrieved data
-      const data = (response as { data: Record<string, unknown> }).data
-
-      // Update numeric values using safe conversion mapping API fields to component fields
-      item.actual = toSafeNumber(data.actual)
-      item.available_budget = toSafeNumber(data.fund) // API returns 'fund' for available budget
-      item.approved_budget = toSafeNumber(data.budget) // API returns 'budget' for approved budget
-      item.encumbrance = toSafeNumber(data.encumbrance)
-
-      // Set flag to indicate data came from API
-      item.financialDataFromApi = true
-
-      // Mark that changes have been made
-      checkForChanges()
-    }
-  } catch (error: unknown) {
-    // Check if the error is a 404 (Not Found)
-    const err = error as { response?: { status?: number } }
-    if (err.response && err.response.status === 404) {
-      // Alert the user with the specific IDs that failed
-      showToast(
-        isArabic.value
-          ? `لا توجد بيانات لهذا التحديد. المركز: ${item.cost_center_code}, الحساب: ${item.account_code}`
-          : `This doesn't have data for Cost Center: ${item.cost_center_code}, Account: ${item.account_code}`,
-        'warning',
-      )
-
-      // Reset the last changed selection
-      // We determine which one was last changed based on the component's context
-      if (item.lastChangedField === 'account_code') {
-        item.account_code = ''
-        item.account_name = ''
-      } else {
-        item.cost_center_code = ''
-        item.cost_center_name = ''
-      }
-
-      // Reset financial values
-      item.actual = 0
-      item.available_budget = 0
-      item.approved_budget = 0
-      item.encumbrance = 0
-      item.financialDataFromApi = false
-    } else {
-      console.error('Failed to fetch pivot fund details:', error)
-    }
-  }
 }
 
 // Add state variable to control report modal visibility

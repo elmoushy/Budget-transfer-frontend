@@ -10,6 +10,8 @@ export interface TransferItem {
   account_name?: string
   cost_center_code?: string | number
   cost_center_name?: string
+  project_code?: string | number
+  project_name?: string
   approved_budget?: number | null
   available_budget?: number | null
   encumbrance?: number | null
