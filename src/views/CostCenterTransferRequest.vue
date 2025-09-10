@@ -1636,8 +1636,8 @@ const loadData = async () => {
             ? item.approved_budget.toString()
             : ''
         // Initialize hardcoded project fields for frontend-only display
-        item.project_code = '10 - Total Abu Dhabi Offices'
-        item.project_name = '10 - Total Abu Dhabi Offices'
+        item.project_code = item.project_code || '-'
+        item.project_name = item.project_name || '-'
       })
 
       // Store a deep copy of the original data for future comparisons
